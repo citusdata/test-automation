@@ -668,8 +668,8 @@
     },
     "Constants": {
       "Scripts": {
-        "FindWorkers": "https://citus-deployment.s3.amazonaws.com/aws/test-cluster/find-workers.sh",
-        "FabFile": "https://citus-deployment.s3.amazonaws.com/aws/test-cluster/fabfile.py"
+        "FindWorkers": "https://s3.eu-central-1.amazonaws.com/citus-tests/find-workers.sh",
+        "FabFile": "https://s3.eu-central-1.amazonaws.com/citus-tests/fabfile.py"
       },
       "VolumeSize": { "Master": "128", "Worker": "128" }
     }

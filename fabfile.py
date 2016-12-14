@@ -1,5 +1,10 @@
-from fabric.api import run, env, cd, roles, task, parallel, execute
-from fabric.operations import sudo
+import tempfile
+import os
+import StringIO
+
+from fabric.api import env, cd, roles, task, parallel, execute
+from fabric.api import run as fab_run
+from fabric.api import sudo as fab_sudo
 from fabric.decorators import runs_once
 
 env.roledefs = {
@@ -7,6 +12,22 @@ env.roledefs = {
     'workers': [ip.strip() for ip in open('worker-instances')],
 }
 env.roles = ['master', 'workers']
+
+# TODO: make this less ugly...
+
+(log_file_fd, log_file_name) = tempfile.mkstemp()
+log_file = os.fdopen(log_file_fd, 'w')
+print('All output will be saved to {}'.format(log_file_name))
+def run(*args):
+    _execute(fab_run, *args)
+def sudo(*args):
+    _execute(fab_sudo, *args)
+def _execute(func, *args):
+    try:
+        result = func(*args, stdout=log_file, stderr=log_file)
+    except SystemExit as e:
+        print('All log output was saved to {}'.format(log_file_name))
+        raise
 
 @task
 @runs_once

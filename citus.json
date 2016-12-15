@@ -177,7 +177,7 @@
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "BlockDeviceMappings": [
           {
-            "DeviceName": "/dev/sdb",
+            "DeviceName": "/dev/xvda",
             "Ebs": {
               "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Master"] },
               "VolumeType": "gp2"
@@ -294,93 +294,15 @@
         "KeyName": { "Ref": "KeyName" },
         "SecurityGroups": [{ "Ref": "CitusSecurityGroup" }],
         "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
-        "BlockDeviceMappings": {
-          "Fn::If": [
-            "WorkerHas1Drive",
-            [
-              { "DeviceName": "/dev/sdb", "VirtualName": "ephemeral0" },
-              {
-                "DeviceName": "/dev/sdp",
-                "Ebs": {
-                  "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                  "VolumeType": "gp2"
-                }
-              }
-            ],
-            {
-              "Fn::If": [
-                "WorkerHas2Drives",
-                [
-                  { "DeviceName": "/dev/sdb", "VirtualName": "ephemeral0" },
-                  { "DeviceName": "/dev/sdc", "VirtualName": "ephemeral1" },
-                  {
-                    "DeviceName": "/dev/sdp",
-                    "Ebs": {
-                      "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                      "VolumeType": "gp2"
-                    }
-                  }
-                ],
-                {
-                  "Fn::If": [
-                    "WorkerHas4Drives",
-                    [
-                      { "DeviceName": "/dev/sdb", "VirtualName": "ephemeral0" },
-                      { "DeviceName": "/dev/sdc", "VirtualName": "ephemeral1" },
-                      { "DeviceName": "/dev/sdd", "VirtualName": "ephemeral2" },
-                      { "DeviceName": "/dev/sde", "VirtualName": "ephemeral3" },
-                      {
-                        "DeviceName": "/dev/sdp",
-                        "Ebs": {
-                          "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                          "VolumeType": "gp2"
-                        }
-                      }
-                    ],
-                    {
-                      "Fn::If": [
-                        "WorkerHas8Drives",
-                        [
-                          { "DeviceName": "/dev/sdb", "VirtualName": "ephemeral0" },
-                          { "DeviceName": "/dev/sdc", "VirtualName": "ephemeral1" },
-                          { "DeviceName": "/dev/sdd", "VirtualName": "ephemeral2" },
-                          { "DeviceName": "/dev/sde", "VirtualName": "ephemeral3" },
-                          { "DeviceName": "/dev/sdf", "VirtualName": "ephemeral4" },
-                          { "DeviceName": "/dev/sdg", "VirtualName": "ephemeral5" },
-                          { "DeviceName": "/dev/sdh", "VirtualName": "ephemeral6" },
-                          { "DeviceName": "/dev/sdi", "VirtualName": "ephemeral7" },
-                          {
-                            "DeviceName": "/dev/sdp",
-                            "Ebs": {
-                              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                              "VolumeType": "gp2"
-                            }
-                          }
-                        ],
-                        [
-                          {
-                            "DeviceName": "/dev/sdb",
-                            "Ebs": {
-                              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                              "VolumeType": "gp2"
-                            }
-                          },
-                          {
-                            "DeviceName": "/dev/sdp",
-                            "Ebs": {
-                              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Worker"] },
-                              "VolumeType": "gp2"
-                            }
-                          }
-                        ]
-                      ]
-                    }
-                  ]
-                }
-              ]
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Master"] },
+              "VolumeType": "gp2"
             }
-          ]
-        },
+          }
+	],
         "UserData": {
           "Fn::Base64": {
             "Fn::Join": [
@@ -583,38 +505,6 @@
         "CidrBlock": "0.0.0.0/0",
         "PortRange": { "From": "1024", "To": "65535" }
       }
-    }
-  },
-  "Conditions": {
-    "WorkerHas0Drives": {
-      "Fn::Equals": [
-        { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "NumEphemerals"] },
-        "0"
-      ]
-    },
-    "WorkerHas1Drive": {
-      "Fn::Equals": [
-        { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "NumEphemerals"] },
-        "1"
-      ]
-    },
-    "WorkerHas2Drives": {
-      "Fn::Equals": [
-        { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "NumEphemerals"] },
-        "2"
-      ]
-    },
-    "WorkerHas4Drives": {
-      "Fn::Equals": [
-        { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "NumEphemerals"] },
-        "4"
-      ]
-    },
-    "WorkerHas8Drives": {
-      "Fn::Equals": [
-        { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "NumEphemerals"] },
-        "8"
-      ]
     }
   },
   "Mappings": {

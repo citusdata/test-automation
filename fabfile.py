@@ -2,7 +2,9 @@ import tempfile
 import os
 import StringIO
 
-from fabric.api import env, cd, roles, task, parallel, execute, run, sudo
+from fabric.api import (
+    env, cd, roles, task, parallel, execute, run, sudo, abort, local, lcd
+)
 from fabric.decorators import runs_once
 
 env.roledefs = {
@@ -11,9 +13,39 @@ env.roledefs = {
 }
 env.roles = ['master', 'workers']
 
+paths = {
+    'citus-repo': '/home/ec2-user/citus',
+}
+
+config = {
+    'citus-git-ref': 'master',
+}
+
+@task
+@runs_once
+def citus(*args):
+    'Choose a citus version. For example: fab citus:v6.0.1 basic_testing'
+
+    # Do a local checkout to make sure this is a valid ref
+    # (so we error as fast as possible)
+
+    if len(args) != 1:
+        abort('You must provide a single argument, with a command such as "citus:feature/joins"')
+    git_ref = args[0]
+
+    path = paths['citus-repo']
+    local('rm -rf {} || true'.format(path))
+    local('git clone -q https://github.com/citusdata/citus.git {}'.format(path))
+    with lcd(path):
+        local('git checkout {}'.format(git_ref))
+    local('rm -rf {} || true'.format(path))
+
+    config['citus-git-ref'] = git_ref
+
 @task
 @runs_once
 def basic_testing():
+    'Sets up a no-frills Postgres+Citus cluster'
     prefix = '/home/ec2-user/pg-961'
 
     # use sequential executes to make sure all nodes are setup before we
@@ -27,6 +59,7 @@ def basic_testing():
 @task
 @runs_once
 def tpch():
+    'Just like basic_testing, but also includes some files useful for tpc-h'
     prefix = '/home/ec2-user/tpch'
 
     execute(common_setup, prefix)
@@ -71,7 +104,7 @@ def add_workers(prefix):
     with cd(prefix):
         for ip in env.roledefs['workers']:
            command = 'SELECT master_add_node(\'{}\', 5432);'.format(ip)
-            run('bin/psql -c "{}"'.format(command))
+           run('bin/psql -c "{}"'.format(command))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
@@ -106,11 +139,11 @@ def build_postgres_96(prefix):
         run('make install')
 
 def build_citus(prefix):
-    run('rm -rf citus || true') # -f because git write-protects files
-    run('git clone -q https://github.com/citusdata/citus.git')
-    with cd('citus'):
-        if 'citus' in env:
-            run('git reset --hard {}'.format(env['citus']))
+    repo = paths['citus-repo']
+    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
+    run('git clone -q https://github.com/citusdata/citus.git'.format(repo))
+    with cd(repo):
+        run('git checkout {}'.format(config['citus-git-ref']))
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
         run('make install')
 

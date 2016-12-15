@@ -2,9 +2,7 @@ import tempfile
 import os
 import StringIO
 
-from fabric.api import env, cd, roles, task, parallel, execute
-from fabric.api import run as fab_run
-from fabric.api import sudo as fab_sudo
+from fabric.api import env, cd, roles, task, parallel, execute, run, sudo
 from fabric.decorators import runs_once
 
 env.roledefs = {
@@ -12,22 +10,6 @@ env.roledefs = {
     'workers': [ip.strip() for ip in open('worker-instances')],
 }
 env.roles = ['master', 'workers']
-
-# TODO: make this less ugly...
-
-(log_file_fd, log_file_name) = tempfile.mkstemp()
-log_file = os.fdopen(log_file_fd, 'w')
-print('All output will be saved to {}'.format(log_file_name))
-def run(*args):
-    _execute(fab_run, *args)
-def sudo(*args):
-    _execute(fab_sudo, *args)
-def _execute(func, *args):
-    try:
-        result = func(*args, stdout=log_file, stderr=log_file)
-    except SystemExit as e:
-        print('All log output was saved to {}'.format(log_file_name))
-        raise
 
 @task
 @runs_once
@@ -40,6 +22,18 @@ def basic_testing():
 
     execute(common_setup, prefix)
     execute(add_workers, prefix)
+    print('You can now connect by running "{}/bin/psql"'.format(prefix))
+
+@task
+@runs_once
+def tpch():
+    prefix = '/home/ec2-user/tpch'
+
+    execute(common_setup, prefix)
+    execute(add_workers, prefix)
+    execute(tpch_setup, prefix)
+    print('You can now connect by running "{}/bin/psql"'.format(prefix))
+    print('The tpc-h scripts are at ""')
 
 @parallel
 def common_setup(prefix):
@@ -56,15 +50,32 @@ def cleanup(prefix):
     run('rm -r {} || true'.format(prefix))
 
 @roles('master')
+def tpch_setup(prefix):
+    # download extra files
+    run('wget https://s3.eu-central-1.amazonaws.com/citus-tests/tpch_2_13_0.tar.gz')
+
+    # generate tpc-h data
+    run('tar -xf tpch_2_13_0.tar.gz')
+    with cd('tpch_2_13_0.citus5'):
+        run('make')
+
+        run('wget https://s3.eu-central-1.amazonaws.com/citus-tests/generate2.sh')
+        run('SCALE_FACTOR=10 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh')
+
+    # stage tpc-h data
+    with cd('tpch_2_13_0.citus5'):
+        run('wget https://s3.eu-central-1.amazonaws.com/citus-tests/stage2.sh')
+
+@roles('master')
 def add_workers(prefix):
     with cd(prefix):
         for ip in env.roledefs['workers']:
-            command = 'SELECT master_add_node(\'{}\', 5432);'.format(ip)
+           command = 'SELECT master_add_node(\'{}\', 5432);'.format(ip)
             run('bin/psql -c "{}"'.format(command))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
-    sudo('yum groupinstall -q -y \'Development Tools\'')
+    sudo("yum groupinstall -q -y 'Development Tools'")
     sudo('yum install -q -y libxml2-devel libxslt-devel'
          ' openssl-devel pam-devel readline-devel git')
 
@@ -98,6 +109,8 @@ def build_citus(prefix):
     run('rm -rf citus || true') # -f because git write-protects files
     run('git clone -q https://github.com/citusdata/citus.git')
     with cd('citus'):
+        if 'citus' in env:
+            run('git reset --hard {}'.format(env['citus']))
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
         run('make install')
 

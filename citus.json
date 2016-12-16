@@ -92,12 +92,6 @@
                 "owner": "root",
                 "group": "root"
               },
-              "/home/ec2-user/fabfile.py": {
-                "source": { "Fn::FindInMap": ["Constants", "Scripts", "FabFile"] },
-                "mode": "000755",
-                "owner": "ec2-user",
-                "group": "ec2-user"
-              },
               "/home/ec2-user/worker-as-group.txt": {
                 "content": { "Fn::Join": ["", [{ "Ref": "WorkerGroup" }, "\n"]] },
                 "mode": "000644",
@@ -124,7 +118,8 @@
                 "sysstat": [ ],
                 "iotop": [ ],
                 "htop": [ ],
-		"fabric": ["1.6.2-2.el6"]
+		"fabric": ["1.6.2-2.el6"],
+		"git": []
               }
             },
             "commands": {
@@ -142,6 +137,12 @@
                   "WORKER_AS_GROUP": { "Ref": "WorkerGroup" }
                 }
               },
+	      "20-checkout-repo": {
+		"command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
+	      },
+	      "22-copy-fabfile": {
+		"command": "cp /home/ec2-user/test-automation/fabfile.py /home/ec2-user/"
+	      },
               "90-signal-done": {
                 "command": {
                   "Fn::Join": [
@@ -267,7 +268,8 @@
               "yum": {
                 "sysstat": [ ],
                 "iotop": [ ],
-                "htop": [ ]
+                "htop": [ ],
+		"git": []
               }
             },
             "commands": {

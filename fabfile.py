@@ -18,6 +18,7 @@ env.roles = ['master', 'workers']
 paths = {
     'tests-repo': '/home/ec2-user/test-automation',
     'citus-repo': '/home/ec2-user/citus',
+    'pg-latest': '/home/ec2-user/pg-latest',
 }
 
 config = {
@@ -145,9 +146,7 @@ def build_postgres_96(prefix):
         run('make install')
 
     # Set the pg-latest link to the last-installed PostgreSQL
-    pg_latest_link = '/home/ec2-user/pg-latest'
-
-    run('rm -rf "{1}" && ln -s {0} {1}'.format(prefix, pg_latest_link))
+    run('rm -rf "{1}" && ln -s {0} {1}'.format(prefix, paths['pg-latest']))
 
 def build_citus(prefix):
     repo = paths['citus-repo']

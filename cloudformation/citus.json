@@ -128,7 +128,7 @@
                 "command": "pip install fabric"
 	      },
               "15-set-path": {
-                "command": "echo 'export PATH=/usr/local/bin/:$PATH' >> /home/ec2-user/.bash_profile"
+                "command": "echo 'export PATH=/home/ec2-user/pg-latest/bin/:$PATH' >> /home/ec2-user/.bash_profile"
               },
               "16-set-workers": {
                 "command": "su ec2-user -c \"/usr/bin/find-workers\"",

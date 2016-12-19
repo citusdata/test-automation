@@ -5,15 +5,17 @@ import glob
 import os.path
 
 from fabric.api import (
-    env, cd, roles, task, parallel, execute, run, sudo, abort, local, lcd
+    env, cd, roles, task, parallel, execute, run, sudo, abort, local, lcd, path, put
 )
 from fabric.decorators import runs_once
+from fabric.contrib.files import append
 
 env.roledefs = {
     'master': ['localhost'],
     'workers': [ip.strip() for ip in open('worker-instances')],
 }
 env.roles = ['master', 'workers']
+env.forward_agent = True
 
 paths = {
     'tests-repo': '/home/ec2-user/test-automation',
@@ -24,6 +26,7 @@ paths = {
 
 config = {
     'citus-git-ref': 'master',
+    'session-analytics-ref': 'master',
     'install-session-analytics': False,
 }
 
@@ -58,13 +61,16 @@ def session_analytics(*args):
     else:
         git_ref = args[0]
 
+    # confirm that the provided git-ref is legit
     path = paths['session-repo']
     local('rm -rf {} || true'.format(path))
     local('git clone -q git@github.com:citusdata/session_analytics.git {}'.format(path))
     with lcd(path):
         local('git checkout {}'.format(git_ref))
+    local('rm -rf {} || true'.format(path))
 
-    config['session-analytics'] = True
+    config['session-analytics-ref'] = git_ref
+    config['install-session-analytics'] = True
 
 @task
 @runs_once
@@ -176,6 +182,17 @@ def build_citus(prefix):
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
         run('make install')
 
+@task
+def install_session_analytics(prefix):
+    add_github_to_known_hosts() # make sure ssh doesn't prompt
+    repo = paths['session-repo']
+
+    run('rm -rf {} || true'.format(repo))
+    run('git clone -q git@github.com:citusdata/session_analytics.git {}'.format(repo))
+    with cd(repo), path('{}/bin'.format(prefix)):
+        run('git checkout {}'.format(config['session-analytics-ref']))
+        run('make install')
+
 def create_database(prefix):
     with cd(prefix):
         run('bin/initdb -D data')
@@ -194,3 +211,9 @@ def setup_database(prefix):
     with cd(prefix):
         run('bin/createdb $(whoami)')
         run('bin/psql -c "CREATE EXTENSION citus;"')
+        if config['install-session-analytics']:
+            run('bin/psql -c "CREATE EXTENSION session_analytics;"')
+
+def add_github_to_known_hosts():
+    key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
+    append('/home/ec2-user/.ssh/known_hosts', key)

@@ -36,6 +36,8 @@ config = {
     # toggle installation by using the "hll" task, always installs v2.10.0
     'hll-ref': 'v2.10.0',
     'install-hll': False,
+
+    'pg-configure-flags': [],
 }
 
 @task
@@ -112,6 +114,22 @@ def tpch():
     print('You can now connect by running "{}/bin/psql"'.format(prefix))
     print('The tpc-h scripts are at ""')
 
+@task
+@runs_once
+def valgrind():
+    'Just like basic_testing, but adds --enable-debug flag'
+    prefix = '/home/ec2-user/valgrind'
+
+    # we do this dance so valgrind is installed on every node, not just the master
+    def install_valgrind():
+        sudo('yum install -q -y valgrind')
+    execute(install_valgrind)
+
+    config['pg-configure-flags'].append('--enable-debug')
+
+    execute(common_setup, prefix)
+    execute(add_workers, prefix)
+
 @parallel
 def common_setup(prefix):
     cleanup(prefix)
@@ -181,7 +199,8 @@ def build_postgres_96(prefix):
     run('rm -r postgresql-9.6.1 || true')
     run('tar -xf postgresql-9.6.1.tar.bz2')
     with cd('postgresql-9.6.1'):
-        run('./configure --prefix={}'.format(prefix))
+        flags = ' '.join(config['pg-configure-flags'])
+        run('./configure --prefix={} {}'.format(prefix, flags))
         run('make install')
 
     # Set the pg-latest link to the last-installed PostgreSQL

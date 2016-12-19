@@ -140,9 +140,9 @@
 	      "20-checkout-repo": {
 		"command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
 	      },
-	      "22-copy-fabfile": {
-		"command": "cp /home/ec2-user/test-automation/fabfile.py /home/ec2-user/"
-	      },
+	          "22-copy-fabfile": {
+		        "command": "ln -s /home/ec2-user/test-automation/fabfile.py /home/ec2-user/fabfile.py"
+	          },
               "90-signal-done": {
                 "command": {
                   "Fn::Join": [

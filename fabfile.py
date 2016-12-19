@@ -89,7 +89,7 @@ def cleanup(prefix):
 @roles('master')
 def tpch_setup(prefix):
     # generate tpc-h data
-    tpch_path = '{}/tpch_2_13_0'.format(paths['tests-repo']
+    tpch_path = '{}/tpch_2_13_0'.format(paths['tests-repo'])
     with cd(tpch_path):
         run('make')
         run('SCALE_FACTOR=10 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh')

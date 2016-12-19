@@ -15,31 +15,39 @@ env.roledefs = {
     'workers': [ip.strip() for ip in open('worker-instances')],
 }
 env.roles = ['master', 'workers']
-env.forward_agent = True
+env.forward_agent = True # So remote machines can checkout private git repos
 
 paths = {
     'tests-repo': '/home/ec2-user/test-automation',
     'citus-repo': '/home/ec2-user/citus',
     'session-repo': '/home/ec2-user/session-analytics',
+    'hll-repo': '/home/ec2-user/hll',
     'pg-latest': '/home/ec2-user/pg-latest',
 }
 
 config = {
+    # just a default, change it with the "citus" task
     'citus-git-ref': 'master',
+
+     # change these with the "session_analytics" task
     'session-analytics-ref': 'master',
     'install-session-analytics': False,
+
+    # toggle installation by using the "hll" task, always installs v2.10.0
+    'hll-ref': 'v2.10.0',
+    'install-hll': False,
 }
 
 @task
 @runs_once
 def citus(*args):
-    'Choose a citus version. For example: fab citus:v6.0.1 basic_testing'
+    'Choose a citus version. For example: fab citus:v6.0.1 basic_testing (defaults to master)'
 
     # Do a local checkout to make sure this is a valid ref
     # (so we error as fast as possible)
 
     if len(args) != 1:
-        abort('You must provide a single argument, with a command such as "citus:feature/joins"')
+        abort('You must provide a single argument, with a command such as "citus:v6.0.1"')
     git_ref = args[0]
 
     path = paths['citus-repo']
@@ -71,6 +79,12 @@ def session_analytics(*args):
 
     config['session-analytics-ref'] = git_ref
     config['install-session-analytics'] = True
+
+@task
+@runs_once
+def hll():
+    'Marks hll for installation.'
+    config['install-hll'] = True
 
 @task
 @runs_once
@@ -193,6 +207,16 @@ def install_session_analytics(prefix):
         run('git checkout {}'.format(config['session-analytics-ref']))
         run('make install')
 
+def install_hll(prefix):
+    repo = paths['hll-repo']
+    url = 'https://github.com/aggregateknowledge/postgresql-hll.git'
+
+    run('rm -rf {} || true'.format(repo))
+    run('git clone -q {} {}'.format(url, repo))
+    with cd(repo), path('{}/bin'.format(prefix)):
+        run('git checkout {}'.format(config['hll-ref']))
+        run('make install')
+
 def create_database(prefix):
     with cd(prefix):
         run('bin/initdb -D data')
@@ -213,7 +237,10 @@ def setup_database(prefix):
         run('bin/psql -c "CREATE EXTENSION citus;"')
         if config['install-session-analytics']:
             run('bin/psql -c "CREATE EXTENSION session_analytics;"')
+        if config['install-hll']:
+            run('bin/psql -c "CREATE EXTENSION hll')
 
 def add_github_to_known_hosts():
+    'Removes prompts from github checkouts asking whether you want to trust the remote'
     key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
     append('/home/ec2-user/.ssh/known_hosts', key)

@@ -18,11 +18,13 @@ env.roles = ['master', 'workers']
 paths = {
     'tests-repo': '/home/ec2-user/test-automation',
     'citus-repo': '/home/ec2-user/citus',
+    'session-repo': '/home/ec2-user/session-analytics',
     'pg-latest': '/home/ec2-user/pg-latest',
 }
 
 config = {
     'citus-git-ref': 'master',
+    'install-session-analytics': False,
 }
 
 @task
@@ -45,6 +47,24 @@ def citus(*args):
     local('rm -rf {} || true'.format(path))
 
     config['citus-git-ref'] = git_ref
+
+@task
+@runs_once
+def session_analytics(*args):
+    'Install session analytics. Example: fab session_analytics:v1.0.0-rc.1 basic_testing [defaults to master]'
+
+    if len(args) == 0:
+        git_ref = 'master'
+    else:
+        git_ref = args[0]
+
+    path = paths['session-repo']
+    local('rm -rf {} || true'.format(path))
+    local('git clone -q git@github.com:citusdata/session_analytics.git {}'.format(path))
+    with lcd(path):
+        local('git checkout {}'.format(git_ref))
+
+    config['session-analytics'] = True
 
 @task
 @runs_once
@@ -86,7 +106,6 @@ def cleanup(prefix):
     run('pkill postgres || true')
     run('rm -r {} || true'.format(prefix))
 
-@task
 @roles('master')
 def tpch_setup(prefix):
     # generate tpc-h data

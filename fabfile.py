@@ -144,6 +144,11 @@ def build_postgres_96(prefix):
         run('./configure --prefix={}'.format(prefix))
         run('make install')
 
+    # Set the pg-latest link to the last-installed PostgreSQL
+    pg_latest_link = '/home/ec2-user/pg-latest'
+
+    run('rm -rf "{1}" && ln -s {0} {1}'.format(prefix, pg_latest_link))
+
 def build_citus(prefix):
     repo = paths['citus-repo']
     run('rm -rf {} || true'.format(repo)) # -f because git write-protects files

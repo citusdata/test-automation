@@ -84,6 +84,18 @@ def session_analytics(*args):
 
 @task
 @runs_once
+def asserts(*args):
+    'Enable asserts in pg (and therefore citus)'
+    config['pg-configure-flags'].append('--enable-cassert')
+
+@task
+@runs_once
+def debug_mode(*args):
+    '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
+    config['pg-configure-flags'].append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+
+@task
+@runs_once
 def hll():
     'Marks hll for installation.'
     config['install-hll'] = True
@@ -117,7 +129,7 @@ def tpch():
 @task
 @runs_once
 def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag'
+    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
     prefix = '/home/ec2-user/valgrind'
 
     # we do this dance so valgrind is installed on every node, not just the master

@@ -4,6 +4,7 @@ paths = {
     'enterprise-repo': '/home/ec2-user/citus-enterprise',
     'session-repo': '/home/ec2-user/session-analytics',
     'hll-repo': '/home/ec2-user/hll',
+    'cstore-repo': '/home/ec2-user/cstore',
     'pg-latest': '/home/ec2-user/pg-latest',
     'pg-source-balls': '/home/ec2-user/postgres-source',
 }

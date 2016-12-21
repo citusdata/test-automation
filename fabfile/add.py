@@ -1,13 +1,13 @@
-from fabric.api import task, cd, path, run, runs_once, roles
+from fabric.api import task, cd, path, run, runs_once, roles, sudo
 
-from utils import add_github_to_known_hosts
+import utils
 import config
 
 @task
 def session_analytics(*args):
     'Adds the session_analytics extension to the instance in pg-latest'
     # TODO: Requires hstore, do we install it automatically?
-    add_github_to_known_hosts() # make sure ssh doesn't prompt
+    utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.paths['session-repo']
     prefix = config.paths['pg-latest']
 
@@ -40,6 +40,23 @@ def hll():
 
     with cd(config.paths['pg-latest']):
         run('bin/psql -c "CREATE EXTENSION hll"')
+
+@task
+def cstore():
+    'Adds the cstore extension to the instance in pg-latest'
+    sudo('yum install -q -y protobuf-c-devel')
+
+    repo = config.paths['cstore-repo']
+    url = 'https://github.com/citusdata/cstore_fdw.git'
+
+    utils.rmdir(repo, force=True)
+    run('git clone -q {} {}'.format(url, repo))
+    with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
+        #run('git checkout master')
+        run('make install')
+
+    with cd(config.paths['pg-latest']):
+        run('bin/psql -c "CREATE EXTENSION cstore_fdw"')
 
 @task
 @roles('master')

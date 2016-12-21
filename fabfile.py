@@ -1,14 +1,12 @@
-import tempfile
-import os
-import StringIO
-import glob
 import os.path
+import re
 
 from fabric.api import (
-    env, cd, roles, task, parallel, execute, run, sudo, abort, local, lcd, path, put
+    env, cd, roles, task, parallel, execute, run,
+    sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
-from fabric.contrib.files import append
+from fabric.contrib.files import append, exists
 
 env.roledefs = {
     'master': ['localhost'],
@@ -23,6 +21,7 @@ paths = {
     'session-repo': '/home/ec2-user/session-analytics',
     'hll-repo': '/home/ec2-user/hll',
     'pg-latest': '/home/ec2-user/pg-latest',
+    'pg-source-balls': '/home/ec2-user/postgres-source',
 }
 
 config = {
@@ -37,8 +36,11 @@ config = {
     'hll-ref': 'v2.10.0',
     'install-hll': False,
 
+    'pg-version': '9.6.1',
     'pg-configure-flags': [],
 }
+
+postgres_version_regex = '\d+\.\d+\.\d+$' # For example: 9.3.15
 
 @task
 @runs_once
@@ -60,6 +62,36 @@ def citus(*args):
     local('rm -rf {} || true'.format(path))
 
     config['citus-git-ref'] = git_ref
+
+@task
+@runs_once
+def postgres(*args):
+    'Choose a postgres version. For example: fab postgres:9.6.1 basic_testing'
+
+    if len(args) != 1:
+        abort('You must provide a single argument. For example: "postgres:9.6.1"')
+    version = args[0]
+    if not re.match(postgres_version_regex, version):
+        abort('"{}" is not a valid postgres version. Enter something like "9.6.1"'.format(version))
+
+    config['pg-version'] = version
+    download_pg() # Check that this doesn't 404
+
+def download_pg():
+    "Idempotent, does not download if file already exists. Returns the file's location"
+    version = config['pg-version']
+    url = pg_url_for_version(version)
+
+    target_dir = paths['pg-source-balls']
+    run('mkdir -p {}'.format(target_dir))
+
+    target_file = '{}/{}'.format(target_dir, os.path.basename(url))
+
+    if exists(target_file):
+        return target_file
+
+    run('wget -O {} --no-verbose {}'.format(target_file, url))
+    return target_file
 
 @task
 @runs_once
@@ -146,7 +178,7 @@ def valgrind():
 def common_setup(prefix):
     cleanup(prefix)
     redhat_install_packages()
-    build_postgres_96(prefix)
+    build_postgres(prefix)
     build_citus(prefix)
     create_database(prefix)
     start_database(prefix)
@@ -188,32 +220,24 @@ def redhat_install_packages():
     sudo('yum install -q -y libxml2-devel libxslt-devel'
          ' openssl-devel pam-devel readline-devel git')
 
-def postgres_95():
-    'Installs postges 9.5 from source'
+def build_postgres(prefix):
+    'Installs postges'
 
-    # Fetched from: https://ftp.postgresql.org/pub/source/v9.5.5/postgresql-9.5.5.tar.bz2
-    postgres_url = 'https://s3.eu-central-1.amazonaws.com/citus-tests/postgresql-9.5.5.tar.bz2'
-    operations.get(postgres_url)
+    # Give the postgres source to the remote node
+    sourceball_loc = download_pg()
+    if env.host_string != 'localhost':
+        put(local_path=sourceball_loc, remote_path=sourceball_loc)
 
-def build_postgres_96(prefix):
-    'Installs postges 9.6 from source'
-    # TODO: This might be more efficient if we download it locally and operations.put()
-    # the file to the remote nodes
+    with cd(paths['pg-source-balls']):
+        final_dir = os.path.basename(sourceball_loc).split('.tar.bz2')[0]
+        # rm makes this idempotent, if not a bit inefficient
+        run('rm -r {} || true'.format(final_dir))
+        run('tar -xf {}.tar.bz2'.format(final_dir))
 
-    # Fetched from https://ftp.postgresql.org/pub/source/v9.6.1/postgresql-9.6.1.tar.bz2
-    postgres_url = 'https://s3.eu-central-1.amazonaws.com/citus-tests/postgresql-9.6.1.tar.bz2'
-
-    # -N means we'll check timestamps before overwriting the file, more importantly it
-    # means we won't save this file as postgresql-9.5.5.tar.bz2.1 if it already exists
-    run('wget -N --no-verbose {}'.format(postgres_url))
-
-    # rm makes this idempotent, if not a bit inefficient
-    run('rm -r postgresql-9.6.1 || true')
-    run('tar -xf postgresql-9.6.1.tar.bz2')
-    with cd('postgresql-9.6.1'):
-        flags = ' '.join(config['pg-configure-flags'])
-        run('./configure --prefix={} {}'.format(prefix, flags))
-        run('make install')
+        with cd(final_dir):
+            flags = ' '.join(config['pg-configure-flags'])
+            run('./configure --prefix={} {}'.format(prefix, flags))
+            run('make install')
 
     # Set the pg-latest link to the last-installed PostgreSQL
     run('rm -rf "{1}" && ln -s {0} {1}'.format(prefix, paths['pg-latest']))
@@ -275,3 +299,7 @@ def add_github_to_known_hosts():
     'Removes prompts from github checkouts asking whether you want to trust the remote'
     key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
     append('/home/ec2-user/.ssh/known_hosts', key)
+
+def pg_url_for_version(version):
+    assert re.match(postgres_version_regex, version) is not None
+    return 'https://ftp.postgresql.org/pub/source/v{0}/postgresql-{0}.tar.bz2'.format(version)

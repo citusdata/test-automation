@@ -10,6 +10,7 @@ from fabric.contrib.files import append, exists
 import utils
 import config
 import pg
+import add
 
 __all__ = ["basic_testing", "tpch", "valgrind"]
 
@@ -25,7 +26,6 @@ def basic_testing():
 
     execute(common_setup, prefix)
     execute(add_workers, prefix)
-    print('You can now connect by running "{}/bin/psql"'.format(prefix))
 
 @task
 @runs_once
@@ -35,9 +35,8 @@ def tpch():
 
     execute(common_setup, prefix)
     execute(add_workers, prefix)
-    execute(tpch_setup, prefix)
-    print('You can now connect by running "{}/bin/psql"'.format(prefix))
-    print('The tpc-h scripts are at ""')
+    execute(add.tpch)
+    print('You can now connect by running psql')
 
 @task
 @runs_once
@@ -57,36 +56,17 @@ def valgrind():
 
 @parallel
 def common_setup(prefix):
-    cleanup(prefix)
+    run('pkill postgres || true')
+    run('rm -r {} || true'.format(prefix))
+
     redhat_install_packages()
     build_postgres(prefix)
     build_citus(prefix)
     create_database(prefix)
     pg.start()
-    setup_database(prefix)
-
-def cleanup(prefix):
-    run('pkill postgres || true')
-    run('rm -r {} || true'.format(prefix))
-
-@roles('master')
-def tpch_setup(prefix):
-    # generate tpc-h data
-    tpch_path = '{}/tpch_2_13_0'.format(config.paths['tests-repo'])
-    with cd(tpch_path):
-        run('make')
-        run('SCALE_FACTOR=10 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh')
-
-        # create the tpc-h tables
-        run('{}/bin/psql -f tpch_create_tables.ddl'.format(prefix))
-
-        # stage tpc-h data
-        sed = r'''sed "s/\(.*\)\.tbl.*/\\\\COPY \1 FROM '\0' WITH DELIMITER '|'/"'''
-        xargs = r'''xargs -d '\n' -L 1 -P 4 sh -c '{}/bin/psql -h localhost -c "$0"' '''.format(prefix)
-
-        for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
-            table_name = os.path.basename(segment).split('.')[0]
-            run('''{}/bin/psql -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(prefix, table_name, segment))
+    with cd(prefix):
+        run('bin/createdb $(whoami)')
+        run('bin/psql -c "CREATE EXTENSION citus;"')
 
 @roles('master')
 def add_workers(prefix):
@@ -150,13 +130,3 @@ def create_database(prefix):
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
-
-def start_database(prefix):
-    with cd(prefix):
-        # "set -m" makes sure postgres is spawned in a new process group and keeps running
-        run('set -m; bin/pg_ctl -D data -l logfile start')
-
-def setup_database(prefix):
-    with cd(prefix):
-        run('bin/createdb $(whoami)')
-        run('bin/psql -c "CREATE EXTENSION citus;"')

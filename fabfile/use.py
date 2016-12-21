@@ -3,15 +3,17 @@ This namespace doesn't perform any installation, it's only used to change config
 which later tasks read. The "citus" task, for instance, specifies which git ref to use
 when building Citus.
 '''
+import re
 
 from fabric.api import task, runs_once, abort, local, lcd
 
 import config
+import utils
 
 @task
 @runs_once
 def citus(*args):
-    'Choose a citus version. For example: fab citus:v6.0.1 basic_testing (defaults to master)'
+    'Choose a citus version. For example: fab use.citus:v6.0.1 setup.basic_testing (defaults to master)'
 
     # Do a local checkout to make sure this is a valid ref
     # (so we error as fast as possible)
@@ -32,16 +34,16 @@ def citus(*args):
 @task
 @runs_once
 def postgres(*args):
-    'Choose a postgres version. For example: fab postgres:9.6.1 basic_testing'
+    'Choose a postgres version. For example: fab use.postgres:9.6.1 setup.basic_testing'
 
     if len(args) != 1:
         abort('You must provide a single argument. For example: "postgres:9.6.1"')
     version = args[0]
-    if not re.match(postgres_version_regex, version):
+    if not re.match(utils.postgres_version_regex, version):
         abort('"{}" is not a valid postgres version. Enter something like "9.6.1"'.format(version))
 
     config.settings['pg-version'] = version
-    download_pg() # Check that this doesn't 404
+    utils.download_pg() # Check that this doesn't 404
 
 @task
 @runs_once
@@ -54,4 +56,3 @@ def asserts(*args):
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
     config.settings['pg-configure-flags'].append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
-

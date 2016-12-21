@@ -18,6 +18,7 @@ env.forward_agent = True # So remote machines can checkout private git repos
 paths = {
     'tests-repo': '/home/ec2-user/test-automation',
     'citus-repo': '/home/ec2-user/citus',
+    'enterprise-repo': '/home/ec2-user/citus-enterprise',
     'session-repo': '/home/ec2-user/session-analytics',
     'hll-repo': '/home/ec2-user/hll',
     'pg-latest': '/home/ec2-user/pg-latest',
@@ -76,22 +77,6 @@ def postgres(*args):
 
     config['pg-version'] = version
     download_pg() # Check that this doesn't 404
-
-def download_pg():
-    "Idempotent, does not download if file already exists. Returns the file's location"
-    version = config['pg-version']
-    url = pg_url_for_version(version)
-
-    target_dir = paths['pg-source-balls']
-    run('mkdir -p {}'.format(target_dir))
-
-    target_file = '{}/{}'.format(target_dir, os.path.basename(url))
-
-    if exists(target_file):
-        return target_file
-
-    run('wget -O {} --no-verbose {}'.format(target_file, url))
-    return target_file
 
 @task
 @runs_once
@@ -251,12 +236,22 @@ def build_citus(prefix):
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
         run('make install')
 
+def build_enterprise(prefix):
+    add_github_to_known_hosts() # make sure ssh doesn't prompt
+    repo = paths['enterprise-repo']
+    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
+    run('git clone -q git@github.com:citusdata/citus-enterprise.git'.format(repo))
+    with cd(repo):
+        run('git checkout {}'.format(config['citus-git-ref']))
+        run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
+        run('make install')
+
 @task
 def install_session_analytics(prefix):
     add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = paths['session-repo']
 
-    run('rm -rf {} || true'.format(repo))
+    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
     run('git clone -q git@github.com:citusdata/session_analytics.git {}'.format(repo))
     with cd(repo), path('{}/bin'.format(prefix)):
         run('git checkout {}'.format(config['session-analytics-ref']))
@@ -299,6 +294,22 @@ def add_github_to_known_hosts():
     'Removes prompts from github checkouts asking whether you want to trust the remote'
     key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
     append('/home/ec2-user/.ssh/known_hosts', key)
+
+def download_pg():
+    "Idempotent, does not download if file already exists. Returns the file's location"
+    version = config['pg-version']
+    url = pg_url_for_version(version)
+
+    target_dir = paths['pg-source-balls']
+    run('mkdir -p {}'.format(target_dir))
+
+    target_file = '{}/{}'.format(target_dir, os.path.basename(url))
+
+    if exists(target_file):
+        return target_file
+
+    run('wget -O {} --no-verbose {}'.format(target_file, url))
+    return target_file
 
 def pg_url_for_version(version):
     assert re.match(postgres_version_regex, version) is not None

@@ -1,3 +1,9 @@
+'''
+Tasks which are aimed at facilitating specific components of our release testing.
+
+Ideally you can run `fab setup.tpch`, for example, and immdiately start running tpc-h
+queries.
+'''
 import os.path
 
 from fabric.api import (
@@ -12,7 +18,7 @@ import config
 import pg
 import add
 
-__all__ = ["basic_testing", "tpch", "valgrind"]
+__all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
 @task
 @runs_once
@@ -24,7 +30,7 @@ def basic_testing():
     # attempt to call master_add_node (common_setup should be run on all nodes before
     # add_workers runs on master)
 
-    execute(common_setup, prefix)
+    execute(common_setup, prefix, build_citus)
     execute(add_workers, prefix)
 
 @task
@@ -33,7 +39,7 @@ def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
     prefix = '/home/ec2-user/tpch'
 
-    execute(common_setup, prefix)
+    execute(common_setup, prefix, build_citus)
     execute(add_workers, prefix)
     execute(add.tpch)
     print('You can now connect by running psql')
@@ -51,17 +57,29 @@ def valgrind():
 
     config.settings['pg-configure-flags'].append('--enable-debug')
 
-    execute(common_setup, prefix)
+    execute(common_setup, prefix, build_citus)
+    execute(add_workers, prefix)
+
+@task
+@runs_once
+def enterprise():
+    'Installs the enterprise version of Citus'
+    prefix = '/home/ec2-user/enterprise'
+
+    # TODO: Add the ability to choose a branch
+    config.settings['citus-git-ref'] = 'enterprise-master'
+
+    execute(common_setup, prefix, build_enterprise)
     execute(add_workers, prefix)
 
 @parallel
-def common_setup(prefix):
+def common_setup(prefix, build_citus_func):
     run('pkill postgres || true')
-    run('rm -r {} || true'.format(prefix))
+    utils.rmdir(prefix)
 
     redhat_install_packages()
     build_postgres(prefix)
-    build_citus(prefix)
+    build_citus_func(prefix)
     create_database(prefix)
     pg.start()
     with cd(prefix):
@@ -92,7 +110,7 @@ def build_postgres(prefix):
     with cd(config.paths['pg-source-balls']):
         final_dir = os.path.basename(sourceball_loc).split('.tar.bz2')[0]
         # rm makes this idempotent, if not a bit inefficient
-        run('rm -r {} || true'.format(final_dir))
+        utils.rmdir(final_dir)
         run('tar -xf {}.tar.bz2'.format(final_dir))
 
         with cd(final_dir):
@@ -105,18 +123,18 @@ def build_postgres(prefix):
 
 def build_citus(prefix):
     repo = config.paths['citus-repo']
-    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
-    run('git clone -q https://github.com/citusdata/citus.git'.format(repo))
+    utils.rmdir(repo, force=True) # force because git write-protects files
+    run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
         run('git checkout {}'.format(config.settings['citus-git-ref']))
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
         run('make install')
 
 def build_enterprise(prefix):
-    add_github_to_known_hosts() # make sure ssh doesn't prompt
+    utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.paths['enterprise-repo']
-    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
-    run('git clone -q git@github.com:citusdata/citus-enterprise.git'.format(repo))
+    utils.rmdir(repo, force=True)
+    run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         run('git checkout {}'.format(config.settings['citus-git-ref']))
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))

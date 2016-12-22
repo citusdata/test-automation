@@ -118,15 +118,15 @@
                 "sysstat": [ ],
                 "iotop": [ ],
                 "htop": [ ],
-		"fabric": ["1.6.2-2.el6"],
-		"git": []
+                "fabric": ["1.6.2-2.el6"],
+                "git": []
               }
             },
             "commands": {
               "02-configure-sysctl": { "command": "sysctl -w net.ipv4.tcp_tw_reuse=1" },
-	      "10-install-fabric": {
+              "10-install-fabric": {
                 "command": "pip install fabric"
-	      },
+              },
               "15-set-path": {
                 "command": "echo 'export PATH=/home/ec2-user/pg-latest/bin/:$PATH' >> /home/ec2-user/.bash_profile"
               },
@@ -137,12 +137,12 @@
                   "WORKER_AS_GROUP": { "Ref": "WorkerGroup" }
                 }
               },
-	      "20-checkout-repo": {
-		"command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
-	      },
-	          "22-copy-fabfile": {
-		        "command": "ln -s /home/ec2-user/test-automation/fabfile.py /home/ec2-user/fabfile.py"
-	          },
+              "20-checkout-repo": {
+                "command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
+              },
+              "22-copy-fabfile": {
+                "command": "ln -s /home/ec2-user/test-automation/fabfile /home/ec2-user/fabfile"
+              },
               "90-signal-done": {
                 "command": {
                   "Fn::Join": [

@@ -242,12 +242,6 @@
           "configSets": { "default": ["FileAndRepoSetup", "PackagesAndCommands"] },
           "FileAndRepoSetup": {
             "files": {
-              "/usr/bin/find-workers": {
-                "source": { "Fn::FindInMap": ["Constants", "Scripts", "FindWorkers"] },
-                "mode": "000755",
-                "owner": "root",
-                "group": "root"
-              },
               "/etc/security/limits.d/fdlimits.conf": {
                 "content": { "Fn::Join": ["", ["ec2-user soft nofile 8192\n", "ec2-user hard nofile 65535\n"]] },
                 "mode": "000644",
@@ -259,8 +253,7 @@
               "01-rpm-makecache": {
                 "command": "/usr/bin/yum -q makecache -y"
               },
-              "02-enable-epel": { "command": "/usr/bin/yum-config-manager --enable epel" },
-              "03-elevate-pgdg": { "command": "/usr/bin/yum-config-manager --setopt='pgdg96.priority=5' --enable pgdg96" }
+              "02-enable-epel": { "command": "/usr/bin/yum-config-manager --enable epel" }
             }
           },
           "PackagesAndCommands": {
@@ -322,10 +315,6 @@
                 "exit 1\n",
                 "}\n",
                 "trap 'handle_error $? ${LINENO}' ERR\n",
-                "mkfs -t ext4 /dev/sdp > /dev/null\n",
-                "mkdir /stage\n",
-                "mount /dev/sdp /stage\n",
-                "chown ec2-user:ec2-user /stage\n",
                 "/opt/aws/bin/cfn-init -s ",
                 { "Ref": "AWS::StackName" },
                 " -r WorkerLaunchConfig ",

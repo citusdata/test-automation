@@ -12,3 +12,4 @@ import pg  # tasks which control postgres
 import add  # tasks which add things to existing clusters
 import setup  # tasks which create clusters with preset settings
 import use  # tasks which change some configuration future tasks read
+import run

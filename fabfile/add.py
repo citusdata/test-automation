@@ -60,15 +60,17 @@ def cstore():
 
 @task
 @roles('master')
-def tpch():
+def tpch(**kwargs):
     'Generates and loads tpc-h data into the instance at pg-latest'
     prefix = config.paths['pg-latest']
+
+    scale = kwargs.get('scale-factor', 10)
 
     # generate tpc-h data
     tpch_path = '{}/tpch_2_13_0'.format(config.paths['tests-repo'])
     with cd(tpch_path):
         run('make')
-        run('SCALE_FACTOR=10 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh')
+        run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
         # create the tpc-h tables
         run('{}/bin/psql -f tpch_create_tables.ddl'.format(prefix))

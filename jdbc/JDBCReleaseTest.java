@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class JDBCReleaseTest {
 	
-	static String url = "jdbc:postgresql://localhost:5432/postgres";
+	static String url = "jdbc:postgresql://localhost:5432/ec2-user";
 	
 	
 	public static void main(String[] args) throws SQLException {
@@ -108,7 +108,7 @@ public class JDBCReleaseTest {
 	static void executePreparedQuery(String query, String large_table_shard_count, String task_executor_type) throws SQLException
 	{
 
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 
 		
 
@@ -134,7 +134,7 @@ public class JDBCReleaseTest {
 	static void executePreparedQueryWithParam(String query, String large_table_shard_count, String task_executor_type, int param) throws SQLException
 	{
 
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 
 		
 
@@ -162,7 +162,7 @@ public class JDBCReleaseTest {
 	static void executePreparedQueryWithTwoParam(String query, String large_table_shard_count, String task_executor_type, String param1, String param2) throws SQLException
 	{
 
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 
 		
 
@@ -197,7 +197,7 @@ public class JDBCReleaseTest {
 	static void executeUpdateQuery(String query) throws SQLException
 	{
 
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate(query);
@@ -209,7 +209,7 @@ public class JDBCReleaseTest {
 	
 	static void simplePreparedTest1() throws SQLException
 	{
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
 		
@@ -237,7 +237,7 @@ public class JDBCReleaseTest {
 	
 	static void simplePreparedTest2() throws SQLException
 	{
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
 		
@@ -265,7 +265,7 @@ public class JDBCReleaseTest {
 	
 	static void simplePreparedTest3() throws SQLException
 	{
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
 		
@@ -294,7 +294,7 @@ public class JDBCReleaseTest {
 	
 	static void simplePreparedTest4() throws SQLException
 	{
-		Connection db = DriverManager.getConnection(url, "ubuntu", "");
+		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 3;");		
 		

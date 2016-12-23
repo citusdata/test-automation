@@ -85,3 +85,8 @@ def tpch(**kwargs):
             table_name = os.path.basename(segment).split('.')[0]
             run('''{}/bin/psql -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(prefix, table_name, segment))
 
+@task
+@runs_once
+def jdbc():
+    'Adds everything required to test out the jdbc connecter'
+    sudo('yum install -q -y java-1.6.0-openjdk-devel') # we only need java on the master

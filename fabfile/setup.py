@@ -72,12 +72,6 @@ def enterprise():
     execute(common_setup, prefix, build_enterprise)
     execute(add_workers, prefix)
 
-@task
-@runs_once
-def jdbc():
-    'Adds everything required to test out the jdbc connecter'
-    sudo('yum install -q -y java-1.6.0-openjdk') # we only need java on the master
-
 @parallel
 def common_setup(prefix, build_citus_func):
     run('pkill postgres || true')

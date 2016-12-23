@@ -171,5 +171,5 @@ if [ -n "${private_key_file}" ]; then
     echo Running fab basic_testing on ${master_hostname}
     eval `ssh-agent -s`
     ssh-add ${private_key_file}
-    ssh -A ec2-user@${master_hostname} fab --hide stdout basic_testing
+    ssh -A ec2-user@${master_hostname} fab --hide stdout
 fi

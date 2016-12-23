@@ -17,11 +17,11 @@ public class JDBCReleaseTest {
 		{
 			test_no_1();
 			test_no_2();
-			test_no_3();
-			test_no_4();
+			//test_no_3();
+			//test_no_4();
 			test_no_6();
 			
-			test_no_7();
+			//test_no_7();
 		}
 	
 	}

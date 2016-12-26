@@ -16,6 +16,7 @@ env.roledefs = {
 env.roles = ['master', 'workers']
 
 paths = {
+    'tests-repo': '/home/ec2-user/test-automation',
     'citus-repo': '/home/ec2-user/citus',
 }
 
@@ -87,27 +88,20 @@ def cleanup(prefix):
 @task
 @roles('master')
 def tpch_setup(prefix):
-    # download extra files
-    run('wget --no-verbose https://s3.eu-central-1.amazonaws.com/citus-tests/tpch_2_13_0.tar.gz')
-
     # generate tpc-h data
-    run('tar -xf tpch_2_13_0.tar.gz')
-    with cd('tpch_2_13_0.citus5'):
+    tpch_path = '{}/tpch_2_13_0'.format(paths['tests-repo']
+    with cd(tpch_path):
         run('make')
-
-        run('wget --no-verbose https://s3.eu-central-1.amazonaws.com/citus-tests/generate2.sh')
         run('SCALE_FACTOR=10 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh')
 
-    # create the tpc-h tables
-    run('wget --no-verbose https://s3.eu-central-1.amazonaws.com/citus-tests/tpch_create_tables.ddl')
-    run('{}/bin/psql -f tpch_create_tables.ddl'.format(prefix))
+        # create the tpc-h tables
+        run('{}/bin/psql -f tpch_create_tables.ddl'.format(prefix))
 
-    # stage tpc-h data
-    sed = r'''sed "s/\(.*\)\.tbl.*/\\\\COPY \1 FROM '\0' WITH DELIMITER '|'/"'''
-    xargs = r'''xargs -d '\n' -L 1 -P 4 sh -c '{}/bin/psql -h localhost -c "$0"' '''.format(prefix)
+        # stage tpc-h data
+        sed = r'''sed "s/\(.*\)\.tbl.*/\\\\COPY \1 FROM '\0' WITH DELIMITER '|'/"'''
+        xargs = r'''xargs -d '\n' -L 1 -P 4 sh -c '{}/bin/psql -h localhost -c "$0"' '''.format(prefix)
 
-    with cd('tpch_2_13_0.citus5'):
-        for segment in run('find /home/ec2-user/tpch_2_13_0.citus5 -name \'*.tbl*\'').splitlines():
+        for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
             table_name = os.path.basename(segment).split('.')[0]
             run('''{}/bin/psql -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(prefix, table_name, segment))
 

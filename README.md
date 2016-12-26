@@ -59,6 +59,17 @@ Finally, there are `add` tasks, such as `add.tpch`. These assume that a cluster 
 installe and running (and therefore must come after the `setup` tasks, and install
 additional components, such as the tpch data.
 
+# `add` tasks
+
+It is possible to add extra extensions and features to a Citus cluster:
+
+- `fab add.tpch:scale_factor=1` will generate and stage tpch tables (the default scale factor is 10)
+- `fab add.session_analytics` will build and install the session_analytics package (it uses your ssh agent forwarding when connecting to github, so you must have the key you use for github added to your local agent)
+
+There's no need to run these as a separate command.
+
+- `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
+
 # Advanced fab usage
 
 By default your fab commands configure the entire cluster, however they can be targeted

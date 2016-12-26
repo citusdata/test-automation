@@ -11,12 +11,12 @@ from fabric.api import (
     sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
-from fabric.contrib.files import append, exists
 
 import utils
 import config
 import pg
 import add
+import prefix
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
@@ -24,23 +24,25 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 @runs_once
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    prefix = '/home/ec2-user/pg-961'
+    prefix.ensure_pg_latest_exists('/home/ec2-user/citus-installation')
+    pg_latest = config.paths['pg-latest']
 
     # use sequential executes to make sure all nodes are setup before we
     # attempt to call master_add_node (common_setup should be run on all nodes before
     # add_workers runs on master)
 
-    execute(common_setup, prefix, build_citus)
-    execute(add_workers, prefix)
+    execute(common_setup, pg_latest, build_citus)
+    execute(add_workers, pg_latest)
 
 @task
 @runs_once
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    prefix = '/home/ec2-user/tpch'
+    prefix.ensure_pg_latest_exists('/home/ec2-user/citus-installation')
+    pg_latest = config.paths['pg-latest']
 
-    execute(common_setup, prefix, build_citus)
-    execute(add_workers, prefix)
+    execute(common_setup, pg_latest, build_citus)
+    execute(add_workers, pg_latest)
     execute(add.tpch)
     print('You can now connect by running psql')
 
@@ -48,7 +50,8 @@ def tpch():
 @runs_once
 def valgrind():
     'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
-    prefix = '/home/ec2-user/valgrind'
+    prefix.ensure_pg_latest_exists('/home/ec2-user/citus-installation')
+    pg_latest = config.paths['pg-latest']
 
     # we do this dance so valgrind is installed on every node, not just the master
     def install_valgrind():
@@ -57,38 +60,39 @@ def valgrind():
 
     config.settings['pg-configure-flags'].append('--enable-debug')
 
-    execute(common_setup, prefix, build_citus)
-    execute(add_workers, prefix)
+    execute(common_setup, pg_latest, build_citus)
+    execute(add_workers, pg_latest)
 
 @task
 @runs_once
 def enterprise():
     'Installs the enterprise version of Citus'
-    prefix = '/home/ec2-user/enterprise'
+    prefix.ensure_pg_latest_exists('/home/ec2-user/citus-installation')
+    pg_latest = config.paths['pg-latest']
 
     # TODO: Add the ability to choose a branch
     config.settings['citus-git-ref'] = 'enterprise-master'
 
-    execute(common_setup, prefix, build_enterprise)
-    execute(add_workers, prefix)
+    execute(common_setup, pg_latest, build_enterprise)
+    execute(add_workers, pg_latest)
 
 @parallel
-def common_setup(prefix, build_citus_func):
+def common_setup(pg_latest, build_citus_func):
     run('pkill postgres || true')
-    utils.rmdir(prefix)
+    utils.rmdir(pg_latest)
 
     redhat_install_packages()
-    build_postgres(prefix)
-    build_citus_func(prefix)
-    create_database(prefix)
+    build_postgres(pg_latest)
+    build_citus_func(pg_latest)
+    create_database(pg_latest)
     pg.start()
-    with cd(prefix):
+    with cd(pg_latest):
         run('bin/createdb $(whoami)')
         run('bin/psql -c "CREATE EXTENSION citus;"')
 
 @roles('master')
-def add_workers(prefix):
-    with cd(prefix):
+def add_workers(pg_latest):
+    with cd(pg_latest):
         for ip in env.roledefs['workers']:
            command = 'SELECT master_add_node(\'{}\', 5432);'.format(ip)
            run('bin/psql -c "{}"'.format(command))
@@ -99,7 +103,7 @@ def redhat_install_packages():
     sudo('yum install -q -y libxml2-devel libxslt-devel'
          ' openssl-devel pam-devel readline-devel git')
 
-def build_postgres(prefix):
+def build_postgres(pg_latest):
     'Installs postges'
 
     # Give the postgres source to the remote node
@@ -115,35 +119,32 @@ def build_postgres(prefix):
 
         with cd(final_dir):
             flags = ' '.join(config.settings['pg-configure-flags'])
-            run('./configure --prefix={} {}'.format(prefix, flags))
+            run('./configure --prefix={} {}'.format(pg_latest, flags))
             run('make install')
 
-    # Set the pg-latest link to the last-installed PostgreSQL
-    run('rm -rf "{1}" && ln -s {0} {1}'.format(prefix, config.paths['pg-latest']))
-
-def build_citus(prefix):
+def build_citus(pg_latest):
     repo = config.paths['citus-repo']
     utils.rmdir(repo, force=True) # force because git write-protects files
     run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
         run('git checkout {}'.format(config.settings['citus-git-ref']))
-        run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
+        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
         run('make install')
 
-def build_enterprise(prefix):
+def build_enterprise(pg_latest):
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.paths['enterprise-repo']
     utils.rmdir(repo, force=True)
     run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         run('git checkout {}'.format(config.settings['citus-git-ref']))
-        run('PG_CONFIG={}/bin/pg_config ./configure'.format(prefix))
+        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
         run('make install')
 
-def create_database(prefix):
-    with cd(prefix):
+def create_database(pg_latest):
+    with cd(pg_latest):
         run('bin/initdb -D data')
-    with cd('{}/data'.format(prefix)):
+    with cd('{}/data'.format(pg_latest)):
         run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')

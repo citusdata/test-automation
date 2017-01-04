@@ -6,7 +6,7 @@ required for testing citus.
 
 # Starting a cluster
 
-You'll need to have installed the (https://aws.amazon.com/cli/)[AWS CLI]. Once that's
+You'll need to have installed the [AWS CLI](https://aws.amazon.com/cli/). Once that's
 installed you can run something like:
 
 `cloudformation/create-stack.sh -k [your keypair name] -s MyStack -a eu-central-1a`

@@ -21,7 +21,9 @@ def set_prefix(prefix):
 
     latest = config.paths['pg-latest']
 
-    run('ln -sf {} {}'.format(prefix, latest)) # -f to overwrite any existing links
+    # -f to overwrite any existing links
+    # -n to not follow the {latest} link, if it exists, and instead replace it
+    run('ln -snf {} {}'.format(prefix, latest))
     run('mkdir -p {}'.format(prefix))
 
 def ensure_pg_latest_exists(prefix):

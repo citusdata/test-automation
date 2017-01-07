@@ -127,7 +127,8 @@ def build_citus():
     utils.rmdir(repo, force=True) # force because git write-protects files
     run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
-        run('git checkout {}'.format(config.settings['citus-git-ref']))
+        git_ref = config.settings.get('citus-git-ref', 'master')
+        run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
@@ -141,7 +142,8 @@ def build_enterprise():
     utils.rmdir(repo, force=True)
     run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
-        run('git checkout {}'.format(config.settings['citus-git-ref']))
+        git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
+        run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))

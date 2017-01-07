@@ -10,7 +10,6 @@ paths = {
 }
 
 settings = {
-    'citus-git-ref': 'master',
     'hll-ref': 'v2.10.0',
     'pg-version': '9.6.1',
     'pg-configure-flags': [],

@@ -19,12 +19,33 @@ def citus(*args):
     # (so we error as fast as possible)
 
     if len(args) != 1:
-        abort('You must provide a single argument, with a command such as "citus:v6.0.1"')
+        abort('You must provide a single argument, with a command such as "use.citus:v6.0.1"')
     git_ref = args[0]
 
     path = config.paths['citus-repo']
     local('rm -rf {} || true'.format(path))
     local('git clone -q https://github.com/citusdata/citus.git {}'.format(path))
+    with lcd(path):
+        local('git checkout {}'.format(git_ref))
+    local('rm -rf {} || true'.format(path))
+
+    config.settings['citus-git-ref'] = git_ref
+
+@task
+@runs_once
+def enterprise(*args):
+    'Choose a citus enterprise version. For example: fab use.enterprise:v6.0.1 setup.enterprise (defaults to enterprise-master)'
+
+    # Do a local checkout to make sure this is a valid ref
+    # (so we error as fast as possible)
+
+    if len(args) != 1:
+        abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
+    git_ref = args[0]
+
+    path = config.paths['enterprise-repo']
+    local('rm -rf {} || true'.format(path))
+    local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
     with lcd(path):
         local('git checkout {}'.format(git_ref))
     local('rm -rf {} || true'.format(path))

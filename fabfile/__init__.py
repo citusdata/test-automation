@@ -12,11 +12,11 @@ import pg  # tasks which control postgres
 import add  # tasks which add things to existing clusters
 import setup  # tasks which create clusters with preset settings
 import use  # tasks which change some configuration future tasks read
-import run
-import prefix
+import run  # tasks to run misc commands
+import prefix  # utilities for keeping track of where we're installing everything
 
 # control the output of "fab --list"
-__all__ = ['pg', 'add', 'setup', 'use', 'run', 'set_pg_latest']
+__all__ = ['pg', 'add', 'setup', 'use', 'run', 'set_pg_latest', 'main']
 
 @task(default=True)
 @runs_once

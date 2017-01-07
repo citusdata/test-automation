@@ -3,6 +3,8 @@ from fabric.api import task, run, cd
 from config import paths
 import prefix
 
+__all__ = ['start', 'stop', 'restart']
+
 @task
 def start():
     'Start the database in pg-latest'

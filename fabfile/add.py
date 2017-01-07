@@ -6,6 +6,8 @@ import utils
 import config
 import prefix
 
+__all__ = ['session_analytics', 'hll', 'cstore', 'tpch', 'jdbc']
+
 @task
 def session_analytics(*args):
     'Adds the session_analytics extension to the instance in pg-latest'

@@ -11,6 +11,7 @@ from fabric.api import (
     sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
+from fabric.contrib.files import exists
 
 import utils
 import config
@@ -24,7 +25,7 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 @runs_once
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    prefix.ensure_pg_latest_exists('/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, '/home/ec2-user/citus-installation')
     pg_latest = config.paths['pg-latest']
 
     # use sequential executes to make sure all nodes are setup before we
@@ -79,7 +80,11 @@ def enterprise():
 @parallel
 def common_setup(pg_latest, build_citus_func):
     run('pkill postgres || true')
-    utils.rmdir(pg_latest)
+
+    # empty it but don't delete the link
+    if not exists(pg_latest):
+        abort('Something went wrong, {} does not exist! It should be a link somewhere'.format(pg_latest))
+    run('rm -r {}/ || true'.format(pg_latest))
 
     redhat_install_packages()
     build_postgres(pg_latest)
@@ -118,18 +123,20 @@ def build_postgres(pg_latest):
         run('tar -xf {}.tar.bz2'.format(final_dir))
 
         with cd(final_dir):
+            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
             flags = ' '.join(config.settings['pg-configure-flags'])
             run('./configure --prefix={} {}'.format(pg_latest, flags))
-            run('make install')
+            run('make -j{} install'.format(core_count))
 
 def build_citus(pg_latest):
     repo = config.paths['citus-repo']
     utils.rmdir(repo, force=True) # force because git write-protects files
     run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
+        core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
         run('git checkout {}'.format(config.settings['citus-git-ref']))
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
-        run('make install')
+        run('make -j{} install'.format(core_count))
 
 def build_enterprise(pg_latest):
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt

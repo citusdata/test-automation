@@ -69,7 +69,6 @@ class InstallExtensionTask(Task):
         # TODO: What if the server isn't running?
         utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.extension_name))
 
-# TODO: Requires hstore, which means we must have installed contrib.
 session_analytics = InstallExtensionTask(
     task_name='session_analytics',
     doc='Adds the session analytics extension to the instance in pg-latest',

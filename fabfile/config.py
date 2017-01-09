@@ -5,6 +5,7 @@ paths = {
     'session-repo': '/home/ec2-user/session-analytics',
     'hll-repo': '/home/ec2-user/hll',
     'cstore-repo': '/home/ec2-user/cstore',
+    'rebalancer-repo': '/home/ec2-user/rebalancer',
     'pg-latest': '/home/ec2-user/pg-latest',
     'pg-source-balls': '/home/ec2-user/postgres-source',
 }

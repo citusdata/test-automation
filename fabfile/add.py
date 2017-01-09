@@ -6,7 +6,9 @@ import utils
 import config
 import prefix
 
-__all__ = ['session_analytics', 'hll', 'cstore', 'tpch', 'jdbc']
+__all__ = [
+    'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer'
+]
 
 @task
 def session_analytics(*args):
@@ -63,11 +65,26 @@ def cstore():
     utils.rmdir(repo, force=True)
     run('git clone -q {} {}'.format(url, repo))
     with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
-        #run('git checkout master')
         run('make install')
 
     with cd(config.paths['pg-latest']):
         run('bin/psql -c "CREATE EXTENSION cstore_fdw"')
+
+@task
+def shard_rebalancer():
+    'Adds the shard rebalancer extension to pg-latest (requires enterprise)'
+    prefix.check_for_pg_latest()
+
+    repo = config.paths['rebalancer-repo']
+    url = 'git@github.com:citusdata/shard_rebalancer.git'
+
+    utils.rmdir(repo, force=True)
+    run('git clone -q {} {}'.format(url, repo))
+    with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
+        run('make install')
+
+    with cd(config.paths['pg-latest']):
+        run('bin/psql -c "CREATE EXTENSION shard_rebalancer"')
 
 @task
 @roles('master')

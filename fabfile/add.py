@@ -95,7 +95,7 @@ def add_cstore_to_shared_preload_libraries():
 
     # append cstore to the line
     regexp = "^shared_preload_libraries\s*=\s*'\(.*\)'$"
-    replacement = "shared_preload_libraries='\\1,cstore'"
+    replacement = "shared_preload_libraries='\\1,cstore_fdw'"
     run('sed -i -e "s/{}/{}/" {}'.format(regexp, replacement, conf))
 
 # TODO: It should also restart the server

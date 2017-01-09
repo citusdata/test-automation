@@ -85,14 +85,12 @@ def common_setup(build_citus_func):
     pg_latest = config.paths['pg-latest']
     with cd(pg_latest):
         run('bin/createdb $(whoami)')
-        run('bin/psql -c "CREATE EXTENSION citus;"')
+    utils.psql('CREATE EXTENSION citus;')
 
 @roles('master')
 def add_workers():
-    with cd(config.paths['pg-latest']):
-        for ip in env.roledefs['workers']:
-           command = 'SELECT master_add_node(\'{}\', 5432);'.format(ip)
-           run('bin/psql -c "{}"'.format(command))
+    for ip in env.roledefs['workers']:
+       utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release

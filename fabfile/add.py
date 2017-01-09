@@ -32,8 +32,7 @@ def session_analytics(*args):
         run('make install')
 
     # TODO: What if the server isn't running?
-    with cd(latest):
-        run('bin/psql -c "CREATE EXTENSION session_analytics;"')
+    utils.psql('CREATE EXTENSION session_analytics;')
 
 @task
 def hll():
@@ -49,8 +48,7 @@ def hll():
         run('git checkout {}'.format(config.settings['hll-ref']))
         run('make install')
 
-    with cd(config.paths['pg-latest']):
-        run('bin/psql -c "CREATE EXTENSION hll"')
+    utils.psql('CREATE EXTENSION hll;')
 
 @task
 def cstore():
@@ -67,8 +65,7 @@ def cstore():
     with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
         run('make install')
 
-    with cd(config.paths['pg-latest']):
-        run('bin/psql -c "CREATE EXTENSION cstore_fdw"')
+    utils.psql('CREATE EXTENSION cstore_fdw;')
 
 @task
 def shard_rebalancer():
@@ -83,8 +80,7 @@ def shard_rebalancer():
     with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
         run('make install')
 
-    with cd(config.paths['pg-latest']):
-        run('bin/psql -c "CREATE EXTENSION shard_rebalancer"')
+    utils.psql('CREATE EXTENSION shard_rebalancer;')
 
 @task
 @roles('master')

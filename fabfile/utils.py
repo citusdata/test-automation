@@ -5,7 +5,7 @@ A grab bag of functions used by other modules
 import re
 import os.path
 
-from fabric.api import run
+from fabric.api import run, cd
 from fabric.contrib.files import append, exists
 
 import config
@@ -17,6 +17,10 @@ def rmdir(path, force=False):
     flag = '-f' if force else ''
     if exists(path):
         run('rm {} -r {}'.format(flag, path))
+
+def psql(command):
+    with cd(config.paths['pg-latest']):
+        return run('bin/psql -c "{}"'.format(command))
 
 def add_github_to_known_hosts():
     'Removes prompts from github checkouts asking whether you want to trust the remote'

@@ -1,6 +1,7 @@
 import os.path
 
 from fabric.api import task, cd, path, run, runs_once, roles, sudo
+from fabric.tasks import Task
 
 import utils
 import config
@@ -10,77 +11,81 @@ __all__ = [
     'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer'
 ]
 
-@task
-def session_analytics(*args):
-    'Adds the session_analytics extension to the instance in pg-latest'
-    prefix.check_for_pg_latest()
+class InstallExtensionTask(Task):
+    '''
+    A class which has all the boilerplate for building and installing extensions.
+    Instantiate it to make it show up in the list of tasks.
 
-    # TODO: Requires hstore, do we install it automatically?
-    utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
-    repo = config.paths['session-repo']
-    latest = config.paths['pg-latest']
+    Tasks created with this class accept a single parameter, the git revision to check out
+    and build. e.x. `fab add.shard_rebalancer:master`. Will default to using 'master'
+    unless you specify otherwise by passing 'default_git_ref'.
 
-    if len(args) == 0:
-        git_ref = 'master'
-    else:
-        git_ref = args[0]
+    If you don't specify `extension_name` (used to call CREATE EXTENSION) it defaults to
+    using the name of the task.
+    '''
 
-    run('rm -rf {} || true'.format(repo)) # -f because git write-protects files
-    run('git clone -q git@github.com:citusdata/session_analytics.git {}'.format(repo))
-    with cd(repo), path('{}/bin'.format(latest)):
-        run('git checkout {}'.format(git_ref))
-        run('make install')
+    def __init__(self, *args, **kwargs):
+        self.name = kwargs.pop('task_name')  # the name of the task (fab [xxx])
+        self.__doc__ = kwargs.pop('doc')  # the description which fab --list will list
+        self.repo_url = kwargs.pop('repo_url')
+        self.extension_name = kwargs.pop('extension_name', self.name)
+        self.default_git_ref = kwargs.pop('default_git_ref', 'master')
+        self.before_run_hook = kwargs.pop('before_run_hook', None)
+        super(InstallExtensionTask, self).__init__(*args, **kwargs)
 
-    # TODO: What if the server isn't running?
-    utils.psql('CREATE EXTENSION session_analytics;')
+    def run(self, *args):
+        if self.before_run_hook:
+            self.before_run_hook()
 
-@task
-def hll():
-    'Adds the hll extension to the instance in pg-latest'
-    prefix.check_for_pg_latest()
+        prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
+        utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
 
-    repo = config.paths['hll-repo']
-    url = 'https://github.com/aggregateknowledge/postgresql-hll.git'
+        repo_name = run('basename {}'.format(self.repo_url))
+        repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
+        repo = os.path.join(config.paths['code-directory'], repo_name)
 
-    run('rm -rf {} || true'.format(repo))
-    run('git clone -q {} {}'.format(url, repo))
-    with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
-        run('git checkout {}'.format(config.settings['hll-ref']))
-        run('make install')
+        if len(args) == 0:
+            git_ref = self.default_git_ref
+        else:
+            git_ref = args[0]
 
-    utils.psql('CREATE EXTENSION hll;')
+        utils.rmdir(repo, force=True) # force because git write-protects files
+        run('git clone -q {} {}'.format(self.repo_url, repo))
 
-@task
-def cstore():
-    'Adds the cstore extension to the instance in pg-latest'
-    prefix.check_for_pg_latest()
+        with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
+            run('git checkout {}'.format(git_ref))
+            run('make install')
 
-    sudo('yum install -q -y protobuf-c-devel')
+        # TODO: What if the server isn't running?
+        utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.extension_name))
 
-    repo = config.paths['cstore-repo']
-    url = 'https://github.com/citusdata/cstore_fdw.git'
+# TODO: Requires hstore, which means we must have installed contrib.
+session_analytics = InstallExtensionTask(
+    task_name='session_analytics',
+    doc='Adds the session analytics extension to the instance in pg-latest',
+    repo_url='git@github.com:citusdata/session_analytics.git',
+)
 
-    utils.rmdir(repo, force=True)
-    run('git clone -q {} {}'.format(url, repo))
-    with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
-        run('make install')
+hll = InstallExtensionTask(
+    task_name='hll',
+    doc='Adds the hll extension to the instance in pg-latest',
+    repo_url='https://github.com/aggregateknowledge/postgresql-hll.git',
+    default_git_ref='v2.10.0',
+)
 
-    utils.psql('CREATE EXTENSION cstore_fdw;')
+cstore = InstallExtensionTask(
+    task_name='cstore',
+    doc='Adds the cstore extension to the instance in pg-latest',
+    repo_url='https://github.com/citusdata/cstore_fdw.git',
+    extension_name='cstore_fdw',
+    before_run_hook=lambda: sudo('yum install -q -y protobuf-c-devel')
+)
 
-@task
-def shard_rebalancer():
-    'Adds the shard rebalancer extension to pg-latest (requires enterprise)'
-    prefix.check_for_pg_latest()
-
-    repo = config.paths['rebalancer-repo']
-    url = 'git@github.com:citusdata/shard_rebalancer.git'
-
-    utils.rmdir(repo, force=True)
-    run('git clone -q {} {}'.format(url, repo))
-    with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
-        run('make install')
-
-    utils.psql('CREATE EXTENSION shard_rebalancer;')
+shard_rebalancer = InstallExtensionTask(
+    task_name='shard_rebalancer',
+    doc='Adds the shard rebalancer extension to pg-latest (requires enterprise)',
+    repo_url='git@github.com:citusdata/shard_rebalancer.git',
+)
 
 @task
 @roles('master')

@@ -120,6 +120,9 @@ def build_postgres():
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
             run('make -j{} install'.format(core_count))
 
+            with cd('contrib'):
+                run('make install')
+
 def build_citus():
     repo = config.paths['citus-repo']
     utils.rmdir(repo, force=True) # force because git write-protects files

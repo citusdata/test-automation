@@ -26,13 +26,13 @@ def set_prefix(prefix):
     run('ln -snf {} {}'.format(prefix, latest))
     run('mkdir -p {}'.format(prefix))
 
-def ensure_pg_latest_exists(prefix):
+def ensure_pg_latest_exists(default):
     'If there is no valid working directory make one and point it at prefix'
     latest = config.paths['pg-latest']
 
     # make sure pg-latest exists
     if not exists(latest):
-        set_prefix(prefix)
+        set_prefix(default)
 
     # make sure pg-latest is a link
     if run('stat -c %F {}'.format(latest)) != 'symbolic link':

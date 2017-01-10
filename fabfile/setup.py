@@ -25,7 +25,7 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 @runs_once
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    execute(prefix.ensure_pg_latest_exists, '/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -34,7 +34,7 @@ def basic_testing():
 @runs_once
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    execute(prefix.ensure_pg_latest_exists, '/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -44,9 +44,9 @@ def tpch():
 @runs_once
 def valgrind():
     'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
-    execute(prefix.ensure_pg_latest_exists, '/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
 
-    # we do this dance so valgrind is installed on every node, not just the master
+    # we do this execute dance so valgrind is installed on every node, not just the master
     def install_valgrind():
         sudo('yum install -q -y valgrind')
     execute(install_valgrind)
@@ -60,10 +60,7 @@ def valgrind():
 @runs_once
 def enterprise():
     'Installs the enterprise version of Citus'
-    execute(prefix.ensure_pg_latest_exists, '/home/ec2-user/citus-installation')
-
-    # TODO: Add the ability to choose a branch
-    config.settings['citus-git-ref'] = 'enterprise-master'
+    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
 
     execute(common_setup, build_enterprise)
     execute(add_workers)

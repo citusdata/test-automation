@@ -4,6 +4,7 @@ import config
 
 @task
 @runs_once
+@roles('master')
 def jdbc():
     'Assumes add.jdbc and add.tpch have been run'
     with cd('/home/ec2-user/test-automation/jdbc'):

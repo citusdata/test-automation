@@ -1,6 +1,6 @@
 import os.path
 
-from fabric.api import task, cd, path, run, runs_once, roles, sudo, abort
+from fabric.api import task, cd, path, run, roles, sudo, abort
 from fabric.tasks import Task
 
 import utils

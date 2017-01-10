@@ -5,7 +5,7 @@ when building Citus.
 '''
 import re
 
-from fabric.api import task, runs_once, abort, local, lcd
+from fabric.api import task, runs_once, abort, local, lcd, roles
 
 import config
 import utils
@@ -54,6 +54,7 @@ def enterprise(*args):
 
 @task
 @runs_once
+@roles('master')
 def postgres(*args):
     'Choose a postgres version. For example: fab use.postgres:9.6.1 setup.basic_testing'
 

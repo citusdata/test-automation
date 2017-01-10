@@ -24,13 +24,15 @@ If you forget the name of your cluster you can get the list of active clusters b
 This will only list clusters which are in your default region. You can specify a region
 with the `--region` flag.
 
-To get the host of the master you can run: `aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`.
+To get the hostname of the master you can run: `aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`.
 
 # Connecting to the master
 
 1. **Make sure you have a running ssh-agent**
 
-   If you are running linux you either have a running ssh-agent or know that you don't ;). If you're using OSX you probably have a working ssh-agent but it's possible Apple has pushed an update and broken things.
+   If you are running linux you either have a running ssh-agent or know that you don't ;).
+   If you're using OSX you probably have a working ssh-agent but it's possible Apple has
+   pushed an update and broken things.
 
    If it is running then the `SSH_AUTH_SOCK` environment variable will be set:
 
@@ -39,7 +41,8 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
    /tmp/ssh-s1OzC5ULhRKg/agent.1285
    ```
 
-   If your `SSH_AUTH_SOCK` is empty then Google is your friend for getting an ssh-agent to start automatically when you login. As a temporary fix you can run:
+   If your `SSH_AUTH_SOCK` is empty then Google is your friend for getting an ssh-agent to
+   start automatically when you login. As a temporary fix you can run `exec ssh-agent bash`:
 
    ```bash
    brian@rhythm:~$ echo $SSH_AUTH_SOCK
@@ -49,28 +52,46 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
    /tmp/ssh-et5hwGiqPxUn/agent.31580
    ```
 
-2. **Add your private key to your ssh agent**
+2. **Add your keypair's private key to your ssh agent**
 
-   When you created your EC2 keypair it gave you a `.pem` file for safekeeping. Add it to your agent with:
+   When you created your EC2 keypair it gave you a `.pem` file for safekeeping. Add it to
+   your agent with:
 
-   ```
+   ```bash
    brian@rhythm:~$ ssh-add Downloads/brian-eu.pem
    Identity added: Downloads/brian-eu.pem (Downloads/brian-eu.pem)
    ```
 
-   Running `ssh-add` or `ssh-add ~/.ssh/id_rsa` will not work, you must use the keypair you received from EC2. `find ~ -name '*.pem'` can help you find it.
+   `find ~ -name '*.pem'` can help you find your key. Running `ssh-add ~/.ssh/id_rsa` will
+   not work, you must use the keypair you received from EC2.
 
-3. **ssh into the master in a way which allows it to use your local ssh-agent**
+3. **If you plan on checking out private repos, add that private key to your agent as well**
 
-   The `create-stack.sh` script should have given you a connection string to use. You can also find the hostname of the master node in the cloudformation control panel in the "outputs" section.
+   When you check out a private repo on the master/workers, they will reach back and talk
+   to your ssh-agent in order to authenticate as you when talking to Github. You can find
+   your list of keys [here](https://github.com/settings/keys). One of them should be added
+   to ssh-agent with another `ssh-add` command. Personally, I run:
+
+   ```
+   brian@rhythm:~$ ssh-add
+   Identity added: /home/brian/.ssh/id_rsa (/home/brian/.ssh/id_rsa)
+   ```
+
+4. **ssh into the master in a way which allows it to use your local ssh-agent**
+
+   The `create-stack.sh` script should have given you a connection string to use. You can
+   also find the hostname of the master node in the cloudformation control panel in the
+   "outputs" section. There's a command above which tells you how to get the hostname
+   without going to the control panel.
 
    You'll connect using a string like:
 
    ```bash
-   ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com`
+   ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com
    ```
 
-   The "-A" is NOT optional. It is required in order for the master node to be able to ssh into the worker nodes and for the nodes to be able to checkout private repos.
+   The `-A` is not optional. It is required so the master node can ssh into the worker
+   nodes and so the nodes can checkout private repos.
 
    That means you should not pass the `-i` flag into ssh:
 
@@ -79,9 +100,12 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
    ssh -i Downloads/brian2.pem ec2-user@[hostname]
    ```
 
-   If you need to pass the `-i` flag in order to connect this means the key is not in your agent. That means the master node will not be able to ssh into the worker nodes when you later run `fab`.
+   If you need to pass the `-i` flag in order to connect this means the key is not in your
+   agent. That means the master node will not be able to ssh into the worker nodes when you
+   later run `fab`.
 
-It's unfortunate that you have no flexibility here. This restriction which will hopefully be lifted in the future.
+It's unfortunate that you have no flexibility here. This restriction which will hopefully
+be lifted in the future.
 
 # Example fab commands
 

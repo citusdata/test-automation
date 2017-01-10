@@ -28,18 +28,52 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
 
 # Connecting to the master
 
-The script should have given you a connection string to use. You can also find the
-hostname of the master node in the cloudformation control panel in the "outputs" section.
+1. **Make sure you have a running ssh-agent**
 
-You'll connect using a string like: `ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com`.
+   If you are running linux you either have a running ssh-agent or know that you don't ;). If you're using OSX you probably have a working ssh-agent but it's possible Apple has pushed an update and broken things.
 
-The "-A" is NOT optional. It is required in order for the master node to be able to ssh
-into the worker nodes and for the nodes to be able to checkout private repos. In
-addition, your ssh-agent should have the key loaded. That means you should not pass the
-`-i` flag into ssh. Instead, run `ssh-add [your pem file]` before
-running ssh.
+   If it is running then the `SSH_AUTH_SOCK` environment variable will be set:
 
-This is an unfortunate restriction which will hopefully be lifted in the future.
+   ```
+   brian@rhythm:~$ echo $SSH_AUTH_SOCK
+   /tmp/ssh-s1OzC5ULhRKg/agent.1285
+   ```
+
+   If your `SSH_AUTH_SOCK` is empty then Google is your friend for getting an ssh-agent to start automatically when you login. A temporary fix is to run one in the current shell with `exec ssh-agent bash`. This will not appear to have any effect but after you run it `SSH_AUTH_SOCK` should be populated.
+
+2. **Add your private key to your ssh agent**
+
+   When you created your EC2 keypair it gave you a `.pem` file for safekeeping. Add it to your agent with:
+
+   ```
+   brian@rhythm:~$ ssh-add Downloads/brian-eu.pem
+   Identity added: Downloads/brian-eu.pem (Downloads/brian-eu.pem)
+   ```
+
+   Running `ssh-add` or `ssh-add ~/.ssh/id_rsa` will not work, you must use the keypair your received from EC2. `find ~ -name '*.pem'` can help you find it.
+
+3. **ssh into the master in a way which allows it to use your local ssh-agent**
+
+   The `create-stack.sh` script should have given you a connection string to use. You can also find the hostname of the master node in the cloudformation control panel in the "outputs" section.
+
+   You'll connect using a string like:
+
+   ```
+   ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com`.
+   ```
+
+   The "-A" is NOT optional. It is required in order for the master node to be able to ssh into the worker nodes and for the nodes to be able to checkout private repos.
+
+   That means you should not pass the `-i` flag into ssh:
+
+   ```
+   # careful, this is wrong!
+   ssh -i Downloads/brian2.pem ec2-user@[hostname]
+   ```
+
+   If you need to pass the `-i` flag in order to connect this means the key is not in your agent. That means the master node will not be able to ssh into the worker nodes when you later run `fab`.
+
+It's unfortunate that you have no flexibility here. This restriction which will hopefully be lifted in the future.
 
 # Example fab commands
 

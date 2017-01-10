@@ -9,5 +9,5 @@ paths = {
 
 settings = {
     'pg-version': '9.6.1',
-    'pg-configure-flags': [],
+    'pg-configure-flags': ['--with-openssl'],
 }

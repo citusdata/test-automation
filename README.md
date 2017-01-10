@@ -77,6 +77,12 @@ To get the hostname of the master you can run: `aws cloudformation describe-stac
    Identity added: /home/brian/.ssh/id_rsa (/home/brian/.ssh/id_rsa)
    ```
 
+   Note: If you use 2-factor authentication that will not change these instructions in any
+   way. For the purposes of ssh access your key counts as a factor. If you have a
+   passphrase on your key you will be prompted for it when you run `ssh-add`, that's the
+   second factor. If you do not have a passphrase on your key, well, Github has no way of
+   knowing that.
+
 4. **ssh into the master in a way which allows it to use your local ssh-agent**
 
    The `create-stack.sh` script should have given you a connection string to use. You can

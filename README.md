@@ -34,12 +34,20 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
 
    If it is running then the `SSH_AUTH_SOCK` environment variable will be set:
 
-   ```
+   ```bash
    brian@rhythm:~$ echo $SSH_AUTH_SOCK
    /tmp/ssh-s1OzC5ULhRKg/agent.1285
    ```
 
-   If your `SSH_AUTH_SOCK` is empty then Google is your friend for getting an ssh-agent to start automatically when you login. A temporary fix is to run one in the current shell with `exec ssh-agent bash`. This will not appear to have any effect but after you run it `SSH_AUTH_SOCK` should be populated.
+   If your `SSH_AUTH_SOCK` is empty then Google is your friend for getting an ssh-agent to start automatically when you login. As a temporary fix you can run:
+
+   ```bash
+   brian@rhythm:~$ echo $SSH_AUTH_SOCK
+
+   brian@rhythm:~$ exec ssh-agent bash
+   brian@rhythm:~$ echo $SSH_AUTH_SOCK
+   /tmp/ssh-et5hwGiqPxUn/agent.31580
+   ```
 
 2. **Add your private key to your ssh agent**
 
@@ -50,7 +58,7 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
    Identity added: Downloads/brian-eu.pem (Downloads/brian-eu.pem)
    ```
 
-   Running `ssh-add` or `ssh-add ~/.ssh/id_rsa` will not work, you must use the keypair your received from EC2. `find ~ -name '*.pem'` can help you find it.
+   Running `ssh-add` or `ssh-add ~/.ssh/id_rsa` will not work, you must use the keypair you received from EC2. `find ~ -name '*.pem'` can help you find it.
 
 3. **ssh into the master in a way which allows it to use your local ssh-agent**
 
@@ -58,15 +66,15 @@ To get the host of the master you can run: `aws cloudformation describe-stacks -
 
    You'll connect using a string like:
 
-   ```
-   ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com`.
+   ```bash
+   ssh -A ec2-user@ec2-35-156-235-11.eu-central-1.compute.amazonaws.com`
    ```
 
    The "-A" is NOT optional. It is required in order for the master node to be able to ssh into the worker nodes and for the nodes to be able to checkout private repos.
 
    That means you should not pass the `-i` flag into ssh:
 
-   ```
+   ```bash
    # careful, this is wrong!
    ssh -i Downloads/brian2.pem ec2-user@[hostname]
    ```

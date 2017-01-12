@@ -115,8 +115,10 @@ be lifted in the future.
 
 # Example fab commands
 
+Use `fab --list` to see all the tasks you can run! This is just a few examples.
+
 Once you have a cluster you can use many different variations of the "fab" command to
-install Citus. Here are some examples:
+install Citus:
 
 - `fab --list` will return a list of the tasks you can run.
 - `fab setup.basic_testing`, will create a vanilla cluster with postgres and citus. Once this has run you can simply run `psql` to connect to it.
@@ -152,12 +154,43 @@ There's no need to run these as a separate command.
 
 # Advanced fab usage
 
-By default your fab commands configure the entire cluster, however they can be targeted
-at roles or individual machines.
+By default your fab commands configure the entire cluster, however you can target roles or
+individual machines.
 
-- `fab -R master pg.restart` will restart postgres on the master node
+- `fab -R master pg.restart` will restart postgres on the master node.
 - `fab -R workers pg.stop` will shutdown pg on all the workers.
+- `fab -H 10.0.1.240 pg.start` will start pg on that specific node.
 
 You can also ask to run arbitrary commands by adding them after `--`.
 
 - `fab -H 10.0.1.240 -- cat "max_prepared_transactions=0" >> pg-latest/data/postgresql.conf` will modify the postgresql.conf file on the specified worker.
+- `fab -- 'cd citus && git checkout master && make install'` to switch the branch of Citus you're using. (This runs on all nodes)
+
+# Using multiple Citus installations, `pg-latest`
+
+Some kinds of tests (such as TPC-H) are easier to perform if you create multiple
+simultanious installations of Citus and are able to switch between them. The fabric
+scripts allow this by maintaining a symlink called `pg-latest`.
+
+Most tasks which interact with a postgres installation (such as `add.cstore` or `pg.stop`)
+simply use the installation in `pg-latest`. Tasks such as `setup.basic_testing` which
+install postgres will overwrite whatever is currently in `pg-latest`.
+
+You can change where `pg-latest` points by running `fab set_pg_latest:some-absolute-path`. For
+example: `fab set_pg_latest:/home/ec2-user/enterprise-installation`. Using multiple
+installations is a matter of changing your prefix whenever you want to act upon or create
+a different installation.
+
+Here's an example:
+
+```bash
+fab set_pg_latest:/home/ec2-user/pg-960-citus-600
+fab use.postgres:9.6.0 use.citus:v6.0.0 setup.basic_testing
+fab set_pg_latest:/home/ec2-user/pg-961-citus-601
+fab use.postgres:9.6.1 use.citus:v6.0.1 setup.basic_testing
+# you now have 2 installations of Citus!
+fab pg.stop set_pg_latest:/home/ec2-user/pg-960-citus-600 pg.start
+# now you've switched back to the first installation
+```
+
+At the end of this process you have 2 installations of Citus!

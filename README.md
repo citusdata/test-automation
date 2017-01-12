@@ -138,17 +138,17 @@ in order so this will first setup the `enteprise-master` branch of enterprise (b
 that's the default) then get ready to use the `v6.0.1` ref then exit.
 
 Finally, there are `add` tasks, such as `add.tpch`. These assume that a cluster is already
-installe and running (and therefore must come after the `setup` tasks, and install
-additional components, such as the tpch data.
+installed and running, and install additional components, such as the tpch data. Since
+they require that you already have a cluster, they must be run after a `setup` task!
 
 # `add` tasks
 
 It is possible to add extra extensions and features to a Citus cluster:
 
 - `fab add.tpch:scale_factor=1` will generate and stage tpch tables (the default scale factor is 10)
-- `fab add.session_analytics` will build and install the session_analytics package (it uses your ssh agent forwarding when connecting to github, so you must have the key you use for github added to your local agent)
+- `fab add.session_analytics` will build and install the session_analytics package (see the instructions above for information on how to checkout this private repo)
 
-There's no need to run these as a separate command.
+You can run these at the same time as you run `setup` tasks:
 
 - `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 

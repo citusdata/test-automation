@@ -24,6 +24,7 @@ function finish {
 Make sure you've enabled your SSH agent:
  eval \`ssh-agent -s\`
  ssh-add ~/.ssh/id_rsa
+ ssh-add [path-to-your-ec2-keypair]
 
 To connect to the master node with SSH agent forwarding:
  ssh -A ec2-user@${master_hostname}

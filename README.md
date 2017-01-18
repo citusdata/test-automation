@@ -189,6 +189,11 @@ fab use.postgres:9.6.0 use.citus:v6.0.0 setup.basic_testing
 fab set_pg_latest:/home/ec2-user/pg-961-citus-601
 fab use.postgres:9.6.1 use.citus:v6.0.1 setup.basic_testing
 # you now have 2 installations of Citus!
-fab pg.stop set_pg_latest:/home/ec2-user/pg-960-citus-600 pg.start
+fab pg.stop  # stop the existing Citus instance
+fab set_pg_latest:/home/ec2-user/pg-960-citus-600  # switch to using the new instance
+fab pg.start  # start the new instance
 # now you've switched back to the first installation
+
+# the above can be abbreviated by writing the following:
+fab pg.stop set_pg_latest:/home/ec2-user/pg-960-citus-600 pg.start
 ```

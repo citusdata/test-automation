@@ -143,6 +143,9 @@
               "22-copy-fabfile": {
                 "command": "ln -s /home/ec2-user/test-automation/fabfile /home/ec2-user/fabfile"
               },
+              "30-enable-tab-completion": {
+                "command": "echo 'source /home/ec2-user/test-automation/cloudformation/fab' >> /home/ec2-user/.bash_profile"
+              },
               "90-signal-done": {
                 "command": {
                   "Fn::Join": [
@@ -561,8 +564,7 @@
     },
     "Constants": {
       "Scripts": {
-        "FindWorkers": "https://s3.eu-central-1.amazonaws.com/citus-tests/find-workers.sh",
-        "FabFile": "https://s3.eu-central-1.amazonaws.com/citus-tests/fabfile.py"
+        "FindWorkers": "https://s3.eu-central-1.amazonaws.com/citus-tests/find-workers.sh"
       },
       "VolumeSize": { "Master": "128", "Worker": "128" }
     }

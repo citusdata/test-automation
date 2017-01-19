@@ -122,7 +122,7 @@ def tpch(**kwargs):
 
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
 
-    scale = kwargs.get('scale-factor', 10)
+    scale = kwargs.get('scale-factor', kwargs.get('scale_factor', 10))
 
     # generate tpc-h data
     tpch_path = '{}/tpch_2_13_0'.format(config.paths['tests-repo'])

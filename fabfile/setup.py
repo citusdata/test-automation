@@ -86,8 +86,10 @@ def common_setup(build_citus_func):
 
 @roles('master')
 def add_workers():
-    for ip in env.roledefs['workers']:
-       utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
+    with cd('{}/data'.format(config.paths['pg-latest'])):
+        for ip in env.roledefs['workers']:
+           utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
+           run('echo "{} 5432" >> pg_worker_list.conf'.format(ip))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release

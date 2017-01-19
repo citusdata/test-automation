@@ -1,0 +1,578 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Citus Test Cluster",
+  "Parameters": {
+    "InstanceType": {
+      "Description": "The EC2 instance type to use",
+      "Type": "String",
+      "Default": "m3.2xlarge",
+      "ConstraintDescription": "must be a valid EC2 instance type.",
+      "AllowedValues": [
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "m4.large",
+        "m4.xlarge",
+        "m4.2xlarge",
+        "m4.4xlarge",
+        "m4.10xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge",
+        "c3.4xlarge",
+        "c3.8xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c4.4xlarge",
+        "c4.8xlarge",
+        "r3.large",
+        "r3.xlarge",
+        "r3.2xlarge",
+        "r3.4xlarge",
+        "r3.8large",
+        "g2.2xlarge",
+        "i2.xlarge",
+        "i2.2xlarge",
+        "i2.4xlarge",
+        "i2.8xlarge"
+      ]
+    },
+    "KeyName": {
+      "Description": "The EC2 Key Pair to allow SSH access to the instances",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "MinLength": "1"
+    },
+    "NumWorkers": {
+      "Description": "The number of worker instances",
+      "Type": "Number",
+      "Default": "2",
+      "MinValue": 0
+    },
+    "AvailabilityZone": {
+      "Description": "Select availability zone to use",
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "MinLength": "1"
+    }
+  },
+  "Resources": {
+    "CitusSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Citus cluster",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [{ "IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": "0.0.0.0/0" }]
+      }
+    },
+    "CitusIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Fn::GetAtt": ["CitusSecurityGroup", "GroupId"] },
+        "IpProtocol": "tcp",
+        "FromPort": "5432",
+        "ToPort": "5432",
+        "SourceSecurityGroupId": { "Fn::GetAtt": ["CitusSecurityGroup", "GroupId"] }
+      }
+    },
+    "MasterInstance": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": ["AttachGateway"],
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": { "default": ["FileAndRepoSetup", "PackagesAndCommands"] },
+          "FileAndRepoSetup": {
+            "files": {
+              "/usr/bin/find-workers": {
+                "source": { "Fn::FindInMap": ["Constants", "Scripts", "FindWorkers"] },
+                "mode": "000755",
+                "owner": "root",
+                "group": "root"
+              },
+              "/home/ec2-user/worker-as-group.txt": {
+                "content": { "Fn::Join": ["", [{ "Ref": "WorkerGroup" }, "\n"]] },
+                "mode": "000644",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/security/limits.d/fdlimits.conf": {
+                "content": { "Fn::Join": ["", ["ec2-user soft nofile 8192\n", "ec2-user hard nofile 65535\n"]] },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "01-rpm-makecache": {
+                "command": "/usr/bin/yum -q makecache -y"
+              },
+              "02-enable-epel": { "command": "/usr/bin/yum-config-manager --enable epel" }
+            }
+          },
+          "PackagesAndCommands": {
+            "packages": {
+              "yum": {
+                "sysstat": [ ],
+                "iotop": [ ],
+                "htop": [ ],
+                "fabric": ["1.6.2-2.el6"],
+                "git": []
+              }
+            },
+            "commands": {
+              "02-configure-sysctl": { "command": "sysctl -w net.ipv4.tcp_tw_reuse=1" },
+              "10-install-fabric": {
+                "command": "pip install fabric"
+              },
+              "15-set-path": {
+                "command": "echo 'export PATH=/home/ec2-user/pg-latest/bin/:$PATH' >> /home/ec2-user/.bash_profile"
+              },
+              "16-set-workers": {
+                "command": "su ec2-user -c \"/usr/bin/find-workers\"",
+                "env": {
+                  "AWS_DEFAULT_REGION": { "Ref": "AWS::Region" },
+                  "WORKER_AS_GROUP": { "Ref": "WorkerGroup" }
+                }
+              },
+              "20-checkout-repo": {
+                "command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
+              },
+              "22-copy-fabfile": {
+                "command": "ln -s /home/ec2-user/test-automation/fabfile /home/ec2-user/fabfile"
+              },
+              "30-enable-tab-completion": {
+                "command": "echo 'source /home/ec2-user/test-automation/cloudformation/fab' >> /home/ec2-user/.bash_profile"
+              },
+              "90-signal-done": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    ["/opt/aws/bin/cfn-signal -e 0 -r MasterInstance '", { "Ref": "MasterWaitHandle" }, "'"]
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AmazonLinuxEBSAMIs",
+            { "Ref": "AWS::Region" },
+            { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "Architecture"] }
+          ]
+        },
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "Tags": [{ "Key": "Name", "Value": "citus-master" }],
+        "NetworkInterfaces": [
+          {
+            "GroupSet": [{ "Ref": "CitusSecurityGroup" }],
+            "AssociatePublicIpAddress": "true",
+            "DeviceIndex": "0",
+            "DeleteOnTermination": "true",
+            "SubnetId": { "Ref": "Subnet0" }
+          }
+        ],
+        "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Master"] },
+              "VolumeType": "gp2"
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -v\n",
+                "echo timeout=60 >> /etc/yum.conf\n",
+                "echo retries=20 >> /etc/yum.conf\n",
+                "yum update -y -q aws-cfn-bootstrap\n",
+                "function handle_error\n",
+                "{\n",
+                "ERR_FILE=$(mktemp)\n",
+                "(grep ERROR /var/log/cfn-init.log | sed -e 's/^.*] //' >> $ERR_FILE) || true\n",
+                "(tac /var/log/cfn-init-cmd.log | grep -m 1 -B 100 ==== | tac | sed -e 's/^.*] //' -e '/^=*$/d' >> $ERR_FILE) || true\n",
+                "/opt/aws/bin/cfn-signal -s false -e $1 -r \"Output: `cat $ERR_FILE`\" '",
+                { "Ref": "MasterWaitHandle" },
+                "'\n",
+                "  exit 1\n",
+                "}\n",
+                "trap 'handle_error $? ${LINENO}' ERR\n",
+                "adduser postgres\n",
+                "/opt/aws/bin/cfn-init -s ",
+                { "Ref": "AWS::StackName" },
+                " -r MasterInstance ",
+                "    --region ",
+                { "Ref": "AWS::Region" },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MasterWaitHandle": { "Type": "AWS::CloudFormation::WaitConditionHandle" },
+    "MasterWaitCondition": {
+      "Type": "AWS::CloudFormation::WaitCondition",
+      "DependsOn": "MasterInstance",
+      "Properties": { "Handle": { "Ref": "MasterWaitHandle" }, "Timeout": "900", "Count": "1" }
+    },
+    "WorkerGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VPCZoneIdentifier": [{ "Ref": "Subnet0" }],
+        "LaunchConfigurationName": { "Ref": "WorkerLaunchConfig" },
+        "MinSize": { "Ref": "NumWorkers" },
+        "MaxSize": { "Ref": "NumWorkers" },
+        "Tags": [{ "Key": "Name", "Value": "citus-worker", "PropagateAtLaunch": "true" }]
+      }
+    },
+    "WorkerLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": { "default": ["FileAndRepoSetup", "PackagesAndCommands"] },
+          "FileAndRepoSetup": {
+            "files": {
+              "/etc/security/limits.d/fdlimits.conf": {
+                "content": { "Fn::Join": ["", ["ec2-user soft nofile 8192\n", "ec2-user hard nofile 65535\n"]] },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "01-rpm-makecache": {
+                "command": "/usr/bin/yum -q makecache -y"
+              },
+              "02-enable-epel": { "command": "/usr/bin/yum-config-manager --enable epel" }
+            }
+          },
+          "PackagesAndCommands": {
+            "packages": {
+              "yum": {
+                "sysstat": [ ],
+                "iotop": [ ],
+                "htop": [ ],
+		"git": []
+              }
+            },
+            "commands": {
+              "02-configure-page-cache": {
+                "command": "sysctl -w vm.swappiness=0 vm.dirty_background_ratio=1 vm.overcommit_memory=2 vm.dirty_ratio=60"
+              },
+              "05-set-path": {
+                "command": "echo 'export PATH=/usr/pgsql-9.6/bin/:$PATH' >> /home/ec2-user/.bash_profile"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "AssociatePublicIpAddress": "true",
+        "InstanceType": { "Ref": "InstanceType" },
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AmazonLinuxEBSAMIs",
+            { "Ref": "AWS::Region" },
+            { "Fn::FindInMap": ["InstanceTypes", { "Ref": "InstanceType" }, "Architecture"] }
+          ]
+        },
+        "KeyName": { "Ref": "KeyName" },
+        "SecurityGroups": [{ "Ref": "CitusSecurityGroup" }],
+        "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeSize": { "Fn::FindInMap": ["Constants", "VolumeSize", "Master"] },
+              "VolumeType": "gp2"
+            }
+          }
+	],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -v\n",
+                "echo timeout=60 >> /etc/yum.conf\n",
+                "echo retries=20 >> /etc/yum.conf\n",
+                "yum update -y -q aws-cfn-bootstrap\n",
+                "function handle_error\n",
+                "{\n",
+                "ERR_FILE=$(mktemp)\n",
+                "(grep ERROR /var/log/cfn-init.log | sed -e 's/^.*] //' >> $ERR_FILE) || true\n",
+                "(tac /var/log/cfn-init-cmd.log | grep -m 1 -B 100 ==== | tac | sed -e 's/^.*] //' -e '/^=*$/d' >> $ERR_FILE) || true\n",
+                "exit 1\n",
+                "}\n",
+                "trap 'handle_error $? ${LINENO}' ERR\n",
+                "/opt/aws/bin/cfn-init -s ",
+                { "Ref": "AWS::StackName" },
+                " -r WorkerLaunchConfig ",
+                "    --region ",
+                { "Ref": "AWS::Region" },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MainRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": ["ec2.amazonaws.com"] },
+              "Action": ["sts:AssumeRole"]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": { "Fn::Join": ["_", ["citus-policy", { "Ref": "AWS::Region" }]] },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Sid": "stm5",
+              "Action": ["autoscaling:DescribeAutoScalingGroups"],
+              "Effect": "Allow",
+              "Resource": ["*"]
+            },
+            {
+              "Sid": "stm10",
+              "Action": ["ec2:DescribeInstances"],
+              "Effect": "Allow",
+              "Resource": ["*"]
+            },
+            {
+              "Sid": "stm20",
+              "Action": ["cloudformation:DescribeStacks"],
+              "Effect": "Allow",
+              "Resource": ["*"]
+            }
+          ]
+        },
+        "Roles": [{ "Ref": "MainRole" }]
+      }
+    },
+    "RootInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "DependsOn": "AttachGateway",
+      "Properties": { "Path": "/", "Roles": [{ "Ref": "MainRole" }] }
+    },
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.192.0.0/16",
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          { "Key": "Application", "Value": { "Ref": "AWS::StackId" } },
+          { "Key": "Name", "Value": "citus" }
+        ]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": { "Tags": [{ "Key": "Application", "Value": { "Ref": "AWS::StackId" } }] }
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": { "VpcId": { "Ref": "VPC" }, "InternetGatewayId": { "Ref": "InternetGateway" } }
+    },
+    "RouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [{ "Key": "Application", "Value": { "Ref": "AWS::StackId" } }]
+      }
+    },
+    "Route": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "RouteTableId": { "Ref": "RouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Ref": "InternetGateway" }
+      }
+    },
+    "Subnet0": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": { "Ref": "AvailabilityZone" },
+        "VpcId": { "Ref": "VPC" },
+        "CidrBlock": "10.192.0.0/24",
+        "Tags": [{ "Key": "Application", "Value": { "Ref": "AWS::StackId" } }]
+      }
+    },
+    "Subnet0NetworkAclAssociation": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": { "SubnetId": { "Ref": "Subnet0" }, "NetworkAclId": { "Ref": "NetworkAcl" } }
+    },
+    "Subnet0RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": { "SubnetId": { "Ref": "Subnet0" }, "RouteTableId": { "Ref": "RouteTable" } }
+    },
+    "NetworkAcl": {
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [{ "Key": "Application", "Value": { "Ref": "AWS::StackId" } }]
+      }
+    },
+    "InboundSSHNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "101",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "false",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "22", "To": "22" }
+      }
+    },
+    "InboundResponsePortsNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "102",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "false",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "1024", "To": "65535" }
+      }
+    },
+    "OutBoundHTTPNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "100",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "true",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "80", "To": "80" }
+      }
+    },
+    "OutBoundHTTPSNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "101",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "true",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "443", "To": "443" }
+      }
+    },
+    "OutBoundSSHNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "102",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "true",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "22", "To": "22" }
+      }
+    },
+    "OutBoundResponsePortsNetworkAclEntry": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "NetworkAclId": { "Ref": "NetworkAcl" },
+        "RuleNumber": "103",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "Egress": "true",
+        "CidrBlock": "0.0.0.0/0",
+        "PortRange": { "From": "1024", "To": "65535" }
+      }
+    }
+  },
+  "Mappings": {
+    "InstanceTypes": {
+      "t2.micro": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "1" },
+      "t2.small": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "1" },
+      "t2.medium": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "t2.large": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "m3.medium": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "1" },
+      "m3.large": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "m3.xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "m3.2xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "m4.large": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "m4.xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "m4.2xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "m4.4xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "8", "NumVCPUs": "16" },
+      "m4.10xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "20", "NumVCPUs": "40" },
+      "c3.large": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "c3.xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "c3.2xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "c3.4xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "8", "NumVCPUs": "16" },
+      "c3.8xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "16", "NumVCPUs": "32" },
+      "c4.large": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "c4.xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "c4.2xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "c4.4xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "8", "NumVCPUs": "16" },
+      "c4.8xlarge": { "NumEphemerals": "0", "Architecture": "64HVM", "NumCores": "18", "NumVCPUs": "36" },
+      "r3.large": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "1", "NumVCPUs": "2" },
+      "r3.xlarge": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "r3.2xlarge": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "r3.4xlarge": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "8", "NumVCPUs": "16" },
+      "r3.8xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "16", "NumVCPUs": "32" },
+      "g2.2xlarge": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "i2.xlarge": { "NumEphemerals": "1", "Architecture": "64HVM", "NumCores": "2", "NumVCPUs": "4" },
+      "i2.2xlarge": { "NumEphemerals": "2", "Architecture": "64HVM", "NumCores": "4", "NumVCPUs": "8" },
+      "i2.4xlarge": { "NumEphemerals": "4", "Architecture": "64HVM", "NumCores": "8", "NumVCPUs": "16" },
+      "i2.8xlarge": { "NumEphemerals": "8", "Architecture": "64HVM", "NumCores": "16", "NumVCPUs": "32" }
+    },
+    "AmazonLinuxEBSAMIs": {
+      "us-east-1": { "64HVM": "ami-60b6c60a", "64PV": "ami-5fb8c835" },
+      "us-west-2": { "64HVM": "ami-f0091d91", "64PV": "ami-d93622b8" },
+      "us-west-1": { "64HVM": "ami-d5ea86b5", "64PV": "ami-56ea8636" },
+      "eu-west-1": { "64HVM": "ami-bff32ccc", "64PV": "ami-95e33ce6" },
+      "eu-central-1": { "64HVM": "ami-bc5b48d0", "64PV": "ami-794a5915" },
+      "ap-southeast-1": { "64HVM": "ami-c9b572aa", "64PV": "ami-34bd7a57" },
+      "ap-northeast-1": { "64HVM": "ami-383c1956", "64PV": "ami-393c1957" },
+      "ap-southeast-2": { "64HVM": "ami-48d38c2b", "64PV": "ami-ced887ad" },
+      "sa-east-1": { "64HVM": "ami-6817af04", "64PV": "ami-7d15ad11" },
+      "cn-north-1": { "64HVM": "ami-43a36a2e", "64PV": "ami-18ac6575" },
+      "us-gov-west-1": { "64HVM": "ami-c2b5d7e1", "64PV": "ami-feb5d7dd" }
+    },
+    "Constants": {
+      "Scripts": {
+        "FindWorkers": "https://s3.eu-central-1.amazonaws.com/citus-tests/find-workers.sh"
+      },
+      "VolumeSize": { "Master": "128", "Worker": "128" }
+    }
+  },
+  "Outputs": {
+    "MasterHostname": {
+      "Value": { "Fn::GetAtt": ["MasterInstance", "PublicDnsName"] },
+      "Description": "Hostname for master"
+    }
+  }
+}

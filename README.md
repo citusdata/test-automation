@@ -4,7 +4,20 @@ Tools for making our tests easier to run. Automates setting up a cluster with
 CloudFormation and installs a script which automates setting up citus and everything
 required for testing citus.
 
-# Starting a cluster
+# Table of Contents
+
+* [Starting a cluster](#start-a-cluster)
+* [Connecting to the master](#connect-to-master)
+* [Example fab commands](#fab-examples)
+* [How fab tasks work](#fab-tasks)
+* Task namespaces
+  * [`use`, choose exactly what to install](#use)
+  * [`add`, add add-ons (such as extensions) to a citus cluster](#add)
+  * [`pg`, run commands involving pg_ctl and psql](#pg)
+* [Advanced fab usage](#advanced-fab)
+* [Using multiple Citus installations](#multiple-installs)
+
+# <a name="start-a-cluster"></a> Starting a cluster
 
 You'll need to have installed the [AWS CLI](https://aws.amazon.com/cli/). Once that's
 installed you should configure it with `aws configure`. Once it's configured you can run
@@ -26,7 +39,7 @@ with the `--region` flag.
 
 To get the hostname of the master you can run: `aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`.
 
-# Connecting to the master
+# <a name="connect-to-master"></a> Connecting to the master
 
 1. **Make sure you have a running ssh-agent**
 
@@ -113,7 +126,7 @@ To get the hostname of the master you can run: `aws cloudformation describe-stac
 It's unfortunate that you have no flexibility here. This restriction which will hopefully
 be lifted in the future.
 
-# Example fab commands
+# <a name="fab-examples"></a> Example fab commands
 
 Use `fab --list` to see all the tasks you can run! This is just a few examples.
 
@@ -124,31 +137,57 @@ install Citus:
 - `fab setup.basic_testing`, will create a vanilla cluster with postgres and citus. Once this has run you can simply run `psql` to connect to it.
 - `fab use.citus:v6.0.1 setup.basic_testing` will do the same, but use the tag `v6.0.1` when installing Citus. You can give it any git ref, it defaults to `master`.
 - `fab use.postgres:9.6.1 setup.basic_testing` lets you choose your postgres version.
-- `fab use.citus:v6.0.1 setup.enterprise` will install postgres and the `v6.0.1` tag of the enterprise repo.
+- `fab use.enterprise:v6.0.1 setup.enterprise` will install postgres and the `v6.0.1` tag of the enterprise repo.
 
-# Ordering of fab tasks
+# <a name="fab-tasks"></a> Tasks, and ordering of tasks
 
-Order is important though! There are three kinds of tasks, `use`, `setup`, and `add`. The
-`use` tasks don't take any actions, they just change some configuration which later tasks
-use. So, running `fab use.citus:v6.0.1` will do nothing. The `setup` tasks, such as
-`setup.enterprise` actually build and install things.
+When you run a command like `fab use.citus:v6.0.1 setup.basic_testing` you are running two
+different tasks: `use.citus` with a `v6.0.1` argument and `setup.basic_testing`. Those
+tasks are always executed from left to right, and running them is usually equivalent to
+running them as separate commands. For example:
 
-Running `fab setup.enterprise use.citus:v6.0.1` is also a bad idea. The tasks are executed
-in order so this will first setup the `enteprise-master` branch of enterprise (because
-that's the default) then get ready to use the `v6.0.1` ref then exit.
+```
+# this command:
+fab setup.basic_testing add.tpch
+# has exactly the same effect as this series of commands:
+fab setup.basic_testing
+fab add.tpch
+```
 
-Finally, there are `add` tasks, such as `add.tpch`. These assume that a cluster is already
-installed and running, and install additional components, such as the tpch data. Since
-they require that you already have a cluster, they must be run after a `setup` task!
+An exception is the `use` namespace, tasks such as `use.citus` and `use.postgres` only
+have an effect on the current command:
 
-# `add` tasks
+```
+# this works:
+fab use.citus:v6.0.1 setup.basic_testing
+# this does not work:
+fab use.citus:v6.0.1  # tells fabric to install v6.0.1, but only works during this command
+fab setup.basic_testing  # will install the master branch of citus
+```
+
+`use` tasks must come before `setup` tasks:
+
+```
+# this does not work!
+# since the `setup` task is run before the `use` task the `use` task will have no effect
+fab setup.basic_testing use.citus:v.6.0.1
+```
+
+Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
+is already installed and running. They must be run after a `setup` task!
+
+# <a name="use"></a> `use` tasks
+
+# <a name="add"></a> `add` tasks
 
 It is possible to add extra extensions and features to a Citus cluster:
 
 - `fab add.tpch:scale_factor=1` will generate and stage tpch tables (the default scale factor is 10)
 - `fab add.session_analytics` will build and install the session_analytics package (see the instructions above for information on how to checkout this private repo)
 
-You can run these at the same time as you run `setup` tasks:
+For a complete list, run `fab --list`.
+
+As described [above](#fab-tasks), you can run these at the same time as you run `setup` tasks:
 
 - `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 
@@ -175,7 +214,7 @@ To reset to a clean configuration run this command:
 
 - `fab -- rm pg-latest/data/postgresql.auto.conf`
 
-# Advanced fab usage
+# <a name="advanced-fab"></a> Advanced fab usage
 
 By default your fab commands configure the entire cluster, however you can target roles or
 individual machines.
@@ -189,7 +228,7 @@ You can also ask to run arbitrary commands by adding them after `--`.
 - `fab -H 10.0.1.240 -- cat "max_prepared_transactions=0" >> pg-latest/data/postgresql.conf` will modify the postgresql.conf file on the specified worker.
 - `fab -- 'cd citus && git checkout master && make install'` to switch the branch of Citus you're using. (This runs on all nodes)
 
-# Using multiple Citus installations, `pg-latest`
+# <a name="multiple-installs"></a> Using multiple Citus installations, `pg-latest`
 
 Some kinds of tests (such as TPC-H) are easier to perform if you create multiple
 simultanious installations of Citus and are able to switch between them. The fabric

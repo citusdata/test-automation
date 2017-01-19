@@ -152,6 +152,29 @@ You can run these at the same time as you run `setup` tasks:
 
 - `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 
+# `pg` tasks
+
+These tasks run commands which involve the current postgres instance.
+
+- `fab pg.stop` will stop postgres on all nodes
+- `fab pg.restart` will restart postgres on all nodes
+- `fab pg.start` guess what this does :)
+- `fab pg.read_config:[parameter]` will run `SHOW [parameter]` on all nodes. For example:
+- `fab pg.read_config:max_prepared_transactions`
+
+If you want to use a literal comma in a command you must escape it (this applies to all
+fab tasks)
+
+- `fab pg.set_config:shared_preload_libraries,'citus\,cstore_fdw'`
+
+Using `pg.set_config` it's possible to get yourself into trouble. `pg.set_config` uses
+`ALTER SYSTEM`, so if you've broken your postgres instance so bad it won't boot, you won't
+be able to use `pg.set_config` to fix it.
+
+To reset to a clean configuration run this command:
+
+- `fab -- rm pg-latest/data/postgresql.auto.conf`
+
 # Advanced fab usage
 
 By default your fab commands configure the entire cluster, however you can target roles or

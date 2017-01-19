@@ -1,11 +1,12 @@
 import os.path
 
-from fabric.api import task, cd, path, run, roles, sudo, abort
+from fabric.api import task, cd, path, run, roles, sudo, abort, execute
 from fabric.tasks import Task
 
 import utils
 import config
 import prefix
+import pg
 
 __all__ = [
     'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer'
@@ -66,7 +67,6 @@ class InstallExtensionTask(Task):
         if self.post_install_hook:
             self.post_install_hook()
 
-        # TODO: What if the server isn't running?
         utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.extension_name))
 
 session_analytics = InstallExtensionTask(
@@ -98,7 +98,8 @@ def add_cstore_to_shared_preload_libraries():
     replacement = "shared_preload_libraries='\\1,cstore_fdw'"
     run('sed -i -e "s/{}/{}/" {}'.format(regexp, replacement, conf))
 
-# TODO: It should also restart the server
+    execute(pg.restart)
+
 cstore = InstallExtensionTask(
     task_name='cstore',
     doc='Adds the cstore extension to the instance in pg-latest',

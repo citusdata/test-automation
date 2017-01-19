@@ -70,7 +70,7 @@ def postgres(*args):
 @task
 @runs_once
 def asserts(*args):
-    'Enable asserts in pg (and therefore citus)'
+    'Enable asserts in pg (and therefore citus) by passing --enable-cassert'
     config.settings['pg-configure-flags'].append('--enable-cassert')
 
 @task

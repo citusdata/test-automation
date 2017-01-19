@@ -15,7 +15,7 @@ required for testing citus.
   * [`add`, add add-ons (such as extensions) to a citus cluster](#add)
   * [`pg`, run commands involving pg_ctl and psql](#pg)
 * [Advanced fab usage](#advanced-fab)
-* [Using multiple Citus installations](#multiple-installs)
+  * [Using multiple Citus installations](#multiple-installs)
 
 # <a name="start-a-cluster"></a> Starting a cluster
 
@@ -178,6 +178,19 @@ is already installed and running. They must be run after a `setup` task!
 
 # <a name="use"></a> `use` tasks
 
+These tasks configure the tasks you run after them. When run alone they have no effect.
+Some examples:
+
+```
+fab use.citus:v6.0.1 setup.basic_testing
+fab use.enterprise:v6.0.1 setup.enterprise
+fab use.debug_mode use.postgres:9.6.1 use.citus:v6.0.0 setup.basic_testing
+```
+
+`use.debug_mode` passes the following flags to postges' configure: `--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
+
+`use.asserts` passes `--enable-cassert`, it's a subset of `use.debug_mode`.
+
 # <a name="add"></a> `add` tasks
 
 It is possible to add extra extensions and features to a Citus cluster:
@@ -191,7 +204,7 @@ As described [above](#fab-tasks), you can run these at the same time as you run 
 
 - `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 
-# `pg` tasks
+# <a name="pg"></a> `pg` tasks
 
 These tasks run commands which involve the current postgres instance.
 

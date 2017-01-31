@@ -124,6 +124,7 @@ def tpch(**kwargs):
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
 
     scale = kwargs.get('scale-factor', kwargs.get('scale_factor', 10))
+    partition_type = kwargs.get('partition-type', kwargs.get('partition_type', 'append'))
 
     # generate tpc-h data
     tpch_path = '{}/tpch_2_13_0'.format(config.paths['tests-repo'])
@@ -132,7 +133,10 @@ def tpch(**kwargs):
         run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
         # create the tpc-h tables
-        run('{} -f tpch_create_tables.ddl'.format(psql))
+        if partition_type == 'append':
+            run('{} -f tpch_create_tables.ddl'.format(psql))
+        elif partition_type == 'hash':
+            run('{} -f tpch_create_hash_partitioned_tables.ddl'.format(psql))
 
         # stage tpc-h data
         sed = r'''sed "s/\(.*\)\.tbl.*/\\\\COPY \1 FROM '\0' WITH DELIMITER '|'/"'''

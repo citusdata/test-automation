@@ -8,7 +8,7 @@ CREATE TABLE nation
     n_comment    VARCHAR(152)
 );
 
-select create_reference_table(nation);
+select create_reference_table('nation');
 
 
 CREATE TABLE region
@@ -18,7 +18,7 @@ CREATE TABLE region
     r_comment    VARCHAR(152)
 );
 
-select create_reference_table(region);
+select create_reference_table('region');
 
 CREATE TABLE part
 (

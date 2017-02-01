@@ -8,8 +8,7 @@ CREATE TABLE nation
     n_comment    VARCHAR(152)
 );
 
-select create_distributed_table('nation', 'n_nationkey');
-
+select create_reference_table('nation');
 
 CREATE TABLE region
 (
@@ -47,7 +46,7 @@ CREATE TABLE supplier
     s_comment     VARCHAR(101) not null
 );
 
-select create_distributed_table('supplier', 's_suppkey');
+select create_reference_table('supplier');
 
 
 CREATE TABLE partsupp

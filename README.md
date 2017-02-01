@@ -195,7 +195,9 @@ fab use.debug_mode use.postgres:9.6.1 use.citus:v6.0.0 setup.basic_testing
 
 It is possible to add extra extensions and features to a Citus cluster:
 
-- `fab add.tpch:scale_factor=1` will generate and stage tpch tables (the default scale factor is 10)
+- `fab add.tpch:scale_factor=1,partition_type='hash'` will generate and copy tpch tables.
+
+  The default scale factor is 10. The default partition type is reference for nation, region and supplier and hash for remaining. If you set partition type to 'hash' or 'append', all the tables will be created with that partition type. 
 - `fab add.session_analytics` will build and install the session_analytics package (see the instructions above for information on how to checkout this private repo)
 
 For a complete list, run `fab --list`.

@@ -1,7 +1,7 @@
 SET citus.large_table_shard_count TO 2;
 
 -- Query #6 from the TPC-H decision support benchmark
-
+\timing
 SELECT
 	sum(l_extendedprice * l_discount) as revenue
 FROM

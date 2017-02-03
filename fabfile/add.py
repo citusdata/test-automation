@@ -141,9 +141,6 @@ def tpch(**kwargs):
             run('{} -f tpch_create_append_partitioned_tables.ddl'.format(psql))
 
         # stage tpc-h data
-        sed = r'''sed "s/\(.*\)\.tbl.*/\\\\COPY \1 FROM '\0' WITH DELIMITER '|'/"'''
-        xargs = r'''xargs -d '\n' -L 1 -P 4 sh -c '{} -h localhost -c "$0"' '''.format(psql)
-
         for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
             table_name = os.path.basename(segment).split('.')[0]
             run('''{} -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, table_name, segment))

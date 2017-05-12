@@ -17,11 +17,15 @@ public class JDBCReleaseTest {
 		{
 			test_no_1();
 			test_no_2();
-			//test_no_3();
-			//test_no_4();
+			test_no_3();
+			test_no_4();
 			test_no_6();
-			
-			//test_no_7();
+			test_no_7();
+
+			simplePreparedTest1();
+			simplePreparedTest2();
+			simplePreparedTest3();
+			simplePreparedTest4();
 		}
 	
 	}
@@ -113,8 +117,8 @@ public class JDBCReleaseTest {
 		
 
 		Statement stmtUpdate = db.createStatement();
-		stmtUpdate.executeUpdate("SET citusdb.large_table_shard_count TO " + large_table_shard_count );
-		stmtUpdate.executeUpdate("SET citusdb.task_executor_type TO '" + task_executor_type + "'" );
+		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
+		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		
 		PreparedStatement stmt = db.prepareStatement(query);
@@ -139,8 +143,8 @@ public class JDBCReleaseTest {
 		
 
 		Statement stmtUpdate = db.createStatement();
-		stmtUpdate.executeUpdate("SET citusdb.large_table_shard_count TO " + large_table_shard_count );
-		stmtUpdate.executeUpdate("SET citusdb.task_executor_type TO '" + task_executor_type + "'" );
+		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
+		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		
 		PreparedStatement stmt = db.prepareStatement(query);
@@ -167,8 +171,8 @@ public class JDBCReleaseTest {
 		
 
 		Statement stmtUpdate = db.createStatement();
-		stmtUpdate.executeUpdate("SET citusdb.large_table_shard_count TO " + large_table_shard_count );
-		stmtUpdate.executeUpdate("SET citusdb.task_executor_type TO '" + task_executor_type + "'" );
+		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
+		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		
 		PreparedStatement stmt = db.prepareStatement(query);
@@ -211,7 +215,7 @@ public class JDBCReleaseTest {
 	{
 		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
-		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
+		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		
 		PreparedStatement st = db.prepareStatement("SELECT count(*) FROM orders, customer WHERE o_custkey = c_custkey AND o_custkey > ?;");
 		
@@ -239,7 +243,7 @@ public class JDBCReleaseTest {
 	{
 		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
-		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
+		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		
 		PreparedStatement st = db.prepareStatement("SELECT 	l_returnflag, 	l_linestatus, 	sum(l_quantity) as sum_qty, 	sum(l_extendedprice) as sum_base_price, 	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price, 	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge, 	avg(l_quantity) as avg_qty, 	avg(l_extendedprice) as avg_price, 	avg(l_discount) as avg_disc, 	count(*) as count_order  FROM	lineitem WHERE 	l_shipdate <= date '1998-12-01' - interval '90 days' GROUP BY	l_returnflag,	l_linestatus ORDER BY 	l_returnflag, l_linestatus;");
 		
@@ -267,7 +271,7 @@ public class JDBCReleaseTest {
 	{
 		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
-		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 2;");		
+		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		
 		PreparedStatement st = db.prepareStatement("SELECT 	l_partkey, o_orderkey, count(*)  FROM 	lineitem, orders WHERE 	l_suppkey = o_shippriority AND         l_quantity < ? AND o_totalprice <> ? GROUP BY 	l_partkey, o_orderkey ORDER BY 	l_partkey, o_orderkey;");
 		
@@ -296,7 +300,7 @@ public class JDBCReleaseTest {
 	{
 		Connection db = DriverManager.getConnection(url, "ec2-user", "");
 		Statement stmt = db.createStatement();
-		stmt.executeUpdate("SET citusdb.large_table_shard_count TO 3;");		
+		stmt.executeUpdate("SET citus.large_table_shard_count TO 3;");
 		
 		PreparedStatement st = db.prepareStatement("SELECT 	l_partkey, o_orderkey, count(*) FROM 	 lineitem, part, orders, customer WHERE l_orderkey = o_orderkey AND l_partkey = p_partkey AND 	c_custkey = o_custkey AND  (l_quantity > ? OR l_extendedprice > ?) AND p_size > 8 AND o_totalprice > ? AND  c_acctbal < ? GROUP BY 	l_partkey, o_orderkey ORDER BY l_partkey, o_orderkey LIMIT 3000;");
 	    Random randomGenerator = new Random();

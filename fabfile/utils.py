@@ -22,6 +22,10 @@ def psql(command):
     with cd(config.paths['pg-latest']):
         return run('bin/psql -c "{}"'.format(command))
 
+def psql_file(path):
+    with cd(config.paths['pg-latest']):
+        return run('bin/psql -f ' + path + ' | grep Time:')
+
 def add_github_to_known_hosts():
     'Removes prompts from github checkouts asking whether you want to trust the remote'
     key = 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='

@@ -11,7 +11,6 @@ import config
 import utils
 
 @task
-@runs_once
 def citus(*args):
     'Choose a citus version. For example: fab use.citus:v6.0.1 setup.basic_testing (defaults to master)'
 
@@ -32,7 +31,6 @@ def citus(*args):
     config.settings['citus-git-ref'] = git_ref
 
 @task
-@runs_once
 def enterprise(*args):
     'Choose a citus enterprise version. For example: fab use.enterprise:v6.0.1 setup.enterprise (defaults to enterprise-master)'
 
@@ -53,7 +51,6 @@ def enterprise(*args):
     config.settings['citus-git-ref'] = git_ref
 
 @task
-@runs_once
 @roles('master')
 def postgres(*args):
     'Choose a postgres version. For example: fab use.postgres:9.6.1 setup.basic_testing'
@@ -68,13 +65,11 @@ def postgres(*args):
     utils.download_pg() # Check that this doesn't 404
 
 @task
-@runs_once
 def asserts(*args):
     'Enable asserts in pg (and therefore citus) by passing --enable-cassert'
     config.settings['pg-configure-flags'].append('--enable-cassert')
 
 @task
-@runs_once
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
     config.settings['pg-configure-flags'].append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')

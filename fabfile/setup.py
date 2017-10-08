@@ -22,29 +22,26 @@ import prefix
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
 @task
-@runs_once
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
 
     execute(common_setup, build_citus)
     execute(add_workers)
 
 @task
-@runs_once
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
 
     execute(common_setup, build_citus)
     execute(add_workers)
     execute(add.tpch)
 
 @task
-@runs_once
 def valgrind():
     'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
-    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
 
     # we do this execute dance so valgrind is installed on every node, not just the master
     def install_valgrind():
@@ -57,10 +54,9 @@ def valgrind():
     execute(add_workers)
 
 @task
-@runs_once
 def enterprise():
     'Installs the enterprise version of Citus'
-    execute(prefix.ensure_pg_latest_exists, default='/home/ec2-user/citus-installation')
+    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
 
     execute(common_setup, build_enterprise)
     execute(add_workers)
@@ -81,6 +77,9 @@ def common_setup(build_citus_func):
 
     pg_latest = config.paths['pg-latest']
     with cd(pg_latest):
+        while getattr(run('bin/pg_isready'), 'return_code') != 0:
+            print ('Waiting for database to be ready')
+
         run('bin/createdb $(whoami)')
     utils.psql('CREATE EXTENSION citus;')
 
@@ -100,7 +99,7 @@ def redhat_install_packages():
 def build_postgres():
     'Installs postges'
 
-    # Give the postgres source to the remote node
+    # Give the postgres source to the remote nodes
     sourceball_loc = utils.download_pg()
     if env.host_string != 'localhost':
         put(local_path=sourceball_loc, remote_path=sourceball_loc)
@@ -108,6 +107,7 @@ def build_postgres():
     with cd(config.paths['pg-source-balls']):
         final_dir = os.path.basename(sourceball_loc).split('.tar.bz2')[0]
         # rm makes this idempotent, if not a bit inefficient
+
         utils.rmdir(final_dir)
         run('tar -xf {}.tar.bz2'.format(final_dir))
 

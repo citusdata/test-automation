@@ -5,6 +5,8 @@ paths = {
     'enterprise-repo': '/home/ec2-user/citus-enterprise',
     'pg-latest': '/home/ec2-user/pg-latest',
     'pg-source-balls': '/home/ec2-user/postgres-source',
+    'home-directory': '/home/ec2-user/',
+    'citus-installation': '/home/ec2-user/citus-installation'
 }
 
 settings = {

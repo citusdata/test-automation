@@ -10,6 +10,8 @@ import re
 import add
 import ConfigParser
 
+__all__ = ["jdbc", "regression", "dml_tests", "tpch_automate", "tpch_queries"]
+
 @task
 @runs_once
 @roles('master')

@@ -10,8 +10,6 @@ from fabric.api import (
     env, cd, roles, task, parallel, execute, run,
     sudo, abort, local, lcd, path, put, warn
 )
-from fabric.decorators import runs_once
-from fabric.contrib.files import exists
 
 import utils
 import config

@@ -10,6 +10,7 @@ from fabric.contrib.files import append, exists
 
 import config
 
+
 def rmdir(path, force=False):
     'Better than rm because it is silent when the file does not exist'
     flag = '-f' if force else ''

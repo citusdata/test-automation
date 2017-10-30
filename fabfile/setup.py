@@ -159,4 +159,5 @@ def create_database():
         run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
+        run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')

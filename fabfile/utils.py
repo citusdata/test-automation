@@ -10,8 +10,6 @@ from fabric.contrib.files import append, exists
 
 import config
 
-postgres_version_regex = '\d+\.\d+\.\d+$' # For example: 9.3.15
-
 def rmdir(path, force=False):
     'Better than rm because it is silent when the file does not exist'
     flag = '-f' if force else ''
@@ -44,5 +42,4 @@ def download_pg():
     return target_file
 
 def pg_url_for_version(version):
-    assert re.match(postgres_version_regex, version) is not None
     return 'https://ftp.postgresql.org/pub/source/v{0}/postgresql-{0}.tar.bz2'.format(version)

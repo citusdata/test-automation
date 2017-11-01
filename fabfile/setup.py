@@ -94,7 +94,7 @@ def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
     sudo("yum groupinstall -q -y 'Development Tools'")
     sudo('yum install -q -y libxml2-devel libxslt-devel'
-         ' openssl-devel pam-devel readline-devel git')
+         ' openssl-devel pam-devel readline-devel libcurl-devel git')
 
 def build_postgres():
     'Installs postges'

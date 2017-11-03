@@ -10,6 +10,8 @@ import re
 import add
 import ConfigParser
 
+__all__ = ['jdbc', 'regression', 'dml_tests', 'tpch_automate']
+
 @task
 @runs_once
 @roles('master')
@@ -123,6 +125,8 @@ def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections
 @runs_once
 @roles('master')
 def tpch_automate(*args):
+    'Runs tpch tests automatically given configuration file'
+
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests

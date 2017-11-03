@@ -58,8 +58,6 @@ def postgres(*args):
     if len(args) != 1:
         abort('You must provide a single argument. For example: "postgres:9.6.1"')
     version = args[0]
-    if not re.match(utils.postgres_version_regex, version):
-        abort('"{}" is not a valid postgres version. Enter something like "9.6.1"'.format(version))
 
     config.settings['pg-version'] = version
     utils.download_pg() # Check that this doesn't 404

@@ -59,7 +59,7 @@ def dml_tests(*args):
 
             # create database for the given citus and pg versions
             prepare_for_benchmark(pg_version, citus_version)
-            configure_and_run_postgres('10GB', '1h', 1000)
+            configure_and_run_postgres('10GB', '1h', 1000, 1000)
 
             shard_count_replication_factor_tuples = eval(config_parser.get(section, 'shard_counts_replication_factors'))
             for shard_count, replication_factor in shard_count_replication_factor_tuples:
@@ -113,10 +113,11 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(setup.basic_testing)
     
 
-def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections):
+def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):
     execute(pg.set_config, 'max_wal_size', "'{}'".format(max_val_size))
     execute(pg.set_config, 'checkpoint_timeout', "'{}'".format(checkpoint_timeout))
     execute(pg.set_config, 'max_connections', max_connections)
+    execute(pg.set_config, 'max_prepared_transactions', max_prepared_transactions)
     execute(pg.stop)
     execute(pg.start)
 

@@ -51,7 +51,7 @@ def dml_tests(*args):
     for i in range(1,10000):
         copy_file.write(str(i) + ',' + str(i) + ',' + str(i) + ',' + str(i))
         if i != 9999:
-            copy_file.write('/n')
+            copy_file.write('\n')
 
     for section in config_parser.sections():
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))

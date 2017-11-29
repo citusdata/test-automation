@@ -29,7 +29,7 @@ def restart():
     prefix.check_for_pg_latest()
 
     with cd(paths['pg-latest']):
-        run('set -m; bin/pg_ctl -D data restart')
+        run('set -m; bin/pg_ctl -D data -l logfile restart')
 
     #TODO: Maybe also check that the server started properly. And if it didn't tail the log file?
 

@@ -39,7 +39,7 @@ def dml_tests(*args):
     # If no argument is given, run default tests
     # Note that you can change test sql by updating insert.sql, update.sql and delete.sql
     if len(args) == 0:
-        config_parser.read('default_config.ini')
+        config_parser.read('fabfile/default_config.ini')
     elif len(args) == 1:
         config_parser.read(args)
     else:
@@ -51,7 +51,7 @@ def dml_tests(*args):
     for i in range(1,10000):
         copy_file.write(str(i) + ',' + str(i) + ',' + str(i) + ',' + str(i))
         if i != 9999:
-            copy_file.write('/n')
+            copy_file.write('\n')
 
     for section in config_parser.sections():
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
@@ -59,7 +59,7 @@ def dml_tests(*args):
 
             # create database for the given citus and pg versions
             prepare_for_benchmark(pg_version, citus_version)
-            configure_and_run_postgres('10GB', '1h', 1000)
+            configure_and_run_postgres('10GB', '1h', 1000, 1000)
 
             shard_count_replication_factor_tuples = eval(config_parser.get(section, 'shard_counts_replication_factors'))
             for shard_count, replication_factor in shard_count_replication_factor_tuples:
@@ -113,10 +113,11 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(setup.basic_testing)
     
 
-def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections):
+def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):
     execute(pg.set_config, 'max_wal_size', "'{}'".format(max_val_size))
     execute(pg.set_config, 'checkpoint_timeout', "'{}'".format(checkpoint_timeout))
     execute(pg.set_config, 'max_connections', max_connections)
+    execute(pg.set_config, 'max_prepared_transactions', max_prepared_transactions)
     execute(pg.stop)
     execute(pg.start)
 
@@ -132,7 +133,7 @@ def tpch_automate(*args):
     # If no argument is given, run default tests
     # Note that you can change test sql by updating insert.sql, update.sql and delete.sql
     if len(args) == 0:
-        config_parser.read('default_tpch_config.ini')
+        config_parser.read('fabfile/default_tpch_config.ini')
     elif len(args) == 1:
         config_parser.read(args)
     else:
@@ -142,19 +143,21 @@ def tpch_automate(*args):
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
         for pg_version, citus_version in pg_citus_tuples:
             prepare_for_benchmark(pg_version, citus_version)
-            execute(add.tpch, 'scale_factor=10')
-            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')))
+            execute(add.tpch)
+            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version, citus_version)
             execute(pg.stop)
 
 
 @task
 @roles('master')
-def tpch_queries(query_info):
-    results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results.csv', 'a')
+def tpch_queries(query_info, pg_version, citus_version):
+    results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version), 'a')
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
-    tpch_path = '{}/tpch_2_13_0/'.format(config.paths['tests-repo'])
+    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])
 
     for query_code, executor_type in query_info:
-        utils.psql("set citus.task_executor_type to {}".format(executor_type) )
-        out_val = run('{} -f {}'.format(psql, tpch_path + query_code))
+        executor_string = "set citus.task_executor_type to '{}'".format(executor_type)
+        run_string = '{} -1 -c "{}" -c "\\timing" -f "{}"'.format(psql, executor_string, tpch_path + query_code)
+        out_val = run(run_string)
         results_file.write(out_val)
+        results_file.write('\n')

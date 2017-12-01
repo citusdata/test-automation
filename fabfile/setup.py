@@ -117,7 +117,7 @@ def build_postgres():
             run('./configure --prefix={} {}'.format(pg_latest, flags))
 
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-            run('make -j{} install'.format(core_count))
+            run('make -s -j{} install'.format(core_count))
 
             with cd('contrib'):
                 run('make install')
@@ -134,7 +134,7 @@ def build_citus():
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -j{} install'.format(core_count))
+        run('make -s -j{} install'.format(core_count))
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -149,7 +149,7 @@ def build_enterprise():
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -j{} install'.format(core_count))
+        run('make -s -j{} install'.format(core_count))
 
 def create_database():
     pg_latest = config.paths['pg-latest']
@@ -159,4 +159,5 @@ def create_database():
         run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
+        run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')

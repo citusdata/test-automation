@@ -550,7 +550,7 @@
       "i2.8xlarge": { "NumEphemerals": "8", "Architecture": "64HVM", "NumCores": "16", "NumVCPUs": "32" }
     },
     "AmazonLinuxEBSAMIs": {
-      "us-east-1": { "64HVM": "ami-60b6c60a", "64PV": "ami-5fb8c835" },
+      "us-east-1": { "64HVM": "ami-55ef662f", "64PV": "ami-f0ea638a" },
       "us-west-2": { "64HVM": "ami-f0091d91", "64PV": "ami-d93622b8" },
       "us-west-1": { "64HVM": "ami-d5ea86b5", "64PV": "ami-56ea8636" },
       "eu-west-1": { "64HVM": "ami-bff32ccc", "64PV": "ami-95e33ce6" },

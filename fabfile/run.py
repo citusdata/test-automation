@@ -153,7 +153,7 @@ def tpch_automate(*args):
 def tpch_queries(query_info):
     results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results.csv', 'a')
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
-    tpch_path = '{}/tpch_2_13_0/queries/'.format(config.paths['tests-repo'])
+    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])
 
     for query_code, executor_type in query_info:
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)

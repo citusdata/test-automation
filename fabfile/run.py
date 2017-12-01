@@ -144,14 +144,14 @@ def tpch_automate(*args):
         for pg_version, citus_version in pg_citus_tuples:
             prepare_for_benchmark(pg_version, citus_version)
             execute(add.tpch)
-            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')))
+            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version, citus_version)
             execute(pg.stop)
 
 
 @task
 @roles('master')
-def tpch_queries(query_info):
-    results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results.csv', 'a')
+def tpch_queries(query_info, pg_version, citus_version):
+    results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version), 'a')
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
     tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])
 

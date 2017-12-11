@@ -37,6 +37,17 @@ ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 # set up your test cluster with PostgreSQL 10.1 and Citus master branch
 fab use.postgres:10.1 use.citus:master setup.basic_testing
 
+# lets change some conf values 
+fab pg.set_config:max_wal_size,"'5GB'"
+fab pg.set_config:max_connections,1000
+
+# and restart the cluster
+fab pg.restart
+
+# delete the formation
+# it's a good practice to check deletion status from the cloud formation console
+aws cloudformation delete-stack --stack-name "FormationMetin"
+
 ```
 
 # <a name="start-a-cluster"></a> Starting a cluster
@@ -161,14 +172,14 @@ install Citus:
 
 - `fab --list` will return a list of the tasks you can run.
 - `fab setup.basic_testing`, will create a vanilla cluster with postgres and citus. Once this has run you can simply run `psql` to connect to it.
-- `fab use.citus:v6.0.1 setup.basic_testing` will do the same, but use the tag `v6.0.1` when installing Citus. You can give it any git ref, it defaults to `master`.
-- `fab use.postgres:9.6.1 setup.basic_testing` lets you choose your postgres version.
-- `fab use.enterprise:v6.0.1 setup.enterprise` will install postgres and the `v6.0.1` tag of the enterprise repo.
+- `fab use.citus:v7.1.1 setup.basic_testing` will do the same, but use the tag `v7.1.1` when installing Citus. You can give it any git ref, it defaults to `master`.
+- `fab use.postgres:10.1 setup.basic_testing` lets you choose your postgres version.
+- `fab use.enterprise:v7.1.1 setup.enterprise` will install postgres and the `v7.1.1` tag of the enterprise repo.
 
 # <a name="fab-tasks"></a> Tasks, and ordering of tasks
 
-When you run a command like `fab use.citus:v6.0.1 setup.basic_testing` you are running two
-different tasks: `use.citus` with a `v6.0.1` argument and `setup.basic_testing`. Those
+When you run a command like `fab use.citus:v7.1.1 setup.basic_testing` you are running two
+different tasks: `use.citus` with a `v7.1.1` argument and `setup.basic_testing`. Those
 tasks are always executed from left to right, and running them is usually equivalent to
 running them as separate commands. For example:
 
@@ -185,9 +196,9 @@ have an effect on the current command:
 
 ```
 # this works:
-fab use.citus:v6.0.1 setup.basic_testing
+fab use.citus:v7.1.1 setup.basic_testing
 # this does not work:
-fab use.citus:v6.0.1  # tells fabric to install v6.0.1, but only works during this command
+fab use.citus:v7.1.1  # tells fabric to install v7.1.1, but only works during this command
 fab setup.basic_testing  # will install the master branch of citus
 ```
 
@@ -196,7 +207,7 @@ fab setup.basic_testing  # will install the master branch of citus
 ```
 # this does not work!
 # since the `setup` task is run before the `use` task the `use` task will have no effect
-fab setup.basic_testing use.citus:v.6.0.1
+fab setup.basic_testing use.citus:v.7.1.1
 ```
 
 Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
@@ -208,9 +219,9 @@ These tasks configure the tasks you run after them. When run alone they have no 
 Some examples:
 
 ```
-fab use.citus:v6.0.1 setup.basic_testing
-fab use.enterprise:v6.0.1 setup.enterprise
-fab use.debug_mode use.postgres:9.6.1 use.citus:v6.0.0 setup.basic_testing
+fab use.citus:v7.1.1 setup.basic_testing
+fab use.enterprise:v7.1.1 setup.enterprise
+fab use.debug_mode use.postgres:10.1 use.citus:v7.1.1 setup.basic_testing
 ```
 
 `use.debug_mode` passes the following flags to postges' configure: `--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
@@ -230,7 +241,7 @@ For a complete list, run `fab --list`.
 
 As described [above](#fab-tasks), you can run these at the same time as you run `setup` tasks:
 
-- `fab use.citus:v6.0.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
+- `fab use.citus:v7.1.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 
 # <a name="pg"></a> `pg` tasks
 
@@ -257,7 +268,7 @@ To reset to a clean configuration run this command:
 
 # <a name="run"></a> `run` tasks
 
-In order to run dml and tpch tests automatically, you can use run.dml_tests or run.tpch_automate. If you want to use default configuration files, running commands without any parameter is enough. 
+In order to run dml and tpch tests automatically, you can use `run.dml_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
 
 To change configuration file for dml tests, you should prepare configuration file similar to fabfile/default_config.ini. Note that, dml commands are run against the table with the template like 'test_table(a int, b int, c int, d int)'.
 

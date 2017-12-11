@@ -41,6 +41,7 @@ This will only list clusters which are in your default region. You can specify a
 with the `--region` flag.
 
 To get the hostname of the master you can run:
+
 `aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`
 
 # <a name="connect-to-master"></a> Connecting to the master

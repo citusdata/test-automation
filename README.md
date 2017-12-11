@@ -24,7 +24,7 @@ You'll need to have installed the [AWS CLI](https://aws.amazon.com/cli/). Once t
 installed you should configure it with `aws configure`. Once it's configured you can run
 something like:
 
-`cloudformation/create-stack.sh -k [your keypair name] -s MyStack -a eu-central-1a`
+`cloudformation/create-stack.sh -k [your keypair name] -s MyStack`
 
 This will take some time (around 7 minutes) and emit some instructions for connecting to
 the master node.
@@ -34,11 +34,14 @@ The name you pass `-s` must be unique. There are more parameters you can pass su
 `create-stack` with no parameters it will tell you more.
 
 If you forget the name of your cluster you can get the list of active clusters by running:
-`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE CREATE_IN_PROGRESS CREATE_FAILED --query "StackSummaries[*].{StackName:StackName,StackStatus:StackStatus}"`.
+
+`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE CREATE_IN_PROGRESS CREATE_FAILED --query "StackSummaries[*].{StackName:StackName,StackStatus:StackStatus}"`
+
 This will only list clusters which are in your default region. You can specify a region
 with the `--region` flag.
 
-To get the hostname of the master you can run: `aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`.
+To get the hostname of the master you can run:
+`aws cloudformation describe-stacks --stack-name CS3 --query Stacks[0].Outputs[0].OutputValue`
 
 # <a name="connect-to-master"></a> Connecting to the master
 

@@ -57,7 +57,7 @@ usage: create-stack.sh [-k EC2 key pair] [-p private key file]
   a : specifies the availability zone to use
       Default: us-east-1b
   i : specifies the instance type to use
-      Default: m3.medium
+      Default: c3.xlarge
   n : specifies the number of workers to start
       Default: 2
   s : specifies the name of the stack
@@ -89,7 +89,7 @@ key_pair=
 private_key_file=
 cloudformation_template=${default_cloudformation_template}
 availability_zone=us-east-1b
-instance_type=m3.medium
+instance_type=c3.xlarge
 num_workers=2
 stack_name=
 

@@ -53,40 +53,40 @@ def dml_tests(*args):
         if i != 9999:
             copy_file.write('\n')
 
-    for section in config_parser.sections():
-        pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
-        for pg_version, citus_version in pg_citus_tuples:
+    pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
+    for pg_version, citus_version in pg_citus_tuples:
 
-            # create database for the given citus and pg versions
-            prepare_for_benchmark(pg_version, citus_version)
-            configure_and_run_postgres('10GB', '1h', 1000, 1000)
+        # create database for the given citus and pg versions
+        prepare_for_benchmark(pg_version, citus_version)
+        configure_and_run_postgres('10GB', '1h', 1000, 1000)
 
-            shard_count_replication_factor_tuples = eval(config_parser.get(section, 'shard_counts_replication_factors'))
-            for shard_count, replication_factor in shard_count_replication_factor_tuples:
+        shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
+        for shard_count, replication_factor in shard_count_replication_factor_tuples:
+
+            psql_command = ("SET citus.multi_shard_commit_protocol TO '1pc'; "
+                            "SET citus.shard_count TO {}; "
+                            "SET citus.shard_replication_factor TO {}; "
+                            "CREATE TABLE test_table(a int, b int, c int, d int); ").format(shard_count, replication_factor)
+
+            if config_parser.get('DEFAULT', 'use_reference_table') == 'no':
+                psql_command += "SELECT create_distributed_table('test_table', 'a');"
+            else:
+                psql_command += ("SELECT create_reference_table('test_table'); "
+                                "SET citus.multi_shard_commit_protocol TO '2pc';")
+
+            utils.psql(psql_command)
+
+            for section in config_parser.sections():
 
                 results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
-                                   str(shard_count) + ", " + str(replication_factor) + ", ")
+                                    str(shard_count) + ", " + str(replication_factor) + ", ")
                 print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
-                                str(shard_count) + ", " + str(replication_factor) + ", "
-
-                psql_command = ("SET citus.multi_shard_commit_protocol TO '1pc'; "
-                                "SET citus.shard_count TO {}; " 
-                                "SET citus.shard_replication_factor TO {}; "
-                                "CREATE TABLE test_table(a int, b int, c int, d int); ").format(shard_count, replication_factor)
-
-                if config_parser.get(section, 'use_reference_table') == 'no':
-                    psql_command += "SELECT create_distributed_table('test_table', 'a');"
-                else:
-                    psql_command += ("SELECT create_reference_table('test_table'); "
-                                     "SET citus.multi_shard_commit_protocol TO '2pc';")
-
-                utils.psql(psql_command)
+                                    str(shard_count) + ", " + str(replication_factor) + ", "
 
                 command = 'pgbench -c {} -j {} -f {} -n -t {} -P 5'.format(config_parser.get(section, 'client_count'),
                                                                            config_parser.get(section, 'thread_count'),
                                                                            config_parser.get(section, 'filename'),
                                                                            config_parser.get(section, 'transaction_count'))
-
                 out_val = run(command)
                 if getattr(out_val, 'return_code') != 0:
                     results_file.write('PG_BENCH FAILED')
@@ -99,9 +99,10 @@ def dml_tests(*args):
                     print_to_std += '\n'
 
                 print (print_to_std)
-                utils.psql("DROP TABLE test_table;")
 
-            execute(pg.stop)
+            utils.psql("DROP TABLE test_table;")
+
+        execute(pg.stop)
 
     results_file.close()
 

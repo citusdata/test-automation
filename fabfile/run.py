@@ -33,9 +33,11 @@ def regression():
 @runs_once
 @roles('master')
 def pgbench_tests(*args):
+
     'Runs pgbench tests using the given config options'
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
+
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests
@@ -85,14 +87,12 @@ def pgbench_tests(*args):
                 print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
                                     str(shard_count) + ", " + str(replication_factor) + ", "
 
-                command = 'pgbench -c {} -j {} -f {} -n -t {} -P 5'.format(config_parser.get(section, 'client_count'),
-                                                                           config_parser.get(section, 'thread_count'),
-                                                                           config_parser.get(section, 'filename'),
-                                                                           config_parser.get(section, 'transaction_count'))
+                command = '{}'.format(config_parser.get(section, 'pgbench_command'))
                 out_val = run(command)
+
                 if getattr(out_val, 'return_code') != 0:
-                    results_file.write('PG_BENCH FAILED')
-                    print_to_std += 'PG_BENCH_FAILED'
+                    results_file.write('PGBENCH FAILED')
+                    print_to_std += 'PGBENCH_FAILED'
 
                 else:
                     results_file.write(re.search('tps = (.+?) ', out_val).group(1))

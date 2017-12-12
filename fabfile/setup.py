@@ -63,7 +63,8 @@ def enterprise():
 
 @parallel
 def common_setup(build_citus_func):
-    run('pkill postgres || true')
+    with hide('stdout'):
+        run('pkill postgres || true')
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
@@ -81,7 +82,9 @@ def common_setup(build_citus_func):
             print ('Waiting for database to be ready')
 
         run('bin/createdb $(whoami)')
-    utils.psql('CREATE EXTENSION citus;')
+
+    with hide('stdout'):
+        utils.psql('CREATE EXTENSION citus;')
 
 @roles('master')
 def add_workers():
@@ -142,7 +145,9 @@ def build_citus():
         with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
-        core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+        with hide('stdout', 'running'):
+            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+
         with hide('stdout'):
             run('make -s -j{} install'.format(core_count))
 
@@ -166,7 +171,7 @@ def build_enterprise():
 
 def create_database():
     pg_latest = config.paths['pg-latest']
-    with cd(pg_latest):
+    with cd(pg_latest), hide('stdout'):
         run('bin/initdb -D data')
     with cd('{}/data'.format(pg_latest)):
         run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')

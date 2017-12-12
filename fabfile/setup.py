@@ -7,7 +7,7 @@ queries.
 import os.path
 
 from fabric.api import (
-    env, cd, roles, task, parallel, execute, run,
+    env, cd, hide, roles, task, parallel, execute, run,
     sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
@@ -117,10 +117,12 @@ def build_postgres():
             run('./configure --prefix={} {}'.format(pg_latest, flags))
 
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-            run('make -s -j{} install'.format(core_count))
 
-            with cd('contrib'):
-                run('make install')
+            with hide('running'):
+                run('make -s -j{} install'.format(core_count))
+
+            with cd('contrib'), hide('running'):
+                run('make -s install')
 
 def build_citus():
     repo = config.paths['citus-repo']
@@ -134,7 +136,8 @@ def build_citus():
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -s -j{} install'.format(core_count))
+        with hide('running'):
+            run('make -s -j{} install'.format(core_count))
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -149,7 +152,9 @@ def build_enterprise():
         run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -s -j{} install'.format(core_count))
+
+        with hide('running'):
+            run('make -s -j{} install'.format(core_count))
 
 def create_database():
     pg_latest = config.paths['pg-latest']

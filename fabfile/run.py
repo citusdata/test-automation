@@ -85,28 +85,37 @@ def pgbench_tests(*args):
                 for option in config_parser.options(section):
 
                     if (option == 'pgbench_command'):
-                        results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
-                                            str(shard_count) + ", " + str(replication_factor) + ", ")
-                        print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
-                                            str(shard_count) + ", " + str(replication_factor) + ", "
-
                         command = '{}'.format(config_parser.get(section, 'pgbench_command'))
                         out_val = run(command)
 
-                        if getattr(out_val, 'return_code') != 0:
-                            results_file.write('PGBENCH FAILED')
-                            print_to_std += 'PGBENCH_FAILED'
+                        if (section != 'initialization'):
 
-                        else:
-                            results_file.write(re.search('tps = (.+?) ', out_val).group(1))
-                            results_file.write('\n')
-                            print_to_std += re.search('tps = (.+?) ', out_val).group(1)
-                            print_to_std += '\n'
+                            results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
+                                                str(shard_count) + ", " + str(replication_factor) + ", ")
+                            print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
+                                                str(shard_count) + ", " + str(replication_factor) + ", "
 
-                        print (print_to_std)
+                            if getattr(out_val, 'return_code') != 0:
+                                results_file.write('PGBENCH FAILED')
+                                print_to_std += 'PGBENCH_FAILED'
 
-                    elif (option == 'distribute_table'):
-                        print ('print distribute_table')
+                            else :
+                                results_file.write(re.search('tps = (.+?) ', out_val).group(1))
+                                results_file.write('\n')
+                                print_to_std += re.search('tps = (.+?) ', out_val).group(1)
+                                print_to_std += '\n'
+
+                            print (print_to_std)
+
+                    elif (option == 'distribute_table_command'):
+
+                        distribute_table_command = '{}'.format(config_parser.get(section, 'distribute_table_command'))
+                        psql_command = ("SET citus.shard_count TO {}; "
+                                        "SET citus.shard_replication_factor TO {}; ".format(shard_count, replication_factor))
+
+                        psql_command += distribute_table_command
+
+                        utils.psql(psql_command)
 
             utils.psql("DROP TABLE test_table;")
 

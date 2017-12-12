@@ -9,6 +9,7 @@ import utils
 import re
 import add
 import ConfigParser
+import time
 
 __all__ = ['jdbc', 'regression', 'dml_tests', 'tpch_automate']
 
@@ -33,7 +34,8 @@ def regression():
 @roles('master')
 def dml_tests(*args):
     'Runs pg-bench dml tests using the given config options'
-    results_file = open(config.paths['home-directory'] + 'dml_benchmark_results.csv', 'w')
+    current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
+    results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests

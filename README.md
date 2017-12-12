@@ -15,7 +15,7 @@ required for testing citus.
   * [`use`, choose exactly what to install](#use)
   * [`add`, add add-ons (such as extensions) to a citus cluster](#add)
   * [`pg`, run commands involving pg_ctl and psql](#pg)
-  * [`run`, run dml and tpch tests automatically](#run)
+  * [`run`, run pgbench and tpch tests automatically](#run)
 * [Advanced fab usage](#advanced-fab)
   * [Using multiple Citus installations](#multiple-installs)
 
@@ -268,9 +268,9 @@ To reset to a clean configuration run this command:
 
 # <a name="run"></a> `run` tasks
 
-In order to run dml and tpch tests automatically, you can use `run.dml_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
+In order to run pgbench and tpch tests automatically, you can use `run.pgbench_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
 
-To change configuration file for dml tests, you should prepare configuration file similar to fabfile/default_config.ini. Note that, dml commands are run against the table with the template like 'test_table(a int, b int, c int, d int)'.
+To change configuration file for pgbench tests, you should prepare configuration file similar to fabfile/default_config.ini. Note that, pgbench commands are run against the table with the template like 'test_table(a int, b int, c int, d int)'.
 
 To change the configuration file for tpch tests, you should prepare configuration file similar to fabfile/default_tpch_config.ini. You should add sql files to the folder you mentioned in the configuration file.
 

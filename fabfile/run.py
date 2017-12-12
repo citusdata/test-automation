@@ -11,7 +11,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'dml_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
 
 @task
 @runs_once
@@ -32,8 +32,8 @@ def regression():
 @task
 @runs_once
 @roles('master')
-def dml_tests(*args):
-    'Runs pg-bench dml tests using the given config options'
+def pgbench_tests(*args):
+    'Runs pgbench tests using the given config options'
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
     config_parser = ConfigParser.ConfigParser()

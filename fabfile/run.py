@@ -43,7 +43,7 @@ def pgbench_tests(*args):
     # If no argument is given, run default tests
     # Note that you can change test sql by updating insert.sql, update.sql and delete.sql
     if len(args) == 0:
-        config_parser.read('fabfile/default_config.ini')
+        config_parser.read('fabfile/pgbench_default.ini')
     elif len(args) == 1:
         config_parser.read(args)
     else:
@@ -82,25 +82,31 @@ def pgbench_tests(*args):
 
             for section in config_parser.sections():
 
-                results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
-                                    str(shard_count) + ", " + str(replication_factor) + ", ")
-                print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
-                                    str(shard_count) + ", " + str(replication_factor) + ", "
+                for option in config_parser.options(section):
 
-                command = '{}'.format(config_parser.get(section, 'pgbench_command'))
-                out_val = run(command)
+                    if (option == 'pgbench_command'):
+                        results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
+                                            str(shard_count) + ", " + str(replication_factor) + ", ")
+                        print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
+                                            str(shard_count) + ", " + str(replication_factor) + ", "
 
-                if getattr(out_val, 'return_code') != 0:
-                    results_file.write('PGBENCH FAILED')
-                    print_to_std += 'PGBENCH_FAILED'
+                        command = '{}'.format(config_parser.get(section, 'pgbench_command'))
+                        out_val = run(command)
 
-                else:
-                    results_file.write(re.search('tps = (.+?) ', out_val).group(1))
-                    results_file.write('\n')
-                    print_to_std += re.search('tps = (.+?) ', out_val).group(1)
-                    print_to_std += '\n'
+                        if getattr(out_val, 'return_code') != 0:
+                            results_file.write('PGBENCH FAILED')
+                            print_to_std += 'PGBENCH_FAILED'
 
-                print (print_to_std)
+                        else:
+                            results_file.write(re.search('tps = (.+?) ', out_val).group(1))
+                            results_file.write('\n')
+                            print_to_std += re.search('tps = (.+?) ', out_val).group(1)
+                            print_to_std += '\n'
+
+                        print (print_to_std)
+
+                    elif (option == 'distribute_table'):
+                        print ('print distribute_table')
 
             utils.psql("DROP TABLE test_table;")
 

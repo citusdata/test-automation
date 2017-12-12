@@ -87,16 +87,16 @@ def common_setup(build_citus_func):
 def add_workers():
     with cd('{}/data'.format(config.paths['pg-latest'])):
         for ip in env.roledefs['workers']:
-            with hide('running'):
+            with hide('stdout'):
                 utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
                 run('echo "{} 5432" >> pg_worker_list.conf'.format(ip))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
-    with hide('running'):
+    with hide('stdout'):
         sudo("yum groupinstall -q -y 'Development Tools'")
 
-    with hide('running'):
+    with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
             ' openssl-devel pam-devel readline-devel libcurl-devel git')
 
@@ -113,21 +113,21 @@ def build_postgres():
         # rm makes this idempotent, if not a bit inefficient
 
         utils.rmdir(final_dir)
-        with hide('running'):
+        with hide('stdout'):
             run('tar -xf {}.tar.bz2'.format(final_dir))
 
         with cd(final_dir):
             pg_latest = config.paths['pg-latest']
             flags = ' '.join(config.settings['pg-configure-flags'])
-            with hide('running'):
+            with hide('stdout'):
                 run('./configure --prefix={} {}'.format(pg_latest, flags))
 
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-            with hide('running'):
+            with hide('stdout'):
                 run('make -s -j{} install'.format(core_count))
 
-            with cd('contrib'), hide('running'):
+            with cd('contrib'), hide('stdout'):
                 run('make -s install')
 
 def build_citus():
@@ -139,11 +139,11 @@ def build_citus():
         run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
-        with hide('running'):
+        with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        with hide('running'):
+        with hide('stdout'):
             run('make -s -j{} install'.format(core_count))
 
 def build_enterprise():
@@ -156,12 +156,12 @@ def build_enterprise():
         run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
-        with hide('running'):
+        with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-        with hide('running'):
+        with hide('stdout'):
             run('make -s -j{} install'.format(core_count))
 
 def create_database():

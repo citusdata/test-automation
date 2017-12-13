@@ -77,28 +77,26 @@ def pgbench_tests(*args):
         for shard_count, replication_factor in shard_count_replication_factor_tuples:
 
             for section in config_parser.sections():
-
                 for option in config_parser.options(section):
 
                     if option == 'pgbench_command':
-                        command = '{}'.format(config_parser.get(section, 'pgbench_command'))
+                        command = config_parser.get(section, 'pgbench_command')
                         out_val = run(command)
 
                         if section != 'initialization':
 
                             results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
                                                 str(shard_count) + ", " + str(replication_factor))
-                            print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
-                                                str(shard_count) + ", " + str(replication_factor) + ", "
 
                             if getattr(out_val, 'return_code') != 0:
                                 results_file.write('PGBENCH FAILED')
-                                print_to_std += 'PGBENCH_FAILED'
 
-                            else :
+                            else:
                                 latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
-                                tps_including_connections = re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
-                                tps_excluding_connections = re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+                                tps_including_connections =\
+                                    re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                tps_excluding_connections =\
+                                    re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
 
                                 results_file.write(", " + latency_average)
                                 results_file.write(", " + tps_including_connections)
@@ -106,19 +104,16 @@ def pgbench_tests(*args):
                                 results_file.write('\n')
 
                     elif option == 'distribute_table_command':
-
-                        distribute_table_command = '{}'.format(config_parser.get(section, 'distribute_table_command'))
-                        psql_command = ("SET citus.shard_count TO {}; "
+                        distribute_table_command = config_parser.get(section, 'distribute_table_command')
+                        sql_command = ("SET citus.shard_count TO {}; "
                                         "SET citus.shard_replication_factor TO {}; ".format(shard_count, replication_factor))
 
-                        psql_command += distribute_table_command
-                        utils.psql(psql_command)
+                        sql_command += distribute_table_command
+                        utils.psql(sql_command)
 
                     elif option == 'sql_command':
                         sql_command = '{}'.format(config_parser.get(section, 'sql_command'))
                         utils.psql(sql_command)
-
-            utils.psql("DROP TABLE test_table;")
 
         execute(pg.stop)
 

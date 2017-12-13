@@ -1,1 +1,1 @@
-copy test_table from '/home/ec2-user/copy_data_file' delimiter ',';
+COPY test_table FROM '/home/ec2-user/test_data.csv';

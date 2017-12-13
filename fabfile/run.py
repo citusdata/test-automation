@@ -128,7 +128,7 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(prefix.set_prefix, config.paths['home-directory'] + 'pg-' + pg_version + '-citus-' + citus_version)
     execute(use.postgres, pg_version)
     execute(use.citus, citus_version)
-    execute(setup.basic_testing)
+    setup.basic_testing()
     
 
 def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):

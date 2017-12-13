@@ -46,3 +46,10 @@ def set_config(key, value):
     prefix.check_for_pg_latest()
 
     psql('ALTER SYSTEM SET {} TO {}'.format(key, value))
+
+@task
+def set_config(config):
+    'Changes the postgres configuration: e.g. `fab pg.set_config:max_connections,200`'
+    prefix.check_for_pg_latest()
+
+    psql('ALTER SYSTEM SET {}'.format(config))

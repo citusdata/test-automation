@@ -65,23 +65,16 @@ def pgbench_tests(*args):
 
         # create database for the given citus and pg versions
         prepare_for_benchmark(pg_version, citus_version)
-        configure_and_run_postgres('10GB', '1h', 1000, 1000)
+
+        postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
+
+        for postgresql_conf in postgresql_conf_list:
+            execute(pg.set_config, postgresql_conf)
+
+        execute(pg.restart)
 
         shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
         for shard_count, replication_factor in shard_count_replication_factor_tuples:
-
-            psql_command = ("SET citus.multi_shard_commit_protocol TO '1pc'; "
-                            "SET citus.shard_count TO {}; "
-                            "SET citus.shard_replication_factor TO {}; "
-                            "CREATE TABLE test_table(a int, b int, c int, d int); ").format(shard_count, replication_factor)
-
-            if config_parser.get('DEFAULT', 'use_reference_table') == 'no':
-                psql_command += "SELECT create_distributed_table('test_table', 'a');"
-            else:
-                psql_command += ("SELECT create_reference_table('test_table'); "
-                                "SET citus.multi_shard_commit_protocol TO '2pc';")
-
-            utils.psql(psql_command)
 
             for section in config_parser.sections():
 
@@ -137,15 +130,6 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(use.postgres, pg_version)
     execute(use.citus, citus_version)
     setup.basic_testing()
-
-
-def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):
-    execute(pg.set_config, 'max_wal_size', "'{}'".format(max_val_size))
-    execute(pg.set_config, 'checkpoint_timeout', "'{}'".format(checkpoint_timeout))
-    execute(pg.set_config, 'max_connections', max_connections)
-    execute(pg.set_config, 'max_prepared_transactions', max_prepared_transactions)
-    execute(pg.stop)
-    execute(pg.start)
 
 
 @task

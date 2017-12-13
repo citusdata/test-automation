@@ -38,6 +38,8 @@ def pgbench_tests(*args):
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
 
+    results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, TPS Including Connections, TPS Exclusing Connections")
+
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests
@@ -84,14 +86,14 @@ def pgbench_tests(*args):
 
                 for option in config_parser.options(section):
 
-                    if (option == 'pgbench_command'):
+                    if option == 'pgbench_command':
                         command = '{}'.format(config_parser.get(section, 'pgbench_command'))
                         out_val = run(command)
 
-                        if (section != 'initialization'):
+                        if section != 'initialization':
 
-                            results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
-                                                str(shard_count) + ", " + str(replication_factor) + ", ")
+                            results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
+                                                str(shard_count) + ", " + str(replication_factor))
                             print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
                                                 str(shard_count) + ", " + str(replication_factor) + ", "
 
@@ -100,14 +102,16 @@ def pgbench_tests(*args):
                                 print_to_std += 'PGBENCH_FAILED'
 
                             else :
-                                results_file.write(re.search('tps = (.+?) ', out_val).group(1))
+                                latency_average = re.search('latency average = (.+?) ms', out_val).group(0)
+                                tps_including_connections = re.search('tps = (.+?) \(including connections establishing\)', out_val).group(0)
+                                tps_excluding_connections = re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(0)
+
+                                results_file.write(", " + latency_average)
+                                results_file.write(", " + tps_including_connections)
+                                results_file.write(", " + tps_excluding_connections)
                                 results_file.write('\n')
-                                print_to_std += re.search('tps = (.+?) ', out_val).group(1)
-                                print_to_std += '\n'
 
-                            print (print_to_std)
-
-                    elif (option == 'distribute_table_command'):
+                    elif option == 'distribute_table_command':
 
                         distribute_table_command = '{}'.format(config_parser.get(section, 'distribute_table_command'))
                         psql_command = ("SET citus.shard_count TO {}; "
@@ -129,7 +133,7 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(use.postgres, pg_version)
     execute(use.citus, citus_version)
     setup.basic_testing()
-    
+
 
 def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):
     execute(pg.set_config, 'max_wal_size', "'{}'".format(max_val_size))

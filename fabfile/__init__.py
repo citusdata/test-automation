@@ -48,7 +48,7 @@ __all__ = ['pg', 'add', 'setup', 'use', 'run', 'set_pg_latest', 'main']
 @runs_once
 def main():
     'The default task (what happens when you type "fab"), currently setup.basic_testing'
-    execute(setup.basic_testing)
+    setup.basic_testing()
 
 @task
 @runs_once

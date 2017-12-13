@@ -38,7 +38,8 @@ def pgbench_tests(*args):
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
 
-    results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, TPS Including Connections, TPS Exclusing Connections")
+    results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
+                       "TPS Including Connections, TPS Excluding Connections\n")
 
     config_parser = ConfigParser.ConfigParser()
 
@@ -102,9 +103,9 @@ def pgbench_tests(*args):
                                 print_to_std += 'PGBENCH_FAILED'
 
                             else :
-                                latency_average = re.search('latency average = (.+?) ms', out_val).group(0)
-                                tps_including_connections = re.search('tps = (.+?) \(including connections establishing\)', out_val).group(0)
-                                tps_excluding_connections = re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(0)
+                                latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
+                                tps_including_connections = re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                tps_excluding_connections = re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
 
                                 results_file.write(", " + latency_average)
                                 results_file.write(", " + tps_including_connections)
@@ -118,8 +119,11 @@ def pgbench_tests(*args):
                                         "SET citus.shard_replication_factor TO {}; ".format(shard_count, replication_factor))
 
                         psql_command += distribute_table_command
-
                         utils.psql(psql_command)
+
+                    elif option == 'sql_command':
+                        sql_command = '{}'.format(config_parser.get(section, 'sql_command'))
+                        utils.psql(sql_command)
 
             utils.psql("DROP TABLE test_table;")
 

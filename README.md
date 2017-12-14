@@ -8,6 +8,7 @@ required for testing citus.
 
 * [Getting Started](#getting-started)
 * [Starting a cluster](#start-a-cluster)
+  * [Basic Cluster Setup](#basic-cluster-setup)
 * [Connecting to the master](#connect-to-master)
 * [Example fab commands](#fab-examples)
 * [Tasks, and ordering of tasks](#fab-tasks)
@@ -23,17 +24,23 @@ required for testing citus.
 
 You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
 
+## <a name="basic-cluster-setup"></a> Basic Cluster Setup
+
+On your local machine:
 ```bash
 
 # add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
 
-# quickly start a cluster of 1 + 2 c3.xlarge nodes 
+# quickly start a cluster of (1 + 2) c3.xlarge nodes 
 cloudformation/create-stack.sh -k metin-keypair -s FormationMetin -n 2 -i c3.xlarge
 
 # when your cluster is ready, it will prompt you with the connection string, connect to master node
 ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+```
 
+On the coordinator node:
+```bash
 # set up your test cluster with PostgreSQL 10.1 and Citus master branch
 fab use.postgres:10.1 use.citus:master setup.basic_testing
 
@@ -43,7 +50,10 @@ fab pg.set_config:max_connections,1000
 
 # and restart the cluster
 fab pg.restart
+```
 
+On your local machine:
+```bash
 # delete the formation
 # it's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "FormationMetin"

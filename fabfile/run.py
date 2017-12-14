@@ -39,8 +39,7 @@ def pgbench_tests(*args):
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests
-
-    config_folder_path = "/home/ec2-user/test-automation/pgbench_confs/"
+    config_folder_path = "/home/ec2-user/test-automation/fabfile/pgbench_confs/"
     if len(args) == 0:
         config_parser.read(config_folder_path + "pgbench_default.ini")
     elif len(args) == 1:

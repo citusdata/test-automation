@@ -85,7 +85,7 @@ fab run.pgbench_tests
 
 # It's possible to provide another configuration file for tests
 # Such as with this, we run the same set of default pgBench tests without transactions
-fab run.pgbench_tests:pg_bench_default_without_transaction.ini
+fab run.pgbench_tests:pgbench_default_without_transaction.ini
 ```
 
 On your local machine:

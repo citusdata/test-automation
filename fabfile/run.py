@@ -40,7 +40,7 @@ def pgbench_tests(*args):
 
     # If no argument is given, run default tests
     if len(args) == 0:
-        config_parser.read('fabfile/pgbench_default.ini')
+        config_parser.read('pgbench_confs/pgbench_default.ini')
     elif len(args) == 1:
         config_parser.read(args)
     else:

@@ -9,6 +9,7 @@ required for testing citus.
 * [Getting Started](#getting-started)
 * [Starting a cluster](#start-a-cluster)
   * [Basic Cluster Setup](#basic-cluster-setup)
+  * [Running pgBench Tests](#pgbench)
 * [Connecting to the master](#connect-to-master)
 * [Example fab commands](#fab-examples)
 * [Tasks, and ordering of tasks](#fab-tasks)
@@ -16,7 +17,7 @@ required for testing citus.
   * [`use`, choose exactly what to install](#use)
   * [`add`, add add-ons (such as extensions) to a citus cluster](#add)
   * [`pg`, run commands involving pg_ctl and psql](#pg)
-  * [`run`, run pgbench and tpch tests automatically](#run)
+  * [`run`, run dml and tpch tests automatically](#run)
 * [Advanced fab usage](#advanced-fab)
   * [Using multiple Citus installations](#multiple-installs)
 
@@ -29,35 +30,69 @@ You can find more information about every step below in other categories. This l
 On your local machine:
 ```bash
 
-# add your EC2 keypair's private key to your agent
+# Add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
 
-# quickly start a cluster of (1 + 2) c3.xlarge nodes 
+# Quickly start a cluster of (1 + 2) c3.xlarge nodes 
 cloudformation/create-stack.sh -k metin-keypair -s FormationMetin -n 2 -i c3.xlarge
 
-# when your cluster is ready, it will prompt you with the connection string, connect to master node
+# When your cluster is ready, it will prompt you with the connection string, connect to master node
 ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 ```
 
 On the coordinator node:
 ```bash
-# set up your test cluster with PostgreSQL 10.1 and Citus master branch
+# Setup your test cluster with PostgreSQL 10.1 and Citus master branch
 fab use.postgres:10.1 use.citus:master setup.basic_testing
 
-# lets change some conf values 
+# Lets change some conf values 
 fab pg.set_config:max_wal_size,"'5GB'"
 fab pg.set_config:max_connections,1000
 
-# and restart the cluster
+# And restart the cluster
 fab pg.restart
 ```
 
 On your local machine:
 ```bash
-# delete the formation
-# it's a good practice to check deletion status from the cloud formation console
+# Delete the formation
+# It's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "FormationMetin"
 
+```
+
+## <a name="pgbench"></a> Running pgBench Tests
+
+On your local machine:
+```bash
+
+# Add your EC2 keypair's private key to your agent
+ssh-add path_to_keypair/metin-keypair.pem
+
+# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
+cloudformation/create-stack.sh -k metin-keypair -s PgBenchFormation -n 3 -i c3.4xlarge
+
+# When your cluster is ready, it will prompt you with the connection string, connect to master node
+ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+```
+
+On the coordinator node:
+```bash
+# This will run default pgBench tests with PG=10.1 and Citus=7.0.3/7.1.1/master
+# and it will log results to pgbench_results_{timemark}.csv file
+# Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
+fab run.pgbench_tests
+
+# It's possible to provide another configuration file for tests
+# Such as with this, we run the same set of default pgBench tests without transactions
+fab run.pgbench_tests:pg_bench_default_without_transaction.ini
+```
+
+On your local machine:
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the cloud formation console
+aws cloudformation delete-stack --stack-name "PgBenchFormation"
 ```
 
 # <a name="start-a-cluster"></a> Starting a cluster
@@ -278,9 +313,9 @@ To reset to a clean configuration run this command:
 
 # <a name="run"></a> `run` tasks
 
-In order to run pgbench and tpch tests automatically, you can use `run.pgbench_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
+In order to run dml and tpch tests automatically, you can use `run.dml_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
 
-To change configuration file for pgbench tests, you should prepare configuration file similar to fabfile/default_config.ini. Note that, pgbench commands are run against the table with the template like 'test_table(a int, b int, c int, d int)'.
+To change configuration file for dml tests, you should prepare configuration file similar to fabfile/default_config.ini. Note that, dml commands are run against the table with the template like 'test_table(a int, b int, c int, d int)'.
 
 To change the configuration file for tpch tests, you should prepare configuration file similar to fabfile/default_tpch_config.ini. You should add sql files to the folder you mentioned in the configuration file.
 

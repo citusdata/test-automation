@@ -7,7 +7,7 @@ queries.
 import os.path
 
 from fabric.api import (
-    env, cd, roles, task, parallel, execute, run,
+    env, cd, hide, roles, task, parallel, execute, run,
     sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
@@ -63,7 +63,8 @@ def enterprise():
 
 @parallel
 def common_setup(build_citus_func):
-    run('pkill postgres || true')
+    with hide('stdout'):
+        run('pkill postgres || true')
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
@@ -81,20 +82,26 @@ def common_setup(build_citus_func):
             print ('Waiting for database to be ready')
 
         run('bin/createdb $(whoami)')
-    utils.psql('CREATE EXTENSION citus;')
+
+    with hide('stdout'):
+        utils.psql('CREATE EXTENSION citus;')
 
 @roles('master')
 def add_workers():
     with cd('{}/data'.format(config.paths['pg-latest'])):
         for ip in env.roledefs['workers']:
-           utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
-           run('echo "{} 5432" >> pg_worker_list.conf'.format(ip))
+            with hide('stdout'):
+                utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
+                run('echo "{} 5432" >> pg_worker_list.conf'.format(ip))
 
 def redhat_install_packages():
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
-    sudo("yum groupinstall -q -y 'Development Tools'")
-    sudo('yum install -q -y libxml2-devel libxslt-devel'
-         ' openssl-devel pam-devel readline-devel libcurl-devel git')
+    with hide('stdout'):
+        sudo("yum groupinstall -q -y 'Development Tools'")
+
+    with hide('stdout'):
+        sudo('yum install -q -y libxml2-devel libxslt-devel'
+            ' openssl-devel pam-devel readline-devel libcurl-devel git')
 
 def build_postgres():
     'Installs postges'
@@ -109,18 +116,22 @@ def build_postgres():
         # rm makes this idempotent, if not a bit inefficient
 
         utils.rmdir(final_dir)
-        run('tar -xf {}.tar.bz2'.format(final_dir))
+        with hide('stdout'):
+            run('tar -xf {}.tar.bz2'.format(final_dir))
 
         with cd(final_dir):
             pg_latest = config.paths['pg-latest']
             flags = ' '.join(config.settings['pg-configure-flags'])
-            run('./configure --prefix={} {}'.format(pg_latest, flags))
+            with hide('stdout'):
+                run('./configure --prefix={} {}'.format(pg_latest, flags))
 
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-            run('make -s -j{} install'.format(core_count))
 
-            with cd('contrib'):
-                run('make install')
+            with hide('stdout'):
+                run('make -s -j{} install'.format(core_count))
+
+            with cd('contrib'), hide('stdout'):
+                run('make -s install')
 
 def build_citus():
     repo = config.paths['citus-repo']
@@ -131,10 +142,14 @@ def build_citus():
         run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
-        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
+        with hide('stdout'):
+            run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
-        core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -s -j{} install'.format(core_count))
+        with hide('stdout', 'running'):
+            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+
+        with hide('stdout'):
+            run('make -s -j{} install'.format(core_count))
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -146,14 +161,17 @@ def build_enterprise():
         run('git checkout {}'.format(git_ref))
 
         pg_latest = config.paths['pg-latest']
-        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
+        with hide('stdout'):
+            run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
-        run('make -s -j{} install'.format(core_count))
+
+        with hide('stdout'):
+            run('make -s -j{} install'.format(core_count))
 
 def create_database():
     pg_latest = config.paths['pg-latest']
-    with cd(pg_latest):
+    with cd(pg_latest), hide('stdout'):
         run('bin/initdb -D data')
     with cd('{}/data'.format(pg_latest)):
         run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')

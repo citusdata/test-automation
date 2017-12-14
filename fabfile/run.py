@@ -9,8 +9,10 @@ import utils
 import re
 import add
 import ConfigParser
+import time
 
-__all__ = ['jdbc', 'regression', 'dml_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
+
 
 @task
 @runs_once
@@ -21,6 +23,7 @@ def jdbc():
         run('javac JDBCReleaseTest.java')
         run('java -classpath postgresql-9.4.1212.jre6.jar:. JDBCReleaseTest')
 
+
 @task
 @roles('master')
 def regression():
@@ -28,79 +31,82 @@ def regression():
     with cd(config.paths['citus-repo']):
         run('make check')
 
+
 @task
 @runs_once
 @roles('master')
-def dml_tests(*args):
-    'Runs pg-bench dml tests using the given config options'
-    results_file = open(config.paths['home-directory'] + 'dml_benchmark_results.csv', 'w')
+def pgbench_tests(*args):
     config_parser = ConfigParser.ConfigParser()
 
     # If no argument is given, run default tests
-    # Note that you can change test sql by updating insert.sql, update.sql and delete.sql
+    config_folder_path = "/home/ec2-user/test-automation/fabfile/pgbench_confs/"
     if len(args) == 0:
-        config_parser.read('fabfile/default_config.ini')
+        config_parser.read(config_folder_path + "pgbench_default.ini")
     elif len(args) == 1:
-        config_parser.read(args)
+        config_parser.read(config_folder_path + args[0])
     else:
         print('You should use the default config or give the name of your own config file')
 
-    # before tests, create a file for the copy. We have to create this file since copy
-    # benchmark get the data from this file.
-    copy_file = open('copy_data_file', 'w')
-    for i in range(1,10000):
-        copy_file.write(str(i) + ',' + str(i) + ',' + str(i) + ',' + str(i))
-        if i != 9999:
-            copy_file.write('\n')
+    current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
+    results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
+
+    results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
+                       "TPS Including Connections, TPS Excluding Connections\n")
 
     pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
     for pg_version, citus_version in pg_citus_tuples:
 
         # create database for the given citus and pg versions
         prepare_for_benchmark(pg_version, citus_version)
-        configure_and_run_postgres('10GB', '1h', 1000, 1000)
+
+        postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
+        for postgresql_conf in postgresql_conf_list:
+            execute(pg.set_config, postgresql_conf)
+
+        execute(pg.restart)
 
         shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
         for shard_count, replication_factor in shard_count_replication_factor_tuples:
 
-            psql_command = ("SET citus.multi_shard_commit_protocol TO '1pc'; "
-                            "SET citus.shard_count TO {}; "
-                            "SET citus.shard_replication_factor TO {}; "
-                            "CREATE TABLE test_table(a int, b int, c int, d int); ").format(shard_count, replication_factor)
-
-            if config_parser.get('DEFAULT', 'use_reference_table') == 'no':
-                psql_command += "SELECT create_distributed_table('test_table', 'a');"
-            else:
-                psql_command += ("SELECT create_reference_table('test_table'); "
-                                "SET citus.multi_shard_commit_protocol TO '2pc';")
-
-            utils.psql(psql_command)
-
             for section in config_parser.sections():
+                for option in config_parser.options(section):
 
-                results_file.write(section + ", " + pg_version + ", " + citus_version + ", " +
-                                    str(shard_count) + ", " + str(replication_factor) + ", ")
-                print_to_std = section + ", " + pg_version + ", " + citus_version + ", " + \
-                                    str(shard_count) + ", " + str(replication_factor) + ", "
+                    if option == 'pgbench_command':
+                        command = config_parser.get(section, 'pgbench_command')
+                        out_val = run(command)
 
-                command = 'pgbench -c {} -j {} -f {} -n -t {} -P 5'.format(config_parser.get(section, 'client_count'),
-                                                                           config_parser.get(section, 'thread_count'),
-                                                                           config_parser.get(section, 'filename'),
-                                                                           config_parser.get(section, 'transaction_count'))
-                out_val = run(command)
-                if getattr(out_val, 'return_code') != 0:
-                    results_file.write('PG_BENCH FAILED')
-                    print_to_std += 'PG_BENCH_FAILED'
+                        if section != 'initialization':
 
-                else:
-                    results_file.write(re.search('tps = (.+?) ', out_val).group(1))
-                    results_file.write('\n')
-                    print_to_std += re.search('tps = (.+?) ', out_val).group(1)
-                    print_to_std += '\n'
+                            results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
+                                               str(shard_count) + ", " + str(replication_factor))
 
-                print (print_to_std)
+                            if getattr(out_val, 'return_code') != 0:
+                                results_file.write('PGBENCH FAILED')
 
-            utils.psql("DROP TABLE test_table;")
+                            else:
+                                latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
+                                tps_including_connections = \
+                                    re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                tps_excluding_connections = \
+                                    re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+
+                                results_file.write(", " + latency_average)
+                                results_file.write(", " + tps_including_connections)
+                                results_file.write(", " + tps_excluding_connections)
+                                results_file.write('\n')
+
+                    elif option == 'distribute_table_command':
+                        distribute_table_command = config_parser.get(section, 'distribute_table_command')
+                        sql_command = ("SET citus.shard_count TO {}; "
+                                       "SET citus.shard_replication_factor TO {}; ".format(shard_count,
+                                                                                           replication_factor))
+
+                        sql_command += distribute_table_command
+                        utils.psql(sql_command)
+
+                    elif option == 'sql_command':
+                        sql_command = config_parser.get(section, 'sql_command')
+                        utils.psql(sql_command)
 
         execute(pg.stop)
 
@@ -111,16 +117,7 @@ def prepare_for_benchmark(pg_version, citus_version):
     execute(prefix.set_prefix, config.paths['home-directory'] + 'pg-' + pg_version + '-citus-' + citus_version)
     execute(use.postgres, pg_version)
     execute(use.citus, citus_version)
-    execute(setup.basic_testing)
-    
-
-def configure_and_run_postgres(max_val_size, checkpoint_timeout, max_connections, max_prepared_transactions):
-    execute(pg.set_config, 'max_wal_size', "'{}'".format(max_val_size))
-    execute(pg.set_config, 'checkpoint_timeout', "'{}'".format(checkpoint_timeout))
-    execute(pg.set_config, 'max_connections', max_connections)
-    execute(pg.set_config, 'max_prepared_transactions', max_prepared_transactions)
-    execute(pg.stop)
-    execute(pg.start)
+    setup.basic_testing()
 
 
 @task
@@ -145,14 +142,17 @@ def tpch_automate(*args):
         for pg_version, citus_version in pg_citus_tuples:
             prepare_for_benchmark(pg_version, citus_version)
             execute(add.tpch)
-            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version, citus_version)
+            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version,
+                    citus_version)
             execute(pg.stop)
 
 
 @task
 @roles('master')
 def tpch_queries(query_info, pg_version, citus_version):
-    results_file = open(config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version), 'a')
+    results_file = open(
+        config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
+        'a')
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
     tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])
 

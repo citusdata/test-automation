@@ -7,19 +7,20 @@ required for testing citus.
 # Table of Contents
 
 * [Getting Started](#getting-started)
-* [Starting a cluster](#start-a-cluster)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running pgBench Tests](#pgbench)
-* [Connecting to the master](#connect-to-master)
-* [Example fab commands](#fab-examples)
-* [Tasks, and ordering of tasks](#fab-tasks)
-* Task namespaces
-  * [`use`, choose exactly what to install](#use)
-  * [`add`, add add-ons (such as extensions) to a citus cluster](#add)
-  * [`pg`, run commands involving pg_ctl and psql](#pg)
-  * [`run`, run dml and tpch tests automatically](#run)
-* [Advanced fab usage](#advanced-fab)
-  * [Using multiple Citus installations](#multiple-installs)
+* [Detailed Configuration](#detailed-configuration)
+  * [Starting a Cluster](#start-a-cluster)
+  * [Connecting to the Master](#connect-to-master)
+  * [Example fab Commands](#fab-examples)
+  * [Tasks, and Ordering of Tasks](#fab-tasks)
+* [Task Namespaces](#task-namespaces)
+  * [`use`, Choose Exactly What to Install](#use)
+  * [`add`, Add add-ons (such as extensions) to a Citus Cluster](#add)
+  * [`pg`, Run Commands Involving pg_ctl and psql](#pg)
+  * [`run`, Run pgbench and tpch Rests Automatically](#run)
+* [Advanced fab Usage](#advanced-fab)
+  * [Using Multiple Citus Installations](#multiple-installs)
 
 # <a name="getting-started"></a> Getting Started
 
@@ -33,8 +34,8 @@ On your local machine:
 # Add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
 
-# Quickly start a cluster of (1 + 2) c3.xlarge nodes 
-cloudformation/create-stack.sh -k metin-keypair -s FormationMetin -n 2 -i c3.xlarge
+# Quickly start a cluster of (1 + 2) c3.xlarge nodes at availability zone us-east-1b
+cloudformation/create-stack.sh -k metin-keypair -s FormationMetin -n 2 -i c3.xlarge -a us-east-1b
 
 # When your cluster is ready, it will prompt you with the connection string, connect to master node
 ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
@@ -94,8 +95,9 @@ On your local machine:
 # It's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "PgBenchFormation"
 ```
+# <a name="detailed-configuration"></a> Detailed Configuration
 
-# <a name="start-a-cluster"></a> Starting a cluster
+## <a name="start-a-cluster"></a> Starting a Cluster
 
 You'll need to have installed the [AWS CLI](https://aws.amazon.com/cli/). Once that's
 installed you should configure it with `aws configure`. Once it's configured you can run
@@ -121,7 +123,7 @@ To get the hostname of the master you can run:
 
 `aws cloudformation describe-stacks --stack-name MyStack --query Stacks[0].Outputs[0].OutputValue`
 
-# <a name="connect-to-master"></a> Connecting to the master
+## <a name="connect-to-master"></a> Connecting to the Master
 
 1. **Make sure you have a running ssh-agent**
 
@@ -208,7 +210,7 @@ To get the hostname of the master you can run:
 It's unfortunate that you have no flexibility here. This restriction which will hopefully
 be lifted in the future.
 
-# <a name="fab-examples"></a> Example fab commands
+## <a name="fab-examples"></a> Example fab Commands
 
 Use `fab --list` to see all the tasks you can run! This is just a few examples.
 
@@ -221,7 +223,7 @@ install Citus:
 - `fab use.postgres:10.1 setup.basic_testing` lets you choose your postgres version.
 - `fab use.enterprise:v7.1.1 setup.enterprise` will install postgres and the `v7.1.1` tag of the enterprise repo.
 
-# <a name="fab-tasks"></a> Tasks, and ordering of tasks
+## <a name="fab-tasks"></a> Tasks, and Ordering of Tasks
 
 When you run a command like `fab use.citus:v7.1.1 setup.basic_testing` you are running two
 different tasks: `use.citus` with a `v7.1.1` argument and `setup.basic_testing`. Those
@@ -258,7 +260,9 @@ fab setup.basic_testing use.citus:v.7.1.1
 Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
 is already installed and running. They must be run after a `setup` task!
 
-# <a name="use"></a> `use` tasks
+# <a name="task-namespaces"></a> Task Namespaces
+
+## <a name="use"></a> `use` Tasks
 
 These tasks configure the tasks you run after them. When run alone they have no effect.
 Some examples:
@@ -273,7 +277,7 @@ fab use.debug_mode use.postgres:10.1 use.citus:v7.1.1 setup.basic_testing
 
 `use.asserts` passes `--enable-cassert`, it's a subset of `use.debug_mode`.
 
-# <a name="add"></a> `add` tasks
+## <a name="add"></a> `add` Tasks
 
 It is possible to add extra extensions and features to a Citus cluster:
 
@@ -288,7 +292,7 @@ As described [above](#fab-tasks), you can run these at the same time as you run 
 
 - `fab use.citus:v7.1.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
 
-# <a name="pg"></a> `pg` tasks
+## <a name="pg"></a> `pg` Tasks
 
 These tasks run commands which involve the current postgres instance.
 
@@ -311,7 +315,7 @@ To reset to a clean configuration run this command:
 
 - `fab -- rm pg-latest/data/postgresql.auto.conf`
 
-# <a name="run"></a> `run` tasks
+## <a name="run"></a> `run` Tasks
 
 In order to run dml and tpch tests automatically, you can use `run.dml_tests` or `run.tpch_automate`. If you want to use default configuration files, running commands without any parameter is enough.
 
@@ -319,7 +323,7 @@ To change configuration file for dml tests, you should prepare configuration fil
 
 To change the configuration file for tpch tests, you should prepare configuration file similar to fabfile/default_tpch_config.ini. You should add sql files to the folder you mentioned in the configuration file.
 
-# <a name="advanced-fab"></a> Advanced fab usage
+# <a name="advanced-fab"></a> Advanced fab Usage
 
 By default your fab commands configure the entire cluster, however you can target roles or
 individual machines.
@@ -333,7 +337,7 @@ You can also ask to run arbitrary commands by adding them after `--`.
 - `fab -H 10.0.1.240 -- cat "max_prepared_transactions=0" >> pg-latest/data/postgresql.conf` will modify the postgresql.conf file on the specified worker.
 - `fab -- 'cd citus && git checkout master && make install'` to switch the branch of Citus you're using. (This runs on all nodes)
 
-# <a name="multiple-installs"></a> Using multiple Citus installations, `pg-latest`
+## <a name="multiple-installs"></a> Using Multiple Citus Installations, `pg-latest`
 
 Some kinds of tests (such as TPC-H) are easier to perform if you create multiple
 simultanious installations of Citus and are able to switch between them. The fabric

@@ -17,9 +17,9 @@ def rmdir(path, force=False):
     if exists(path):
         run('rm {} -r {}'.format(flag, path))
 
-def psql(command):
+def psql(command, connectionURI=''):
     with cd(config.paths['pg-latest']):
-        return run('bin/psql -c "{}"'.format(command))
+        return run('bin/psql {} -c "{}"'.format(connectionURI, command))
 
 def add_github_to_known_hosts():
     'Removes prompts from github checkouts asking whether you want to trust the remote'

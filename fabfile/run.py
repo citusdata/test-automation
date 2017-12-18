@@ -35,7 +35,7 @@ def regression():
 @task
 @runs_once
 @roles('master')
-def pgbench_tests(config_file='pgbench_default.ini'):
+def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
     config_folder_path = "/home/ec2-user/test-automation/fabfile/pgbench_confs/"
@@ -44,65 +44,101 @@ def pgbench_tests(config_file='pgbench_default.ini'):
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
 
-    results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
-                       "TPS Including Connections, TPS Excluding Connections\n")
+    if (connectionURI == ''):
+        results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
+                           "TPS Including Connections, TPS Excluding Connections\n")
 
-    pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
-    for pg_version, citus_version in pg_citus_tuples:
+        pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
+        for pg_version, citus_version in pg_citus_tuples:
 
-        # create database for the given citus and pg versions
-        prepare_for_benchmark(pg_version, citus_version)
+            # create database for the given citus and pg versions
+            prepare_for_benchmark(pg_version, citus_version)
 
-        postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
-        for postgresql_conf in postgresql_conf_list:
-            execute(pg.set_config, postgresql_conf)
+            postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
+            for postgresql_conf in postgresql_conf_list:
+                execute(pg.set_config, postgresql_conf)
 
-        execute(pg.restart)
+            execute(pg.restart)
 
-        shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
-        for shard_count, replication_factor in shard_count_replication_factor_tuples:
+            shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
+            for shard_count, replication_factor in shard_count_replication_factor_tuples:
 
-            for section in config_parser.sections():
-                for option in config_parser.options(section):
+                for section in config_parser.sections():
+                    for option in config_parser.options(section):
 
-                    if option == 'pgbench_command':
-                        command = config_parser.get(section, 'pgbench_command')
-                        out_val = run(command)
+                        if option == 'pgbench_command':
+                            command = config_parser.get(section, 'pgbench_command')
+                            out_val = run(command)
 
-                        if section != 'initialization':
+                            if section != 'initialization':
 
-                            results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
-                                               str(shard_count) + ", " + str(replication_factor))
+                                results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
+                                                   str(shard_count) + ", " + str(replication_factor))
 
-                            if getattr(out_val, 'return_code') != 0:
-                                results_file.write('PGBENCH FAILED')
+                                if getattr(out_val, 'return_code') != 0:
+                                    results_file.write('PGBENCH FAILED')
 
-                            else:
-                                latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
-                                tps_including_connections = \
-                                    re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
-                                tps_excluding_connections = \
-                                    re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+                                else:
+                                    latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
+                                    tps_including_connections = \
+                                        re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                    tps_excluding_connections = \
+                                        re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
 
-                                results_file.write(", " + latency_average)
-                                results_file.write(", " + tps_including_connections)
-                                results_file.write(", " + tps_excluding_connections)
-                                results_file.write('\n')
+                                    results_file.write(", " + latency_average)
+                                    results_file.write(", " + tps_including_connections)
+                                    results_file.write(", " + tps_excluding_connections)
+                                    results_file.write('\n')
 
-                    elif option == 'distribute_table_command':
-                        distribute_table_command = config_parser.get(section, 'distribute_table_command')
-                        sql_command = ("SET citus.shard_count TO {}; "
-                                       "SET citus.shard_replication_factor TO {}; ".format(shard_count,
-                                                                                           replication_factor))
+                        elif option == 'distribute_table_command':
+                            distribute_table_command = config_parser.get(section, 'distribute_table_command')
+                            sql_command = ("SET citus.shard_count TO {}; "
+                                           "SET citus.shard_replication_factor TO {}; ".format(shard_count,
+                                                                                               replication_factor))
 
-                        sql_command += distribute_table_command
-                        utils.psql(sql_command)
+                            sql_command += distribute_table_command
+                            utils.psql(sql_command)
 
-                    elif option == 'sql_command':
-                        sql_command = config_parser.get(section, 'sql_command')
-                        utils.psql(sql_command)
+                        elif option == 'sql_command':
+                            sql_command = config_parser.get(section, 'sql_command')
+                            utils.psql(sql_command)
 
-        execute(pg.stop)
+            execute(pg.stop)
+
+    else:
+        results_file.write("Test, Connection String, Latency Average, "
+                           "TPS Including Connections, TPS Excluding Connections\n")
+
+        for section in config_parser.sections():
+             for option in config_parser.options(section):
+
+                if option == 'pgbench_command':
+                    command = config_parser.get(section, 'pgbench_command')
+                    command = command.replace("pgbench", "pgbench {}".format(connectionURI), 1)
+                    out_val = run(command)
+
+                    if section != 'initialization':
+
+                        results_file.write(section + ", " + connectionURI)
+
+                        if getattr(out_val, 'return_code') != 0:
+                            results_file.write('PGBENCH FAILED')
+
+                        else:
+                            latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
+                            tps_including_connections = \
+                                re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                            tps_excluding_connections = \
+                                re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+
+                            results_file.write(", " + latency_average)
+                            results_file.write(", " + tps_including_connections)
+                            results_file.write(", " + tps_excluding_connections)
+                            results_file.write('\n')
+
+                elif option == 'sql_command':
+                    sql_command = config_parser.get(section, 'sql_command')
+                    utils.psql(sql_command, connectionURI)
 
     results_file.close()
 

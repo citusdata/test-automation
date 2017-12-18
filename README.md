@@ -8,7 +8,8 @@ required for testing citus.
 
 * [Getting Started](#getting-started)
   * [Basic Cluster Setup](#basic-cluster-setup)
-  * [Running pgBench Tests](#pgbench)
+  * [Running PgBench Tests](#pgbench)
+  * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
 * [Detailed Configuration](#detailed-configuration)
   * [Starting a Cluster](#start-a-cluster)
   * [Connecting to the Master](#connect-to-master)
@@ -62,7 +63,7 @@ aws cloudformation delete-stack --stack-name "FormationMetin"
 
 ```
 
-## <a name="pgbench"></a> Running pgBench Tests
+## <a name="pgbench"></a> Running PgBench Tests
 
 On your local machine:
 ```bash
@@ -95,6 +96,37 @@ On your local machine:
 # It's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "PgBenchFormation"
 ```
+
+## <a name="pgbench"></a> Running PgBench Tests Against Citus Cloud
+
+On your local machine:
+```bash
+
+# Add your EC2 keypair's private key to your agent
+ssh-add path_to_keypair/metin-keypair.pem
+
+# Quickly start a cluster with no worker nodes
+cloudformation/create-stack.sh -k metin-keypair -s PgBenchFormation -n 0 -i c3.4xlarge
+
+# When your cluster is ready, it will prompt you with the connection string, connect to master node
+ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+```
+
+On the coordinator node:
+```bash
+
+# Use pgbench_cloud.ini config file with connection string of your Citus Cloud cluster
+# Don't forget to escape `=` at the end of your connection string
+fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
+On your local machine:
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the cloud formation console
+aws cloudformation delete-stack --stack-name "PgBenchFormation"
+```
+
 # <a name="detailed-configuration"></a> Detailed Configuration
 
 ## <a name="start-a-cluster"></a> Starting a Cluster

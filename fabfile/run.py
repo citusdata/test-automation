@@ -35,17 +35,11 @@ def regression():
 @task
 @runs_once
 @roles('master')
-def pgbench_tests(*args):
+def pgbench_tests(config_file='pgbench_default.ini'):
     config_parser = ConfigParser.ConfigParser()
 
-    # If no argument is given, run default tests
     config_folder_path = "/home/ec2-user/test-automation/fabfile/pgbench_confs/"
-    if len(args) == 0:
-        config_parser.read(config_folder_path + "pgbench_default.ini")
-    elif len(args) == 1:
-        config_parser.read(config_folder_path + args[0])
-    else:
-        print('You should use the default config or give the name of your own config file')
+    config_parser.read(config_folder_path + config_file)
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')

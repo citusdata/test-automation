@@ -97,7 +97,7 @@ On your local machine:
 aws cloudformation delete-stack --stack-name "PgBenchFormation"
 ```
 
-## <a name="pgbench"></a> Running PgBench Tests Against Citus Cloud
+## <a name="pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
 
 On your local machine:
 ```bash

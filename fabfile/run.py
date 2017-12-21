@@ -153,12 +153,6 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
     results_file.close()
 
-
-def prepare_for_benchmark(pg_version, citus_version):
-    execute(use.postgres, pg_version)
-    execute(use.citus, citus_version)
-
-
 @task
 @runs_once
 @roles('master')
@@ -177,10 +171,19 @@ def tpch_automate(*args):
         print('You should use the default config or give the name of your own config file')
 
     for section in config_parser.sections():
+        use_enterprise = config_parser.get(section, 'use_enterprise')
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
+
         for pg_version, citus_version in pg_citus_tuples:
-            prepare_for_benchmark(pg_version, citus_version)
-            setup.basic_testing()
+            if use_enterprise == 'on':
+                execute(use.postgres, pg_version)
+                execute(use.enterprise, citus_version)
+                setup.enterprise()
+            else:
+                execute(use.postgres, pg_version)
+                execute(use.citus, citus_version)
+                setup.basic_testing()
+
             execute(add.tpch)
             execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version,
                     citus_version)

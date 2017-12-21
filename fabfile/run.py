@@ -44,7 +44,9 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
 
-    if (connectionURI == ''):
+    use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
+
+    if connectionURI == '':
         results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
                            "TPS Including Connections, TPS Excluding Connections\n")
 
@@ -52,7 +54,16 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
         for pg_version, citus_version in pg_citus_tuples:
 
             # create database for the given citus and pg versions
-            prepare_for_benchmark(pg_version, citus_version)
+            if use_enterprise == 'on':
+                citus_print_version = 'EE-' + citus_version
+                execute(use.postgres, pg_version)
+                execute(use.enterprise, citus_version)
+                setup.enterprise()
+            else:
+                citus_print_version = 'CE-' + citus_version
+                execute(use.postgres, pg_version)
+                execute(use.citus, citus_version)
+                setup.basic_testing()
 
             postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
             for postgresql_conf in postgresql_conf_list:
@@ -72,7 +83,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
                             if section != 'initialization':
 
-                                results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_version + ", " +
+                                results_file.write(section + ", PG=" + pg_version + ", Citus=" + citus_print_version + ", " +
                                                    str(shard_count) + ", " + str(replication_factor))
 
                                 if getattr(out_val, 'return_code') != 0:
@@ -144,10 +155,8 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
 
 def prepare_for_benchmark(pg_version, citus_version):
-    execute(prefix.set_prefix, config.paths['home-directory'] + 'pg-' + pg_version + '-citus-' + citus_version)
     execute(use.postgres, pg_version)
     execute(use.citus, citus_version)
-    setup.basic_testing()
 
 
 @task
@@ -171,6 +180,7 @@ def tpch_automate(*args):
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
         for pg_version, citus_version in pg_citus_tuples:
             prepare_for_benchmark(pg_version, citus_version)
+            setup.basic_testing()
             execute(add.tpch)
             execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version,
                     citus_version)

@@ -67,7 +67,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
             postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
             for postgresql_conf in postgresql_conf_list:
-                execute(pg.set_config, postgresql_conf)
+                execute(pg.set_config_str, postgresql_conf)
 
             execute(pg.restart)
 

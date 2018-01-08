@@ -9,6 +9,7 @@ required for testing citus.
 * [Getting Started](#getting-started)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
+  * [Running Scale Tests](#scale)
   * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
 * [Detailed Configuration](#detailed-configuration)
   * [Starting a Cluster](#start-a-cluster)
@@ -99,6 +100,45 @@ On your local machine:
 # It's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "PgBenchFormation"
 ```
+
+## <a name="scale"></a> Running Scale Tests
+
+On your local machine:
+```bash
+
+# Add your EC2 keypair's private key to your agent
+ssh-add path_to_keypair/metin-keypair.pem
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
+cloudformation/create-stack.sh -k metin-keypair -s ScaleFormation -n 3 -i c3.4xlarge
+
+# When your cluster is ready, it will prompt you with the connection string, connect to master node
+ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+```
+
+On the coordinator node:
+```bash
+# This will run scale tests with PG=10.1 and Citus Enterprise 7.1 and 7.2 release branches
+# and it will log results to pgbench_results_{timemark}.csv file
+# You can change settings in files under the fabfile/pgbench_confs/ directory
+fab run.pgbench_tests:scale_test.ini
+fab run.pgbench_tests:scale_test_no_index.ini
+fab run.pgbench_tests:scale_test_prepared.ini
+fab run.pgbench_tests:scale_test_reference.ini
+fab run.pgbench_tests:scale_test_foreign.ini
+fab run.pgbench_tests:scale_test_100_columns.ini
+```
+
+On your local machine:
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the cloud formation console
+aws cloudformation delete-stack --stack-name "ScaleFormation"
+```
+
 
 ## <a name="pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
 

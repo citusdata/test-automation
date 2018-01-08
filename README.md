@@ -71,6 +71,9 @@ On your local machine:
 # Add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
 
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
 # Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
 cloudformation/create-stack.sh -k metin-keypair -s PgBenchFormation -n 3 -i c3.4xlarge
 

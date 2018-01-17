@@ -10,6 +10,7 @@ required for testing citus.
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
+  * [Running TPC-H Tests](#tpch)
   * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
 * [Detailed Configuration](#detailed-configuration)
   * [Starting a Cluster](#start-a-cluster)
@@ -139,6 +140,43 @@ On your local machine:
 aws cloudformation delete-stack --stack-name "ScaleFormation"
 ```
 
+## <a name="tpch"></a> Running TPC-H Tests
+
+On your local machine:
+```bash
+
+# Add your EC2 keypair's private key to your agent
+ssh-add path_to_keypair/metin-keypair.pem
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
+cloudformation/create-stack.sh -k metin-keypair -s TPCHFormation -n 3 -i c3.4xlarge
+
+# When your cluster is ready, it will prompt you with the connection string, connect to master node
+ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+```
+
+On the coordinator node:
+```bash
+# This will run TPC-H tests with PG=10.1 and Citus Enterprise 7.1 and 7.2 release branches
+# and it will log results to their own files on the home directory. You can use diff to 
+# compare results.
+# You can change settings in files under the fabfile/tpch_confs/ directory
+fab run.tpch_automate
+
+# Such if you want to run only Q1 with scale factor=1 against community master
+# Feel free to edit conf file
+fab run.tpch_automate:tpch_q1.ini
+```
+
+On your local machine:
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the cloud formation console
+aws cloudformation delete-stack --stack-name "TPCHFormation"
+```
 
 ## <a name="pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
 

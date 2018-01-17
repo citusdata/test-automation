@@ -145,6 +145,8 @@ def tpch(**kwargs):
             table_name = os.path.basename(segment).split('.')[0]
             run('''{} -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, table_name, segment))
 
+        run('{} -f warm_up_cache.sql'.format(psql))
+
 @task
 @roles('master')
 def jdbc():

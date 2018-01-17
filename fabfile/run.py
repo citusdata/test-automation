@@ -165,6 +165,7 @@ def tpch_automate(config_file='tpch_default.ini'):
     for section in config_parser.sections():
         use_enterprise = config_parser.get(section, 'use_enterprise')
         pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
+        scale_factor = config_parser.get(section, 'scale_factor')
 
         for pg_version, citus_version in pg_citus_tuples:
             if use_enterprise == 'on':
@@ -176,7 +177,7 @@ def tpch_automate(config_file='tpch_default.ini'):
                 execute(use.citus, citus_version)
                 setup.basic_testing()
 
-            execute(add.tpch)
+            execute(add.tpch, scale_factor=scale_factor)
             execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version,
                     citus_version)
             execute(pg.stop)

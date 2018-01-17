@@ -156,19 +156,11 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 @task
 @runs_once
 @roles('master')
-def tpch_automate(*args):
-    'Runs tpch tests automatically given configuration file'
-
+def tpch_automate(config_file='tpch_default.ini'):
     config_parser = ConfigParser.ConfigParser()
 
-    # If no argument is given, run default tests
-    # Note that you can change test sql by updating insert.sql, update.sql and delete.sql
-    if len(args) == 0:
-        config_parser.read('fabfile/default_tpch_config.ini')
-    elif len(args) == 1:
-        config_parser.read(args)
-    else:
-        print('You should use the default config or give the name of your own config file')
+    config_folder_path = "/home/ec2-user/test-automation/fabfile/tpch_confs/"
+    config_parser.read(config_folder_path + config_file)
 
     for section in config_parser.sections():
         use_enterprise = config_parser.get(section, 'use_enterprise')

@@ -133,6 +133,9 @@ def tpch(**kwargs):
         run('make')
         run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
+        # clear old tables
+        run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
+
         # create the tpc-h tables
         if partition_type == 'default':
             run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))

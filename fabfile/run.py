@@ -156,7 +156,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 @task
 @runs_once
 @roles('master')
-def tpch_automate(config_file='tpch_default.ini'):
+def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
     config_folder_path = "/home/ec2-user/test-automation/fabfile/tpch_confs/"
@@ -177,15 +177,15 @@ def tpch_automate(config_file='tpch_default.ini'):
                 execute(use.citus, citus_version)
                 setup.basic_testing()
 
-            execute(add.tpch, scale_factor=scale_factor)
-            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), pg_version,
-                    citus_version)
+            execute(add.tpch, connectionURI= connectionURI, scale_factor=scale_factor)
+            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), connectionURI,
+                    pg_version, citus_version)
             execute(pg.stop)
 
 
 @task
 @roles('master')
-def tpch_queries(query_info, pg_version, citus_version):
+def tpch_queries(query_info, connectionURI, pg_version, citus_version):
     results_file = open(
         config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
         'a')
@@ -194,7 +194,7 @@ def tpch_queries(query_info, pg_version, citus_version):
 
     for query_code, executor_type in query_info:
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)
-        run_string = '{} -1 -c "{}" -c "\\timing" -f "{}"'.format(psql, executor_string, tpch_path + query_code)
+        run_string = '{} {} -c "{}" -c "\\timing" -f "{}"'.format(psql, connectionURI, executor_string, tpch_path + query_code)
         out_val = run(run_string)
         results_file.write(out_val)
         results_file.write('\n')

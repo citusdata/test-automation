@@ -14,6 +14,7 @@ AS_INSTANCES_FILE=/home/ec2-user/worker-instances
 aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $WORKER_AS_GROUP --output text > $AS_GROUP_FILE
 INSTANCES=$(grep ^INSTANCES $AS_GROUP_FILE | awk '{print $4}')
 
+touch $AS_INSTANCES_FILE
 if [ "$INSTANCES" != "" ]; then
     aws ec2 describe-instances --instance-ids $INSTANCES --output text | grep PRIVATEIPADDRESSES | cut -f4 > $AS_INSTANCES_FILE
 fi

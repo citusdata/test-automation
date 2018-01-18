@@ -123,6 +123,7 @@ def tpch(**kwargs):
 
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
 
+    connectionURI = kwargs.get('connectionURI', kwargs.get('connectionURI', ''))
     scale = kwargs.get('scale-factor', kwargs.get('scale_factor', 10))
     partition_type = kwargs.get('partition-type', kwargs.get('partition_type', 'default'))
 
@@ -132,20 +133,23 @@ def tpch(**kwargs):
         run('make')
         run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
+        # clear old tables
+        run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
+
         # create the tpc-h tables
         if partition_type == 'default':
-            run('{} -f tpch_create_tables.ddl'.format(psql))
+            run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'hash':
-            run('{} -f tpch_create_hash_partitioned_tables.ddl'.format(psql))
+            run('{} {} -f tpch_create_hash_partitioned_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'append':
-            run('{} -f tpch_create_append_partitioned_tables.ddl'.format(psql))
+            run('{} {} -f tpch_create_append_partitioned_tables.ddl'.format(psql, connectionURI))
 
         # stage tpc-h data
         for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
             table_name = os.path.basename(segment).split('.')[0]
-            run('''{} -c "COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, table_name, segment))
+            run('''{} {} -c "\COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, connectionURI, table_name, segment))
 
-        run('{} -f warm_up_cache.sql'.format(psql))
+        run('{} {} -f warm_up_cache.sql'.format(psql, connectionURI))
 
 @task
 @roles('master')

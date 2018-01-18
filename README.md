@@ -231,7 +231,7 @@ On the coordinator node:
 ```bash
 # Provide your tpch config file or go with the default file
 # Don't forget to escape `=` at the end of your connection string
-fab run.tpch_automate:tpch_q1.ini
+fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
 ```
 
 On your local machine:

@@ -21,7 +21,7 @@ def mess_with_roledefs(environment):
 
     environment.roledefs = {
         'master': ['localhost'],
-        'workers': [ip.strip() for ip in open('test-automation/worker-instances')],
+        'workers': [ip.strip() for ip in open('/home/ec2-user/test-automation/worker-instances')],
     }
 
     if environment.hosts or environment.roles:

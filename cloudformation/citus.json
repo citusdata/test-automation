@@ -142,18 +142,18 @@
               "15-set-path": {
                 "command": "echo 'export PATH=/home/ec2-user/pg-latest/bin/:$PATH' >> /home/ec2-user/.bash_profile"
               },
-              "16-set-workers": {
-                "command": "su ec2-user -c \"/usr/bin/find-workers\"",
-                "env": {
-                  "AWS_DEFAULT_REGION": { "Ref": "AWS::Region" },
-                  "WORKER_AS_GROUP": { "Ref": "WorkerGroup" }
-                }
-              },
               "20-checkout-repo": {
                 "command": "cd /home/ec2-user/ && su ec2-user -c \"git clone https://github.com/citusdata/test-automation.git\""
               },
               "22-copy-fabfile": {
                 "command": "ln -s /home/ec2-user/test-automation/fabfile /home/ec2-user/fabfile"
+              },
+              "26-set-workers": {
+                "command": "su ec2-user -c \"/usr/bin/find-workers\"",
+                "env": {
+                  "AWS_DEFAULT_REGION": { "Ref": "AWS::Region" },
+                  "WORKER_AS_GROUP": { "Ref": "WorkerGroup" }
+                }
               },
               "30-enable-tab-completion": {
                 "command": "echo 'source /home/ec2-user/test-automation/cloudformation/fab' >> /home/ec2-user/.bash_profile"
@@ -588,7 +588,7 @@
     },
     "Constants": {
       "Scripts": {
-        "FindWorkers": "https://s3.eu-central-1.amazonaws.com/citus-tests/find-workers.sh"
+        "FindWorkers": "https://github.com/citusdata/test-automation/blob/master/cloudformation/find-workers.sh"
       },
       "VolumeSize": { "Master": "128", "Worker": "128" }
     }

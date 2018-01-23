@@ -588,7 +588,7 @@
     },
     "Constants": {
       "Scripts": {
-        "FindWorkers": "https://github.com/citusdata/test-automation/blob/master/cloudformation/find-workers.sh"
+        "FindWorkers": "https://raw.githubusercontent.com/citusdata/test-automation/master/cloudformation/find-workers.sh"
       },
       "VolumeSize": { "Master": "128", "Worker": "128" }
     }

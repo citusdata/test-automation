@@ -147,44 +147,49 @@ strip_comments(char *line)
 void
 qsub(char *qtag, int flags)
 {
-static char *line = NULL,
-    *qpath = NULL;
-FILE *qfp;
-char *cptr,
-    *mark,
-    *qroot = NULL;
+	static char *line = NULL,
+		*qpath = NULL;
+	FILE *qfp;
+	char *cptr,
+		*mark,
+		*qroot = NULL;
 
     qnum = atoi(qtag);
     if (line == NULL)
-        {
+	{
         line = malloc(BUFSIZ);
         qpath = malloc(BUFSIZ);
         MALLOC_CHECK(line);
         MALLOC_CHECK(qpath);
-        }
+	}
 
     qroot = env_config(QDIR_TAG, QDIR_DFLT);
     sprintf(qpath, "%s%c%s.sql", 
-		qroot, PATH_SEP, qtag);
+			qroot, PATH_SEP, qtag);
     qfp = fopen(qpath, "r");
     OPEN_CHECK(qfp, qpath);
 
     rowcnt = rowcnt_dflt[qnum];
     varsub(qnum, 0, flags); /* set the variables */
+
+/* certainly don't prepend any query with LIMIT when using PostgreSQL */
+#ifndef POSTGRESQL
     if (flags & DFLT_NUM)
         fprintf(ofp, SET_ROWCOUNT, rowcnt);
+#endif
+
     while (fgets(line, BUFSIZ, qfp) != NULL)
-        {
+	{
         if (!(flags & COMMENT))
             strip_comments(line);
         mark = line;
         while ((cptr = strchr(mark, VTAG)) != NULL)
-            {
+		{
             *cptr = '\0';
-             cptr++;
+			cptr++;
             fprintf(ofp,"%s", mark);
             switch(*cptr)
-                {
+			{
                 case 'b':
                 case 'B':
                     if (!(flags & ANSI))
@@ -205,18 +210,23 @@ char *cptr,
                     break;
                 case 'n':
                 case 'N':
+				{
                     if (!(flags & DFLT_NUM))
-                        {
+					{
                         rowcnt=atoi(++cptr);
                         while (isdigit(*cptr) || *cptr == ' ') cptr++;
-                        fprintf(ofp, SET_ROWCOUNT, rowcnt);
-                        }
+					}
+					if (rowcnt != -1 )
+					{
+						fprintf(ofp, SET_ROWCOUNT, rowcnt);
+					}
                     continue;
+				}
                 case 'o':
                 case 'O':
                     if (flags & OUTPUT)
                         fprintf(ofp,"%s '%s/%s.%d'", SET_OUTPUT, osuff, 
-                            qtag, (snum < 0)?0:snum);
+								qtag, (snum < 0)?0:snum);
                     cptr++;
                     break;
                 case 'q':
@@ -235,28 +245,28 @@ char *cptr,
                         fprintf(ofp, "%s\n", GEN_QUERY_PLAN);
                     cptr++;
                     break;
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
                     varsub(qnum, atoi(cptr), flags & DFLT);
                     while (isdigit(*++cptr));
                     break;
                 default:
-		    fprintf(stderr, "-- unknown flag '%c%c' ignored\n", 
-                        VTAG, *cptr);
-		    cptr++;
-		    break;
-                }
+					fprintf(stderr, "-- unknown flag '%c%c' ignored\n", 
+							VTAG, *cptr);
+					cptr++;
+					break;
+			}
             mark=cptr;
-            }
+		}
         fprintf(ofp,"%s", mark);
-        }
+	}
     fclose(qfp);
     fflush(stdout);
     return;

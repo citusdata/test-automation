@@ -153,16 +153,30 @@ static int bTableSet = 0;
 /*
  * flat file print functions; used with -F(lat) option
  */
-int pr_cust (customer_t * c, int mode);
-int pr_line (order_t * o, int mode);
-int pr_order (order_t * o, int mode);
-int pr_part (part_t * p, int mode);
-int pr_psupp (part_t * p, int mode);
-int pr_supp (supplier_t * s, int mode);
-int pr_order_line (order_t * o, int mode);
-int pr_part_psupp (part_t * p, int mode);
-int pr_nation (code_t * c, int mode);
-int pr_region (code_t * c, int mode);
+int pr_cust (customer_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_line (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_order (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_part (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_psupp (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_supp (supplier_t * s, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_order_line (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_part_psupp (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_nation (code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int pr_region (code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+
+/*
+ * load direct functions, used with -D(irect) option
+ */
+int ld_cust (customer_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_line (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_order (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_part (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_psupp (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_supp (supplier_t * s, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_order_line (order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_part_psupp (part_t * p, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_nation (code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
+int ld_region (code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum);
 
 /*
  * seed generation functions; used with '-O s' option
@@ -198,6 +212,30 @@ tdef tdefs[] =
 	 pr_nation, NO_LFUNC, NONE, 0},
 	{"region.tbl", "region table", NATIONS_MAX,
 	 pr_region, NO_LFUNC, NONE, 0},
+};
+
+tdef tdefs_direct[] =
+{
+	{"part.tbl", "part table", 200000,
+	 ld_part, sd_part, PSUPP, 0},
+	{"partsupp.tbl", "partsupplier table", 200000,
+	 ld_psupp, sd_psupp, NONE, 0},
+	{"supplier.tbl", "suppliers table", 10000,
+	 ld_supp, sd_supp, NONE, 0},
+	{"customer.tbl", "customers table", 150000,
+	 ld_cust, sd_cust, NONE, 0},
+	{"orders.tbl", "order table", 150000,
+	 ld_order, sd_order, LINE, 0},
+	{"lineitem.tbl", "lineitem table", 150000,
+	 ld_line, sd_line, NONE, 0},
+	{"orders.tbl", "orders/lineitem tables", 150000,
+	 ld_order_line, sd_order, LINE, 0},
+	{"part.tbl", "part/partsupplier tables", 200000,
+	 ld_part_psupp, sd_part, PSUPP, 0},
+	{"nation.tbl", "nation table", NATIONS_MAX,
+	 ld_nation, NO_LFUNC, NONE, 0},
+	{"region.tbl", "region table", NATIONS_MAX,
+	 ld_region, NO_LFUNC, NONE, 0},
 };
 
 /*
@@ -333,34 +371,34 @@ gen_tbl (int tnum, DSS_HUGE start, DSS_HUGE count, long upd_num)
 					}
 				}
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&o, upd_num);
+					tdefs[tnum].loader(&o, upd_num, start, count, i);
 				break;
 			case SUPP:
 				mk_supp (i, &supp);
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&supp, upd_num);
+					tdefs[tnum].loader(&supp, upd_num, start, count, i);
 				break;
 			case CUST:
 				mk_cust (i, &cust);
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&cust, upd_num);
+					tdefs[tnum].loader(&cust, upd_num, start, count, i);
 				break;
 			case PSUPP:
 			case PART:
 			case PART_PSUPP:
 				mk_part (i, &part);
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&part, upd_num);
+					tdefs[tnum].loader(&part, upd_num, start, count, i);
 				break;
 			case NATION:
 				mk_nation (i, &code);
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&code, 0);
+					tdefs[tnum].loader(&code, 0, start, count, i);
 				break;
 			case REGION:
 				mk_region (i, &code);
 				if (set_seeds == 0)
-					tdefs[tnum].loader(&code, 0);
+					tdefs[tnum].loader(&code, 0, start, count, i);
 				break;
 		}
 		row_stop(tnum);
@@ -386,6 +424,8 @@ usage (void)
 			 "[-U <updates>]");
 	fprintf (stderr, "Basic Options\n===========================\n");
 	fprintf (stderr, "-C <n> -- separate data set into <n> chunks (requires -S, default: 1)\n");
+	fprintf (stderr, "-D     -- direct. Direct database load\n");
+	fprintf (stderr, "-n     -- database name, or connection string\n");
 	fprintf (stderr, "-f     -- force. Overwrite existing files\n");
 	fprintf (stderr, "-h     -- display this message\n");
 	fprintf (stderr, "-q     -- enable QUIET mode\n");
@@ -452,7 +492,7 @@ process_options (int count, char **vector)
 	FILE *pF;
 
 	while ((option = getopt (count, vector,
-							 "b:C:d:fi:hO:P:qs:S:T:U:v")) != -1)
+							 "b:C:d:Dfi:hn:O:P:qs:S:T:U:v")) != -1)
 		switch (option)
 		{
 			case 'b':				/* load distributions from named file */
@@ -474,12 +514,20 @@ process_options (int count, char **vector)
 			case 'd':
 				delete_segments = atoi (optarg);
 				break;
+			case 'D':				/* direct database load */
+				direct = 1;
+				break;
 			case 'f':				/* blind overwrites; Force */
 				force = 1;
 				break;
 			case 'i':
 				insert_segments = atoi (optarg);
 				break;
+            case 'n':   /* set database name */
+                db_name = malloc((int)strlen(optarg) + 1);
+                MALLOC_CHECK(db_name);
+                strcpy(db_name, optarg);
+                break;
 			case 'q':				/* all prompts disabled */
 				verbose = -1;
 				break;
@@ -649,6 +697,19 @@ void validate_options(void)
 		exit(-1);
 	}
 
+	// Direct Load for PostgreSQL
+	if (direct && db_name == NULL)
+	{
+		fprintf(stderr, "ERROR: -n must be given when doing direct database load\n");
+		exit(-1);
+	}
+
+	if (!direct && db_name != NULL)
+	{
+		fprintf(stderr, "ERROR: -n is ignored unless doing direct database load, see -D\n");
+		exit(-1);
+	}
+
 	return;
 }
 
@@ -671,6 +732,7 @@ main (int ac, char **av)
 		(1 << PART_PSUPP) |
 		(1 << ORDER_LINE);
 	force = 0;
+	direct = 0;
     insert_segments=0;
     delete_segments=0;
     insert_orders_segment=0;
@@ -690,6 +752,7 @@ main (int ac, char **av)
 		ORDERS_PER_CUST;			/* have to do this after init */
 	children = 1;
 	d_path = NULL;
+	db_name = NULL;
 
 #ifdef NO_SUPPORT
 	signal (SIGINT, exit);
@@ -722,6 +785,20 @@ main (int ac, char **av)
 	/* have to do this after init */
 	tdefs[NATION].base = nations.count;
 	tdefs[REGION].base = regions.count;
+
+	/*
+	 * is it a Direct Database load?
+	 */
+	if (direct)
+	{
+		int i;
+
+		/* change the 10 entries of tdef[i].loader */
+		for(i = 0; i<10; i++)
+		{
+			tdefs[i].loader = tdefs_direct[i].loader;
+		}
+	}
 
 	/*
 	 * updates are never parallelized
@@ -773,7 +850,8 @@ main (int ac, char **av)
 	 **/
 
 	/*
-	 * traverse the tables, invoking the appropriate data generation routine for any to be built
+	 * traverse the tables, invoking the appropriate data generation routine
+	 * for any to be built
 	 */
 	for (i = PART; i <= REGION; i++)
 		if (table & (1 << i))

@@ -84,6 +84,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <libpq-fe.h>
+#include "pqexpbuffer.h"
+
 #define  NONE		-1
 #define  PART		0
 #define  PSUPP		1
@@ -273,12 +276,14 @@ EXTERN int refresh;
 EXTERN int resume;
 EXTERN long verbose;
 EXTERN long force;
+EXTERN long direct;
 EXTERN long updates;
 EXTERN long table;
 EXTERN long children;
 EXTERN int  step;
 EXTERN int	set_seeds;
 EXTERN char *d_path;
+EXTERN char *db_name;
 
 /* added for segmented updates */
 EXTERN int insert_segments;
@@ -467,6 +472,7 @@ extern tdef tdefs[];
 #define DT_KEY		4
 #define DT_MONEY	5
 #define DT_CHR		6
+#define DT_EOL		7			/* End Of Line */
 
 int dbg_print(int dt, FILE *tgt, void *data, int len, int eol);
 #define PR_STR(f, str, len)		dbg_print(DT_STR, f, (void *)str, len, 1)
@@ -484,6 +490,25 @@ int dbg_print(int dt, FILE *tgt, void *data, int len, int eol);
 	sprintf(tgt, "%02ld-%02ld-19%02ld", mn, dy, yr)
 #else
 #define  PR_DATE(tgt, yr, mn, dy)					\
+	sprintf(tgt, "19%02ld-%02ld-%02ld", yr, mn, dy)
+#endif /* DATE_FORMAT */
+
+int pg_append(int format, PQExpBuffer buffer, void *data, int len, int sep);
+#define LD_STR(f, str, len)		pg_append(DT_STR, f, (void *)str, len, 1)
+#define LD_VSTR(f, str, len) 	pg_append(DT_VSTR, f, (void *)str, len, 1)
+#define LD_VSTR_LAST(f, str, len) 	pg_append(DT_VSTR, f, (void *)str, len, 0)
+#define LD_INT(f, str) 			pg_append(DT_INT, f, (void *)str, 0, 1)
+#define LD_HUGE(f, str) 		pg_append(DT_HUGE, f, (void *)str, 0, 1)
+#define LD_KEY(f, str) 			pg_append(DT_KEY, f, (void *)str, 0, -1)
+#define LD_MONEY(f, str) 		pg_append(DT_MONEY, f, (void *)str, 0, 1)
+#define LD_CHR(f, str)	 		pg_append(DT_CHR, f, (void *)str, 0, 1)
+#define  LD_STRT(fp)            fp = createPQExpBuffer();
+#define  LD_END(fp)             pg_append(DT_EOL, fp, NULL, 0, 0)
+#ifdef MDY_DATE
+#define  LD_DATE(tgt, yr, mn, dy)					\
+	sprintf(tgt, "%02ld-%02ld-19%02ld", mn, dy, yr)
+#else
+#define  LD_DATE(tgt, yr, mn, dy)					\
 	sprintf(tgt, "19%02ld-%02ld-%02ld", yr, mn, dy)
 #endif /* DATE_FORMAT */
 

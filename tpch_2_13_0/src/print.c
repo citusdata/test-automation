@@ -151,7 +151,7 @@ dbg_print(int format, FILE *target, void *data, int len, int sep)
 }
 
 int
-pr_cust(customer_t *c, int mode)
+pr_cust(customer_t *c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
 	static FILE *fp = NULL;
 
@@ -179,7 +179,7 @@ pr_cust(customer_t *c, int mode)
  * print the numbered order
  */
 int
-pr_order(order_t *o, int mode)
+pr_order(order_t *o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
     static FILE *fp_o = NULL;
     static int last_mode = 0;
@@ -210,7 +210,7 @@ pr_order(order_t *o, int mode)
  * print an order's lineitems
  */
 int
-pr_line(order_t *o, int mode)
+pr_line(order_t *o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
     static FILE *fp_l = NULL;
     static int last_mode = 0;
@@ -253,11 +253,11 @@ pr_line(order_t *o, int mode)
  * print the numbered order *and* its associated lineitems
  */
 int
-pr_order_line(order_t *o, int mode)
+pr_order_line(order_t *o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
     tdefs[ORDER].name = tdefs[ORDER_LINE].name;
-    pr_order(o, mode);
-    pr_line(o, mode);
+    pr_order(o, mode, start, count, rownum);
+    pr_line(o, mode, start, count, rownum);
 
     return(0);
 }
@@ -266,7 +266,7 @@ pr_order_line(order_t *o, int mode)
  * print the given part
  */
 int
-pr_part(part_t *part, int mode)
+pr_part(part_t *part, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
 	static FILE *p_fp = NULL;
 
@@ -292,7 +292,7 @@ pr_part(part_t *part, int mode)
  * print the given part's suppliers
  */
 int
-pr_psupp(part_t *part, int mode)
+pr_psupp(part_t *part, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
     static FILE *ps_fp = NULL;
     long      i;
@@ -318,17 +318,17 @@ pr_psupp(part_t *part, int mode)
  * print the given part *and* its suppliers
  */
 int
-pr_part_psupp(part_t *part, int mode)
+pr_part_psupp(part_t *part, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
     tdefs[PART].name = tdefs[PART_PSUPP].name;
-    pr_part(part, mode);
-    pr_psupp(part, mode);
+    pr_part(part, mode, start, count, rownum);
+    pr_psupp(part, mode, start, count, rownum);
 
     return(0);
 }
 
 int
-pr_supp(supplier_t *supp, int mode)
+pr_supp(supplier_t *supp, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
 	static FILE *fp = NULL;
 
@@ -349,7 +349,7 @@ pr_supp(supplier_t *supp, int mode)
 }
 
 int
-pr_nation(code_t *c, int mode)
+pr_nation(code_t *c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
 	static FILE *fp = NULL;
 
@@ -367,7 +367,7 @@ pr_nation(code_t *c, int mode)
 }
 
 int
-pr_region(code_t *c, int mode)
+pr_region(code_t *c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 {
 	static FILE *fp = NULL;
 

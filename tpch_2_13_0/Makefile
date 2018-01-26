@@ -110,8 +110,13 @@ DATABASE = POSTGRESQL
 MACHINE  = LINUX
 WORKLOAD = TPCH
 #
-CFLAGS	= -g -DDBNAME=\"dss\" -D$(MACHINE) -D$(DATABASE) -D$(WORKLOAD) -DRNG_TEST -D_FILE_OFFSET_BITS=64 
-LDFLAGS = -O
+
+PG_CONFIG ?= pg_config
+PG_INCLUDE = $(shell $(PG_CONFIG) --includedir)
+PG_LIB     = $(shell $(PG_CONFIG) --libdir)
+
+CFLAGS	= -g -DDBNAME=\"dss\" -D$(MACHINE) -D$(DATABASE) -D$(WORKLOAD) -DRNG_TEST -D_FILE_OFFSET_BITS=64 -I$(PG_INCLUDE)
+LDFLAGS = -O -L$(PG_LIB) -lpq
 # The OBJ,EXE and LIB macros will need to be changed for compilation under
 #  Windows NT
 OBJ     = .o

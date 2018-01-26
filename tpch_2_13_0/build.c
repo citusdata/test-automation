@@ -1,35 +1,35 @@
 /*
  * $Id: build.c,v 1.5 2009/06/28 14:01:08 jms Exp $
- * 
+ *
  * Revision History =================== $Log: build.c,v $
  * Revision History =================== Revision 1.5  2009/06/28 14:01:08  jms
  * Revision History =================== bug fix for DOP
  * Revision History =================== Revision 1.4
  * 2005/10/28 02:56:22  jms add platform-specific printf formats to allow for
  * DSS_HUGE data type
- * 
+ *
  * Revision 1.3  2005/10/14 23:16:54  jms fix for answer set compliance
- * 
+ *
  * Revision 1.2  2005/01/03 20:08:58  jms change line terminations
- * 
+ *
  * Revision 1.1.1.1  2004/11/24 23:31:46  jms re-establish external server
- * 
+ *
  * Revision 1.3  2004/04/07 20:17:29  jms bug #58 (join fails between
  * order/lineitem)
- * 
+ *
  * Revision 1.2  2004/01/22 05:49:29  jms AIX porting (AIX 5.1)
- * 
+ *
  * Revision 1.1.1.1  2003/08/08 21:35:26  jms recreation after CVS crash
- * 
+ *
  * Revision 1.3  2003/08/08 21:35:26  jms first integration of rng64 for
  * o_custkey and l_partkey
- * 
+ *
  * Revision 1.2  2003/08/07 17:58:34  jms Convery RNG to 64bit space as
  * preparation for new large scale RNG
- * 
+ *
  * Revision 1.1.1.1  2003/04/03 18:54:21  jms initial checkin
- * 
- * 
+ *
+ *
  */
 /* stuff related to the customer table */
 #include <stdio.h>
@@ -50,16 +50,16 @@ extern adhoc_t  adhocs[];
 #endif				/* ADHOC */
 #include "rng64.h"
 
-#define LEAP_ADJ(yr, mnth)      \
-((LEAP(yr) && (mnth) >= 2) ? 1 : 0)
+#define LEAP_ADJ(yr, mnth)						\
+	((LEAP(yr) && (mnth) >= 2) ? 1 : 0)
 #define JDAY_BASE       8035	/* start from 1/1/70 a la unix */
 #define JMNTH_BASE      (-70 * 12)	/* start from 1/1/70 a la unix */
 #define JDAY(date) ((date) - STARTDATE + JDAY_BASE + 1)
-#define PART_SUPP_BRIDGE(tgt, p, s) \
-    { \
-    DSS_HUGE tot_scnt = tdefs[SUPP].base * scale; \
-    tgt = (p + s *  (tot_scnt / SUPP_PER_PART +  \
-	(long) ((p - 1) / tot_scnt))) % tot_scnt + 1; \
+#define PART_SUPP_BRIDGE(tgt, p, s)										\
+    {																	\
+		DSS_HUGE tot_scnt = tdefs[SUPP].base * scale;					\
+		tgt = (p + s *  (tot_scnt / SUPP_PER_PART +						\
+						 (long) ((p - 1) / tot_scnt))) % tot_scnt + 1;	\
     }
 #define V_STR(avg, sd, tgt)  a_rnd((int)(avg * V_STR_LOW),(int)(avg * V_STR_HGH), sd, tgt)
 #define TEXT(avg, sd, tgt)  dbg_text(tgt, (int)(avg * V_STR_LOW),(int)(avg * V_STR_HGH), sd)
@@ -172,13 +172,13 @@ mk_order(DSS_HUGE index, order_t * o, long upd_num)
 	if (asc_date == NULL)
 		asc_date = mk_ascdate();
 	mk_sparse(index, &o->okey,
-		  (upd_num == 0) ? 0 : 1 + upd_num / (10000 / UPD_PCT));
+			  (upd_num == 0) ? 0 : 1 + upd_num / (10000 / UPD_PCT));
 /*
-	if (scale >= 30000)
-		RANDOM64(o->custkey, O_CKEY_MIN, O_CKEY_MAX, O_CKEY_SD);
-	else
+  if (scale >= 30000)
+  RANDOM64(o->custkey, O_CKEY_MIN, O_CKEY_MAX, O_CKEY_SD);
+  else
 */
-		RANDOM(o->custkey, O_CKEY_MIN, O_CKEY_MAX, O_CKEY_SD);
+	RANDOM(o->custkey, O_CKEY_MIN, O_CKEY_MAX, O_CKEY_SD);
 	while (o->custkey % CUST_MORTALITY == 0)
 	{
 		o->custkey += delta;
@@ -218,11 +218,11 @@ mk_order(DSS_HUGE index, order_t * o, long upd_num)
 		TEXT(L_CMNT_LEN, L_CMNT_SD, o->l[lcnt].comment);
 		o->l[lcnt].clen = (int)strlen(o->l[lcnt].comment);
 /*
-		if (scale >= 30000)
-			RANDOM64(o->l[lcnt].partkey, L_PKEY_MIN, L_PKEY_MAX, L_PKEY_SD);
-		else
+  if (scale >= 30000)
+  RANDOM64(o->l[lcnt].partkey, L_PKEY_MIN, L_PKEY_MAX, L_PKEY_SD);
+  else
 */
-			RANDOM(o->l[lcnt].partkey, L_PKEY_MIN, L_PKEY_MAX, L_PKEY_SD);
+		RANDOM(o->l[lcnt].partkey, L_PKEY_MIN, L_PKEY_MAX, L_PKEY_SD);
 		rprice = rpb_routine(o->l[lcnt].partkey);
 		RANDOM(supp_num, 0, 3, L_SKEY_SD);
 		PART_SUPP_BRIDGE(o->l[lcnt].suppkey, o->l[lcnt].partkey, supp_num);
@@ -230,7 +230,7 @@ mk_order(DSS_HUGE index, order_t * o, long upd_num)
 
 		o->totalprice +=
 			((o->l[lcnt].eprice *
-		     ((long) 100 - o->l[lcnt].discount)) / (long) PENNIES) *
+			  ((long) 100 - o->l[lcnt].discount)) / (long) PENNIES) *
 			((long) 100 + o->l[lcnt].tax)
 			/ (long) PENNIES;
 
@@ -422,7 +422,7 @@ mk_time(DSS_HUGE index, dss_time_t * t)
 	while (d > months[m].dcnt + LEAP_ADJ(y, m))
 		m++;
 	PR_DATE(t->alpha, y, m,
-		d - months[m - 1].dcnt - ((LEAP(y) && m > 2) ? 1 : 0));
+			d - months[m - 1].dcnt - ((LEAP(y) && m > 2) ? 1 : 0));
 	t->year = 1900 + y;
 	t->month = m + 12 * y + JMNTH_BASE;
 	t->week = (d + T_START_DAY - 1) / 7 + 1;

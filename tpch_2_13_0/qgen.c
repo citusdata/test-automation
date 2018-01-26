@@ -1,26 +1,26 @@
 /*
-* $Id: qgen.c,v 1.3 2005/10/28 02:54:35 jms Exp $
-*
-* Revision History
-* ===================
-* $Log: qgen.c,v $
-* Revision 1.3  2005/10/28 02:54:35  jms
-* add release.h changes
-*
-* Revision 1.2  2005/01/03 20:08:59  jms
-* change line terminations
-*
-* Revision 1.1.1.1  2004/11/24 23:31:47  jms
-* re-establish external server
-*
-* Revision 1.1.1.1  2003/04/03 18:54:21  jms
-* recreation after CVS crash
-*
-* Revision 1.1.1.1  2003/04/03 18:54:21  jms
-* initial checkin
-*
-*
-*/
+ * $Id: qgen.c,v 1.3 2005/10/28 02:54:35 jms Exp $
+ *
+ * Revision History
+ * ===================
+ * $Log: qgen.c,v $
+ * Revision 1.3  2005/10/28 02:54:35  jms
+ * add release.h changes
+ *
+ * Revision 1.2  2005/01/03 20:08:59  jms
+ * change line terminations
+ *
+ * Revision 1.1.1.1  2004/11/24 23:31:47  jms
+ * re-establish external server
+ *
+ * Revision 1.1.1.1  2003/04/03 18:54:21  jms
+ * recreation after CVS crash
+ *
+ * Revision 1.1.1.1  2003/04/03 18:54:21  jms
+ * initial checkin
+ *
+ *
+ */
 /*
  * qgen.c -- routines to convert query templates to executable query
  *           text for TPC-H and TPC-R
@@ -85,42 +85,42 @@ strip_comments(char *line)
     char *cp1, *cp2;
 
     cp1 = line;
-    
+
     while (1)   /* traverse the entire string */
-        {
+	{
         if (in_comment)
-            {
+		{
             if ((cp2 = strchr(cp1, '}')) != NULL) /* comment ends */
-                {
+			{
                 strcpy(cp1, cp2 + 1);
                 in_comment = 0;
                 continue;
-                }
-            else 
-                {
+			}
+            else
+			{
                 *cp1 = '\0';
                 break;
-                }
-            }
+			}
+		}
         else    /* not in_comment */
-            {
+		{
             if ((cp2 = strchr(cp1, '-')) != NULL)
-                {
+			{
                 if (*(cp2 + 1) == '-')  /* found a '--' comment */
-                    {
+				{
                     *cp2 = '\0';
                     break;
-                    }
-                }
+				}
+			}
             if ((cp2 = strchr(cp1, '{')) != NULL) /* comment starts */
-                {
+			{
                 in_comment = 1;
                 *cp2 = ' ';
                 continue;
-                }
+			}
             else break;
-            }
-        }
+		}
+	}
     return(0);
 }
 
@@ -136,7 +136,7 @@ strip_comments(char *line)
  *  second line set explain on;         -x from command line
  *   :<number>  parameter <number>
  *  :k          set number
- *  :o          output to outpath/qnum.snum    
+ *  :o          output to outpath/qnum.snum
  *                                      -o from command line, SET_OUTPUT
  *  :s          stream number
  *  :b          BEGIN WORK;             -a from command line, START_TRAN
@@ -164,7 +164,7 @@ qsub(char *qtag, int flags)
 	}
 
     qroot = env_config(QDIR_TAG, QDIR_DFLT);
-    sprintf(qpath, "%s%c%s.sql", 
+    sprintf(qpath, "%s%c%s.sql",
 			qroot, PATH_SEP, qtag);
     qfp = fopen(qpath, "r");
     OPEN_CHECK(qfp, qpath);
@@ -225,7 +225,7 @@ qsub(char *qtag, int flags)
                 case 'o':
                 case 'O':
                     if (flags & OUTPUT)
-                        fprintf(ofp,"%s '%s/%s.%d'", SET_OUTPUT, osuff, 
+                        fprintf(ofp,"%s '%s/%s.%d'", SET_OUTPUT, osuff,
 								qtag, (snum < 0)?0:snum);
                     cptr++;
                     break;
@@ -258,7 +258,7 @@ qsub(char *qtag, int flags)
                     while (isdigit(*++cptr));
                     break;
                 default:
-					fprintf(stderr, "-- unknown flag '%c%c' ignored\n", 
+					fprintf(stderr, "-- unknown flag '%c%c' ignored\n",
 							VTAG, *cptr);
 					cptr++;
 					break;
@@ -275,28 +275,28 @@ qsub(char *qtag, int flags)
 void
 usage(void)
 {
-printf("%s Parameter Substitution (v. %d.%d.%d build %d)\n", 
-          NAME, VERSION,RELEASE,
-            PATCH,BUILD);
-printf("Copyright %s %s\n", TPC, C_DATES);
-printf("USAGE: %s <options> [ queries ]\n", prog);
-printf("Options:\n");
-printf("\t-a\t\t-- use ANSI semantics.\n");
-printf("\t-b <str>\t-- load distributions from <str>\n");
-printf("\t-c\t\t-- retain comments found in template.\n");
-printf("\t-d\t\t-- use default substitution values.\n");
-printf("\t-h\t\t-- print this usage summary.\n");
-printf("\t-i <str>\t-- use the contents of file <str> to begin a query.\n");
-printf("\t-l <str>\t-- log parameters to <str>.\n");
-printf("\t-n <str>\t-- connect to database <str>.\n");
-printf("\t-N\t\t-- use default rowcounts and ignore :n directive.\n");
-printf("\t-o <str>\t-- set the output file base path to <str>.\n");
-printf("\t-p <n>\t\t-- use the query permutation for stream <n>\n");
-printf("\t-r <n>\t\t-- seed the random number generator with <n>\n");
-printf("\t-s <n>\t\t-- base substitutions on an SF of <n>\n");
-printf("\t-v\t\t-- verbose.\n");
-printf("\t-t <str>\t-- use the contents of file <str> to complete a query\n");
-printf("\t-x\t\t-- enable SET EXPLAIN in each query.\n");
+	printf("%s Parameter Substitution (v. %d.%d.%d build %d)\n",
+		   NAME, VERSION,RELEASE,
+		   PATCH,BUILD);
+	printf("Copyright %s %s\n", TPC, C_DATES);
+	printf("USAGE: %s <options> [ queries ]\n", prog);
+	printf("Options:\n");
+	printf("\t-a\t\t-- use ANSI semantics.\n");
+	printf("\t-b <str>\t-- load distributions from <str>\n");
+	printf("\t-c\t\t-- retain comments found in template.\n");
+	printf("\t-d\t\t-- use default substitution values.\n");
+	printf("\t-h\t\t-- print this usage summary.\n");
+	printf("\t-i <str>\t-- use the contents of file <str> to begin a query.\n");
+	printf("\t-l <str>\t-- log parameters to <str>.\n");
+	printf("\t-n <str>\t-- connect to database <str>.\n");
+	printf("\t-N\t\t-- use default rowcounts and ignore :n directive.\n");
+	printf("\t-o <str>\t-- set the output file base path to <str>.\n");
+	printf("\t-p <n>\t\t-- use the query permutation for stream <n>\n");
+	printf("\t-r <n>\t\t-- seed the random number generator with <n>\n");
+	printf("\t-s <n>\t\t-- base substitutions on an SF of <n>\n");
+	printf("\t-v\t\t-- verbose.\n");
+	printf("\t-t <str>\t-- use the contents of file <str> to complete a query\n");
+	printf("\t-x\t\t-- enable SET EXPLAIN in each query.\n");
 }
 
 int
@@ -306,7 +306,7 @@ process_options(int cnt, char **args)
 
     while((flag = getopt(cnt, args, "ab:cdhi:n:Nl:o:p:r:s:t:vx")) != -1)
         switch(flag)
-            {
+		{
             case 'a':   /* use ANSI semantics */
                 flags |= ANSI;
                 break;
@@ -363,10 +363,10 @@ process_options(int cnt, char **args)
                 flt_scale = atof(optarg);
 				if (scale > MAX_SCALE)
 					fprintf(stderr, "%s %5.0f %s\n%s\n",
-						"WARNING: Support for scale factors >",
-						MAX_SCALE,
-						"GB is still in development.",
-						"Data set integrity is not guaranteed.\n");
+							"WARNING: Support for scale factors >",
+							MAX_SCALE,
+							"GB is still in development.",
+							"Data set integrity is not guaranteed.\n");
                 break;
             case 't':   /* set termination file name */
                 tfile = malloc((int)strlen(optarg) + 1);
@@ -385,7 +385,7 @@ process_options(int cnt, char **args)
                 usage();
                 exit(1);
                 break;
-            }
+		}
     return(0);
 }
 
@@ -399,13 +399,13 @@ setup(void)
     read_dist(env_config(DIST_TAG, DIST_DFLT), "nations", &nations);
     read_dist(env_config(DIST_TAG, DIST_DFLT), "nations2", &nations2);
     read_dist(env_config(DIST_TAG, DIST_DFLT), "regions", &regions);
-    read_dist(env_config(DIST_TAG, DIST_DFLT), "o_oprio", 
-        &o_priority_set);
-    read_dist(env_config(DIST_TAG, DIST_DFLT), "instruct", 
-        &l_instruct_set);
+    read_dist(env_config(DIST_TAG, DIST_DFLT), "o_oprio",
+			  &o_priority_set);
+    read_dist(env_config(DIST_TAG, DIST_DFLT), "instruct",
+			  &l_instruct_set);
     read_dist(env_config(DIST_TAG, DIST_DFLT), "smode", &l_smode_set);
-    read_dist(env_config(DIST_TAG, DIST_DFLT), "category", 
-        &l_category_set);
+    read_dist(env_config(DIST_TAG, DIST_DFLT), "category",
+			  &l_category_set);
     read_dist(env_config(DIST_TAG, DIST_DFLT), "rflag", &l_rflag_set);
     read_dist(env_config(DIST_TAG, DIST_DFLT), "msegmnt", &c_mseg_set);
 	read_dist(env_config(DIST_TAG, DIST_DFLT), "Q13a", &q13a);
@@ -427,73 +427,72 @@ int main(int ac, char **av)
 	d_path = NULL;
     process_options(ac, av);
     if (flags & VERBOSE)
-        fprintf(ofp, 
-	    "-- TPC %s Parameter Substitution (Version %d.%d.%d build %d)\n",
-            NAME, VERSION, RELEASE, PATCH, BUILD);
+        fprintf(ofp,
+				"-- TPC %s Parameter Substitution (Version %d.%d.%d build %d)\n",
+				NAME, VERSION, RELEASE, PATCH, BUILD);
 
     setup();
 
     if (!(flags & DFLT))        /* perturb the RNG */
-	    {
+	{
 	    if (!(flags & SEED))
-                rndm = (long)((unsigned)time(NULL));
+			rndm = (long)((unsigned)time(NULL));
 		if (rndm < 0)
 			rndm += 2147483647;
 		Seed[0].value = rndm;
 		for (i=1; i <= QUERIES_PER_SET; i++)
-			{
+		{
 			Seed[0].value = NextRand(Seed[0].value);
 			Seed[i].value = Seed[0].value;
-			}
-		printf("-- using %ld as a seed to the RNG\n", rndm);
 		}
+		printf("-- using %ld as a seed to the RNG\n", rndm);
+	}
     else
         printf("-- using default substitutions\n");
-    
+
     if (flags & INIT)           /* init stream with ifile */
-        {
+	{
         ifp = fopen(ifile, "r");
-	OPEN_CHECK(ifp, ifile);
+		OPEN_CHECK(ifp, ifile);
         while (fgets(line, LINE_SIZE, ifp) != NULL)
             fprintf(stdout, "%s", line);
-        }
+	}
 
     if (snum >= 0)
         if (optind < ac)
             for (i=optind; i < ac; i++)
-                {
+			{
                 char qname[10];
-                sprintf(qname, "%d", SEQUENCE(snum, atoi(av[i])));
+                sprintf(qname, "%ld", SEQUENCE(snum, atoi(av[i])));
                 qsub(qname, flags);
-                }
+			}
         else
             for (i=1; i <= QUERIES_PER_SET; i++)
-                {
+			{
                 char qname[10];
-                sprintf(qname, "%d", SEQUENCE(snum, i));
+                sprintf(qname, "%ld", SEQUENCE(snum, i));
                 qsub(qname, flags);
-                }
+			}
     else
         if (optind < ac)
             for (i=optind; i < ac; i++)
-                qsub(av[i], flags);   
+                qsub(av[i], flags);
         else
             for (i=1; i <= QUERIES_PER_SET; i++)
-                {
+			{
                 char qname[10];
                 sprintf(qname, "%d", i);
                 qsub(qname, flags);
-                }
-    
+			}
+
     if (flags & TERMINATE)      /* terminate stream with tfile */
-        {
+	{
         ifp = fopen(tfile, "r");
         if (ifp == NULL)
-	OPEN_CHECK(ifp, tfile);
+			OPEN_CHECK(ifp, tfile);
         while (fgets(line, LINE_SIZE, ifp) != NULL)
             fprintf(stdout, "%s", line);
-        }
+	}
 
     return(0);
 }
-

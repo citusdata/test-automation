@@ -1,23 +1,23 @@
 /*
-* $Id: load_stub.c,v 1.2 2005/01/03 20:08:58 jms Exp $
-*
-* Revision History
-* ===================
-* $Log: load_stub.c,v $
-* Revision 1.2  2005/01/03 20:08:58  jms
-* change line terminations
-*
-* Revision 1.1.1.1  2004/11/24 23:31:46  jms
-* re-establish external server
-*
-* Revision 1.1.1.1  2003/04/03 18:54:21  jms
-* recreation after CVS crash
-*
-* Revision 1.1.1.1  2003/04/03 18:54:21  jms
-* initial checkin
-*
-*
-*/
+ * $Id: load_stub.c,v 1.2 2005/01/03 20:08:58 jms Exp $
+ *
+ * Revision History
+ * ===================
+ * $Log: load_stub.c,v $
+ * Revision 1.2  2005/01/03 20:08:58  jms
+ * change line terminations
+ *
+ * Revision 1.1.1.1  2004/11/24 23:31:46  jms
+ * re-establish external server
+ *
+ * Revision 1.1.1.1  2003/04/03 18:54:21  jms
+ * recreation after CVS crash
+ *
+ * Revision 1.1.1.1  2003/04/03 18:54:21  jms
+ * initial checkin
+ *
+ *
+ */
 /*****************************************************************
  *  Title:      load_stub.c
  *  Description:
@@ -33,21 +33,21 @@
 #include "dss.h"
 #include "dsstypes.h"
 
-int 
+int
 close_direct(void)
 {
     /* any post load cleanup goes here */
     return(0);
 }
 
-int 
+int
 prep_direct(void)
 {
     /* any preload prep goes here */
     return(0);
 }
 
-int 
+int
 hd_cust (FILE *f)
 {
     static int count = 0;
@@ -58,20 +58,20 @@ hd_cust (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_cust (customer_t *cp, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the customer table");
+			   "No load routine has been defined",
+			   "for the customer table");
 
     return(0);
 }
 
-int 
+int
 hd_part (FILE *f)
 {
     static int count = 0;
@@ -82,7 +82,7 @@ hd_part (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_part (part_t *pp, int mode)
 {
     static int count = 0;
@@ -93,22 +93,22 @@ ld_part (part_t *pp, int mode)
     return(0);
 }
 
-int 
+int
 ld_psupp (part_t *pp, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined for the",
-            "psupp table\n");
+			   "No load routine has been defined for the",
+			   "psupp table\n");
 
     return(0);
 
 }
 
 
-int 
+int
 hd_supp (FILE *f)
 {
     static int count = 0;
@@ -119,21 +119,21 @@ hd_supp (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_supp (supplier_t *sp, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the supplier table\n");
+			   "No load routine has been defined",
+			   "for the supplier table\n");
 
     return(0);
 }
 
 
-int 
+int
 hd_order (FILE *f)
 {
     static int count = 0;
@@ -144,15 +144,15 @@ hd_order (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_order (order_t *p, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the order table");
+			   "No load routine has been defined",
+			   "for the order table");
 
     return(0);
 }
@@ -163,29 +163,29 @@ int ld_line (order_t *p, int mode)
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the line table");
+			   "No load routine has been defined",
+			   "for the line table");
 
     return(0);
 }
 
 
 
-int 
+int
 hd_psupp (FILE *f)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No header has been defined for the",
-            "part supplier table");
+			   "No header has been defined for the",
+			   "part supplier table");
 
     return(0);
 }
 
 
-int 
+int
 hd_line (FILE *f)
 {
     static int count = 0;
@@ -196,7 +196,7 @@ hd_line (FILE *f)
     return(0);
 }
 
-int 
+int
 hd_nation (FILE *f)
 {
     static int count = 0;
@@ -207,20 +207,20 @@ hd_nation (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_nation (code_t *cp, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the nation table");
+			   "No load routine has been defined",
+			   "for the nation table");
 
     return(0);
 }
 
-int 
+int
 hd_region (FILE *f)
 {
     static int count = 0;
@@ -231,20 +231,20 @@ hd_region (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_region (code_t *cp, int mode)
 {
     static int count = 0;
 
     if (! count++)
         printf("%s %s\n",
-            "No load routine has been defined",
-            "for the region table");
+			   "No load routine has been defined",
+			   "for the region table");
 
     return(0);
 }
 
-int 
+int
 ld_order_line (order_t *p, int mode)
 {
     ld_order(p, mode);
@@ -253,7 +253,7 @@ ld_order_line (order_t *p, int mode)
     return(0);
 }
 
-int 
+int
 hd_order_line (FILE *f)
 {
     hd_order(f);
@@ -262,7 +262,7 @@ hd_order_line (FILE *f)
     return(0);
 }
 
-int 
+int
 ld_part_psupp (part_t *p, int mode)
 {
     ld_part(p, mode);
@@ -271,7 +271,7 @@ ld_part_psupp (part_t *p, int mode)
     return(0);
 }
 
-int 
+int
 hd_part_psupp (FILE *f)
 {
     hd_part(f);

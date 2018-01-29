@@ -42,5 +42,6 @@ group by
 	s_name
 order by
 	numwait desc,
-	s_name;
+	s_name
 :n 100
+;

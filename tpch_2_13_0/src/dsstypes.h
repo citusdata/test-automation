@@ -53,8 +53,8 @@ typedef struct
 }               customer_t;
 /* customers.c */
 long mk_cust   PROTO((DSS_HUGE n_cust, customer_t * c));
-int pr_cust    PROTO((customer_t * c, int mode));
-int ld_cust    PROTO((customer_t * c, int mode));
+int pr_cust    PROTO((customer_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int ld_cust    PROTO((customer_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 
 typedef struct
 {
@@ -95,8 +95,8 @@ typedef struct
 
 /* order.c */
 long	mk_order	PROTO((DSS_HUGE index, order_t * o, long upd_num));
-int		pr_order	PROTO((order_t * o, int mode));
-int		ld_order	PROTO((order_t * o, int mode));
+int		pr_order	PROTO((order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int		ld_order	PROTO((order_t * o, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 void	mk_sparse	PROTO((DSS_HUGE index, DSS_HUGE *ok, long seq));
 
 typedef struct
@@ -128,8 +128,8 @@ typedef struct
 
 /* parts.c */
 long mk_part   PROTO((DSS_HUGE index, part_t * p));
-int pr_part    PROTO((part_t * part, int mode));
-int ld_part    PROTO((part_t * part, int mode));
+int pr_part    PROTO((part_t * part, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int ld_part    PROTO((part_t * part, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 
 typedef struct
 {
@@ -145,8 +145,8 @@ typedef struct
 }               supplier_t;
 /* supplier.c */
 long mk_supp   PROTO((DSS_HUGE index, supplier_t * s));
-int pr_supp    PROTO((supplier_t * supp, int mode));
-int ld_supp    PROTO((supplier_t * supp, int mode));
+int pr_supp    PROTO((supplier_t * supp, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int ld_supp    PROTO((supplier_t * supp, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 
 typedef struct
 {
@@ -175,9 +175,9 @@ typedef struct
 
 /* code table */
 int mk_nation   PROTO((DSS_HUGE i, code_t * c));
-int pr_nation    PROTO((code_t * c, int mode));
-int ld_nation    PROTO((code_t * c, int mode));
+int pr_nation    PROTO((code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int ld_nation    PROTO((code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 int mk_region   PROTO((DSS_HUGE i, code_t * c));
-int pr_region    PROTO((code_t * c, int mode));
-int ld_region    PROTO((code_t * c, int mode));
+int pr_region    PROTO((code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
+int ld_region    PROTO((code_t * c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum));
 

@@ -111,6 +111,7 @@ void	kill_load (void);
 int		pload (int tbl);
 void	gen_tbl (int tnum, DSS_HUGE start, DSS_HUGE count, long upd_num);
 int		pr_drange (int tbl, DSS_HUGE min, DSS_HUGE cnt, long num);
+int		ld_drange (int tbl, DSS_HUGE min, DSS_HUGE cnt, long num);
 int		set_files (int t, int pload);
 int		partial (int, int);
 
@@ -838,7 +839,15 @@ main (int ac, char **av)
 			gen_tbl (ORDER_LINE, minrow, rowcnt, upd_num + 1);
 			if (verbose > 0)
 				fprintf (stderr, "done.\n");
-			pr_drange (ORDER_LINE, minrow, rowcnt, upd_num + 1);
+
+			if (direct)
+			{
+				ld_drange (ORDER_LINE, minrow, rowcnt, upd_num + 1);
+			}
+			else
+			{
+				pr_drange (ORDER_LINE, minrow, rowcnt, upd_num + 1);
+			}
 			upd_num++;
 		}
 

@@ -35,6 +35,8 @@
 
 #include <libpq-fe.h>
 
+int ld_drange PROTO((int tbl, DSS_HUGE min, DSS_HUGE cnt, long num));
+
 static void
 exit_nicely(PGconn *conn)
 {
@@ -44,11 +46,10 @@ exit_nicely(PGconn *conn)
 
 
 PGconn *
-prep_direct(const char *tablename)
+open_pgconn_and_begin()
 {
 	PGconn     *conn;
 	PGresult   *res;
-	PQExpBuffer q = createPQExpBuffer();
 
 	/* Make a connection to the database */
 	conn = PQconnectdb(db_name);
@@ -71,6 +72,39 @@ prep_direct(const char *tablename)
 		exit_nicely(conn);
 	}
 	PQclear(res);
+
+	return conn;
+}
+
+
+int
+commit_and_close(PGconn *conn)
+{
+	PGresult   *res;
+
+    /* end the transaction */
+    res = PQexec(conn, "COMMIT");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "COMMIT command failed: %s", PQerrorMessage(conn));
+		PQclear(res);
+		exit_nicely(conn);
+	}
+    PQclear(res);
+
+    /* close the connection to the database and cleanup */
+    PQfinish(conn);
+
+    return(0);
+}
+
+
+PGconn *
+prep_direct(const char *tablename)
+{
+	PGconn     *conn = open_pgconn_and_begin();
+	PGresult   *res;
+	PQExpBuffer q = createPQExpBuffer();
 
 	/* Open the COPY stream */
 	printfPQExpBuffer(q, "COPY %s FROM STDIN;", tablename);
@@ -118,18 +152,8 @@ close_direct(PGconn *conn)
 	}
     PQclear(res);
 
-    /* end the transaction */
-    res = PQexec(conn, "COMMIT");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "COMMIT command failed: %s", PQerrorMessage(conn));
-		PQclear(res);
-		exit_nicely(conn);
-	}
-    PQclear(res);
-
-    /* close the connection to the database and cleanup */
-    PQfinish(conn);
+    /* end the transaction and close the connection */
+	commit_and_close(conn);
 
     return(0);
 }
@@ -498,3 +522,84 @@ ld_region (code_t *c, int mode, DSS_HUGE start, DSS_HUGE count, DSS_HUGE rownum)
 }
 
 
+/*
+ * This function isn't part of the tdefs meta-data.
+ *
+ * We implement here "Old Sales Refresh Function (RF2)" and directly issue the
+ * DELETE statements to the database connection.
+ */
+int
+ld_drange(int tbl, DSS_HUGE min, DSS_HUGE cnt, long num)
+{
+    static int  last_num = 0;
+    static PGconn *conn = NULL;
+    DSS_HUGE child = -1;
+    DSS_HUGE start, last, new;
+
+	static DSS_HUGE rows_per_segment=0;
+	static DSS_HUGE rows_this_segment=0;
+
+    if (last_num != num)
+	{
+        if (conn)
+		{
+            commit_and_close(conn);
+		}
+		conn = open_pgconn_and_begin();
+
+        last_num = num;
+		rows_this_segment=0;
+	}
+
+    start = MK_SPARSE(min, num/ (10000 / UPD_PCT));
+    last = start - 1;
+    for (child=min; cnt > 0; child++, cnt--)
+	{
+		PGresult   *res;
+		PQExpBuffer q = createPQExpBuffer();
+
+		new = MK_SPARSE(child, num/ (10000 / UPD_PCT));
+		if (delete_segments)
+		{
+
+			if(rows_per_segment==0)
+				rows_per_segment = (cnt / delete_segments) + 1;
+			if((++rows_this_segment) > rows_per_segment)
+			{
+				commit_and_close(conn);
+				conn = open_pgconn_and_begin();
+
+				last_num = num;
+				rows_this_segment=1;
+			}
+		}
+
+		/* now issue the DELETE statements */
+		printfPQExpBuffer(q, "DELETE FROM LINEITEM WHERE L_ORDERKEY = %lld;", new);
+
+		res = PQexec(conn, q->data);
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "DELETE failed: %s", PQerrorMessage(conn));
+			PQclear(res);
+			exit_nicely(conn);
+		}
+		PQclear(res);
+
+		printfPQExpBuffer(q, "DELETE FROM ORDERS WHERE O_ORDERKEY = %lld;", new);
+
+		res = PQexec(conn, q->data);
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "DELETE failed: %s", PQerrorMessage(conn));
+			PQclear(res);
+			exit_nicely(conn);
+		}
+		PQclear(res);
+
+		start = new;
+		last = new;
+	}
+
+    return(0);
+}

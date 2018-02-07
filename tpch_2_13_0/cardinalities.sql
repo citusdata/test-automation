@@ -1,4 +1,4 @@
-create view cardinalities as
+create view if not exists cardinalities as
  select
   (select count(*) from customer)  as customer,
   (select count(*) from lineitem)  as lineitems,

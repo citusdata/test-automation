@@ -1,4 +1,6 @@
-create view if not exists cardinalities as
+drop view if exists cardinalities;
+
+create view cardinalities as
  select
   (select count(*) from customer)  as customer,
   (select count(*) from lineitem)  as lineitems,

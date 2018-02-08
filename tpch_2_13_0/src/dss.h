@@ -370,7 +370,7 @@ extern tdef tdefs[];
  */
 #define  O_SIZE          109
 #define  O_CKEY_MIN      1
-#define  O_CKEY_MAX      (tdefs[CUST].base * scale)
+#define  O_CKEY_MAX      (tdefs[CUST].base * scale / children * step)
 #define  O_ODATE_MIN     STARTDATE
 #define  O_ODATE_MAX     (STARTDATE + TOTDATE -				\
 						  (L_SDTE_MAX + L_RDTE_MAX) - 1)
@@ -390,8 +390,8 @@ extern tdef tdefs[];
 #define  L_TAX_MAX    8
 #define  L_DCNT_MIN   0
 #define  L_DCNT_MAX   10
-#define  L_PKEY_MIN   1
-#define  L_PKEY_MAX   (tdefs[PART].base * scale)
+#define  L_PKEY_MIN   (tdefs[PART].base * scale / children * (step-1)) + 1
+#define  L_PKEY_MAX   (tdefs[PART].base * scale / children * step)
 #define  L_SDTE_MIN   1
 #define  L_SDTE_MAX   121
 #define  L_CDTE_MIN   30

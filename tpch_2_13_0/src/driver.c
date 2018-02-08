@@ -191,6 +191,21 @@ long sd_supp (int child, DSS_HUGE skip_count);
 long sd_order_line (int child, DSS_HUGE skip_count);
 long sd_part_psupp (int child, DSS_HUGE skip_count);
 
+int ntab = 10;
+
+int table_order[] = {
+	REGION,
+	NATION,
+	PART,
+	PSUPP,
+	SUPP,
+	PART_PSUPP,
+	CUST,
+	ORDER,
+	LINE,
+	ORDER_LINE
+};
+
 tdef tdefs[] =
 {
 	{"part.tbl", "part table", 200000,
@@ -467,7 +482,7 @@ partial (int tbl, int s)
 
 	if (verbose > 0)
 	{
-		fprintf (stderr, "\tStarting to load stage %d of %ld for %s...",
+		fprintf (stderr, "\tStarting to load stage %d of %ld for %s... ",
 				 s, children, tdefs[tbl].comment);
 	}
 
@@ -794,8 +809,8 @@ main (int ac, char **av)
 	{
 		int i;
 
-		/* change the 10 entries of tdef[i].loader */
-		for(i = 0; i<10; i++)
+		/* change the entries of tdef[i].loader */
+		for(i = 0; i < ntab; i++)
 		{
 			tdefs[i].loader = tdefs_direct[i].loader;
 		}
@@ -861,28 +876,55 @@ main (int ac, char **av)
 	/*
 	 * traverse the tables, invoking the appropriate data generation routine
 	 * for any to be built
+	 *
+	 * Given direct load support, the order of the loading is important.
 	 */
 	for (i = PART; i <= REGION; i++)
-		if (table & (1 << i))
+	{
+		int tbl = table_order[i];
+
+		if (table & (1 << tbl))
 		{
-			if (children > 1 && i < NATION)
+			if (children > 1 && tbl < NATION)
 			{
-				partial ((int)i, step);
+				partial ((int)tbl, step);
+			}
+			/*
+			 * Only populate NATION and REGION in the first step of a
+			 * multi-step load, that is when using -C (children).
+			 */
+			else if (tbl >= NATION && children > 1 && step > 1)
+			{
+				/* skip this round entirely */
+				continue;
 			}
 			else
 			{
 				minrow = 1;
-				if (i < NATION)
-					rowcnt = tdefs[i].base * scale;
+				if (tbl < NATION)
+				{
+					rowcnt = tdefs[tbl].base * scale;
+				}
 				else
-					rowcnt = tdefs[i].base;
+				{
+					rowcnt = tdefs[tbl].base;
+				}
+
 				if (verbose > 0)
-					fprintf (stderr, "Generating data for %s", tdefs[i].comment);
-				gen_tbl ((int)i, minrow, rowcnt, upd_num);
+				{
+					fprintf (stderr,
+							 "Generating data for %s...", tdefs[tbl].comment);
+				}
+
+				gen_tbl ((int)tbl, minrow, rowcnt, upd_num);
+
 				if (verbose > 0)
+				{
 					fprintf (stderr, "done.\n");
+				}
 			}
 		}
+	}
 
 	return (0);
 }

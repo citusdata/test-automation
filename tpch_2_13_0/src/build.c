@@ -57,7 +57,7 @@ extern adhoc_t  adhocs[];
 #define JDAY(date) ((date) - STARTDATE + JDAY_BASE + 1)
 #define PART_SUPP_BRIDGE(tgt, p, s)										\
     {																	\
-		DSS_HUGE tot_scnt = tdefs[SUPP].base * scale;					\
+		DSS_HUGE tot_scnt = tdefs[SUPP].base * scale / children * step; \
 		tgt = (p + s *  (tot_scnt / SUPP_PER_PART +						\
 						 (long) ((p - 1) / tot_scnt))) % tot_scnt + 1;	\
     }

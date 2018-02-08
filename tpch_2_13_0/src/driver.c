@@ -785,7 +785,7 @@ main (int ac, char **av)
 	spawn_args[ac] = NULL;
 #endif
 
-	if (verbose >= 0)
+	if (verbose > 0)
 	{
 		fprintf (stderr,
 				 "%s Population Generator (Version %d.%d.%d)\n",

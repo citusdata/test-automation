@@ -48,7 +48,7 @@ ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 On the coordinator node:
 ```bash
 # Setup your test cluster with PostgreSQL 10.1 and Citus master branch
-fab use.postgres:10.1 use.citus:master setup.basic_testing
+fab use.postgres:10.2 use.citus:master setup.basic_testing
 
 # Lets change some conf values 
 fab pg.set_config:max_wal_size,"'5GB'"

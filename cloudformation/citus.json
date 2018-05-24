@@ -137,7 +137,7 @@
             "commands": {
               "02-configure-sysctl": { "command": "sysctl -w net.ipv4.tcp_tw_reuse=1" },
               "10-install-fabric": {
-                "command": "pip install fabric"
+                "command": "pip install 'fabric>=1.6.0,<1.6.3'"
               },
               "15-set-path": {
                 "command": "echo 'export PATH=/home/ec2-user/pg-latest/bin/:$PATH' >> /home/ec2-user/.bash_profile"

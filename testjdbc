@@ -1,0 +1,26 @@
+#!/bin/bash
+PATH=~/pg12/bin:$PATH
+
+javac jdbc/JDBCReleaseTest.java
+pushd tpch_2_13_0
+SCALE_FACTOR=1 CHUNKS="o 2 c 2 P 1 S 2 s 1" sh generate2.sh
+popd
+~/s/util/citus_dev stop ~/d/jdbc --port=9700
+rm -rf ~/d/jdbc
+~/s/util/citus_dev make ~/d/jdbc --port=9700
+
+for type in hash append
+do
+for executor in real-time task-tracker adaptive
+do
+
+psql -p 9700 -d postgres -f tpch_2_13_0/drop_tables.sql -f tpch_2_13_0/tpch_create_${type}_partitioned_tables.ddl
+pushd tpch_2_13_0
+for tbl in *.tbl.*
+do psql -d postgres -p 9700 -c "\COPY ${tbl%.tbl.*} FROM '$tbl' WITH DELIMITER '|'"
+done
+popd
+
+CLASSPATH=jdbc/postgresql-42.2.6.jar:jdbc java JDBCReleaseTest $executor > ${type}_${executor}
+done
+done

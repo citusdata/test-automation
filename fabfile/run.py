@@ -19,7 +19,7 @@ __all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
 @roles('master')
 def jdbc():
     'Assumes add.jdbc and add.tpch have been run'
-    with cd('/home/ec2-user/test-automation/jdbc'):
+    with cd(config.HOME_DIR + '/test-automation/jdbc'):
         run('javac JDBCReleaseTest.java')
         run('java -classpath postgresql-9.4.1212.jre6.jar:. JDBCReleaseTest')
 
@@ -38,7 +38,7 @@ def regression():
 def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = "/home/ec2-user/test-automation/fabfile/pgbench_confs/"
+    config_folder_path = config.HOME_DIR + "/test-automation/fabfile/pgbench_confs/"
     config_parser.read(config_folder_path + config_file)
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
@@ -159,7 +159,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = "/home/ec2-user/test-automation/fabfile/tpch_confs/"
+    config_folder_path = config.HOME_DIR + "/test-automation/fabfile/tpch_confs/"
     config_parser.read(config_folder_path + config_file)
 
     for section in config_parser.sections():

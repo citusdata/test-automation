@@ -1,5 +1,7 @@
 from fabric.api import env, task, execute, runs_once, abort
 
+import config
+
 def mess_with_roledefs(environment):
     '''
     For some reason -R and -H and, by default, lowest in the order of precedence.
@@ -21,7 +23,7 @@ def mess_with_roledefs(environment):
 
     environment.roledefs = {
         'master': ['localhost'],
-        'workers': [ip.strip() for ip in open('/home/ec2-user/test-automation/worker-instances')],
+        'workers': [ip.strip() for ip in open(config.HOME_DIR + '/test-automation/worker-instances')],
     }
 
     if environment.hosts or environment.roles:

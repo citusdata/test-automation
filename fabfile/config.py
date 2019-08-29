@@ -1,12 +1,16 @@
+from os.path import expanduser
+
+HOME_DIR = expanduser("~")
+
 paths = {
-    'code-directory': '/home/ec2-user/code',
-    'tests-repo': '/home/ec2-user/test-automation',
-    'citus-repo': '/home/ec2-user/citus',
-    'enterprise-repo': '/home/ec2-user/citus-enterprise',
-    'pg-latest': '/home/ec2-user/pg-latest',
-    'pg-source-balls': '/home/ec2-user/postgres-source',
-    'home-directory': '/home/ec2-user/',
-    'citus-installation': '/home/ec2-user/citus-installation'
+    'code-directory': HOME_DIR + '/code',
+    'tests-repo': HOME_DIR + '/test-automation',
+    'citus-repo': HOME_DIR + '/citus',
+    'enterprise-repo': HOME_DIR + '/citus-enterprise',
+    'pg-latest': HOME_DIR + '/pg-latest',
+    'pg-source-balls': HOME_DIR + '/postgres-source',
+    'home-directory': HOME_DIR, 
+    'citus-installation': HOME_DIR + '/citus-installation'
 }
 
 settings = {

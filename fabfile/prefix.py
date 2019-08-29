@@ -1,5 +1,5 @@
 '''
-/home/ec2-user/pg-latest (config.paths['pg-latest']) should always point to the
+$HOME/pg-latest (config.paths['pg-latest']) should always point to the
 installation of citus we're currently working with. This way tasks which interact with an
 installation can just use pg-latest and not care where it points to. (We use this instead
 of something like a "use" task because this is long-term state which should be kept
@@ -18,7 +18,7 @@ def set_prefix(prefix):
 
     if not os.path.isabs(prefix):
         abort('{} is not an absolute path'.format(prefix))
-
+        
     latest = config.paths['pg-latest']
 
     # -f to overwrite any existing links

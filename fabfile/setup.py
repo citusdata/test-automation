@@ -17,6 +17,7 @@ import utils
 import config
 import pg
 import add
+import use
 import prefix
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
@@ -179,3 +180,9 @@ def create_database():
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
+
+
+def install_citus(citus_version):
+    execute(use.citus, citus_version)
+    execute(build_citus)
+    execute(pg.restart)          

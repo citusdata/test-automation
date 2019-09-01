@@ -198,3 +198,27 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version):
         out_val = run(run_string)
         results_file.write(out_val)
         results_file.write('\n')
+
+@task
+@runs_once
+@roles('master')
+def update():
+     citus_versions = ['release-8.0', 'release-8.1']
+     pg_version = '11.5'
+     for citus_version in citus_versions:
+        run_citus_update(citus_version, pg_version)
+
+
+def run_citus_update(citus_version, pg_version):
+        results_file = open(
+           config.paths['home-directory'] + 'update_results/PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
+           'a')
+        run('psql -c "drop extension if exists citus"')
+
+        execute(setup.install_citus, citus_version)
+        run('psql -c "create extension citus"')
+        results_file.write(run('psql -c "\dx"'))
+
+        execute(setup.install_citus, 'master')
+        run('psql -c "alter extension citus update"')
+        results_file.write(run('psql -c "\dx"'))

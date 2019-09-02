@@ -185,4 +185,4 @@ def create_database():
 def install_citus(citus_version):
     execute(use.citus, citus_version)
     execute(build_citus)
-    execute(pg.restart)          
+    execute(pg.restart)        

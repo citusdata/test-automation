@@ -1,4 +1,4 @@
-from fabric.api import task, run, cd, runs_once, roles, execute
+from fabric.api import task, run, cd, runs_once, roles, execute, settings
 
 import config
 import use
@@ -8,10 +8,11 @@ import setup
 import utils
 import re
 import add
+import constants
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'update', 'tpch_automate']
 
 
 @task
@@ -207,18 +208,33 @@ def update():
      pg_version = '11.5'
      for citus_version in citus_versions:
         run_citus_update(citus_version, pg_version)
+        run_citus_update_forces_restart(citus_version, pg_version)
+
+
+def run_citus_update_forces_restart(citus_version, pg_version):
+    results_file = open(
+        config.paths['home-directory'] + 'update_forces_restart_PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
+        'a')
+    execute(utils.psql, constants.DROP_CITUS)
+    execute(setup.install_citus, citus_version)
+    execute(utils.psql, constants.CREATE_CITUS)
+
+    execute(use.citus, 'master')
+    execute(setup.build_citus)
+    with settings(warn_only=True):
+        results_file.write(utils.psql(constants.ALTER_CITUS))
 
 
 def run_citus_update(citus_version, pg_version):
-        results_file = open(
-           config.paths['home-directory'] + 'update_results/PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
-           'a')
-        run('psql -c "drop extension if exists citus"')
+    results_file = open(
+        config.paths['home-directory'] + 'update_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
+        'a')
+    execute(utils.psql, constants.DROP_CITUS)
+    execute(setup.install_citus, citus_version)
+    execute(utils.psql, constants.CREATE_CITUS)
+    execute(setup.add_workers)
+    results_file.write(utils.psql('\dx'))
 
-        execute(setup.install_citus, citus_version)
-        run('psql -c "create extension citus"')
-        results_file.write(run('psql -c "\dx"'))
-
-        execute(setup.install_citus, 'master')
-        run('psql -c "alter extension citus update"')
-        results_file.write(run('psql -c "\dx"'))
+    execute(setup.install_citus, 'master')
+    execute(utils.psql, constants.ALTER_CITUS)
+    results_file.write(utils.psql('\dx'))

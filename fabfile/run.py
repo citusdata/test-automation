@@ -7,6 +7,7 @@ import pg
 import setup
 import utils
 import re
+import os
 import add
 import ConfigParser
 import time
@@ -38,11 +39,11 @@ def regression():
 def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = config.HOME_DIR + "/test-automation/fabfile/pgbench_confs/"
+    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
-    results_file = open(config.paths['home-directory'] + 'pgbench_results_{}.csv'.format(current_time_mark), 'w')
+    results_file = open(os.path.join(config.paths['home-directory'], 'pgbench_results_{}.csv'.format(current_time_mark)), 'w')
 
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
 
@@ -159,7 +160,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = config.HOME_DIR + "/test-automation/fabfile/tpch_confs/"
+    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/tpch_confs/")
     config_parser.read(config_folder_path + config_file)
 
     for section in config_parser.sections():
@@ -187,7 +188,7 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 @roles('master')
 def tpch_queries(query_info, connectionURI, pg_version, citus_version):
     results_file = open(
-        config.paths['home-directory'] + 'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version),
+        os.path.join(config.paths['home-directory'],'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version)),
         'a')
     psql = '{}/bin/psql'.format(config.paths['pg-latest'])
     tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])

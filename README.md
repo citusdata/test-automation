@@ -124,7 +124,7 @@ ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 
 On the coordinator node:
 ```bash
-# This will run scale tests with PG=10.1 and Citus Enterprise 7.1 and 7.2 release branches
+# This will run scale tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
 # and it will log results to pgbench_results_{timemark}.csv file
 # You can change settings in files under the fabfile/pgbench_confs/ directory
 fab run.pgbench_tests:scale_test.ini
@@ -192,7 +192,7 @@ ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 
 On the coordinator node:
 ```bash
-# This will run TPC-H tests with PG=10.1 and Citus Enterprise 7.1 and 7.2 release branches
+# This will run TPC-H tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
 # and it will log results to their own files on the home directory. You can use diff to 
 # compare results.
 # You can change settings in files under the fabfile/tpch_confs/ directory

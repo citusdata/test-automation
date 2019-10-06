@@ -1,0 +1,12 @@
+#!/bin/bash
+
+apt-get update && apt-get install -y gosu
+
+echo | gosu citus ssh-keygen -P '' -t rsa
+
+# save our ssh key to authorized keys so that we can ssh localhost without password
+gosu citus cat /home/${USER}/.ssh/id_rsa.pub >> /home/${USER}/.ssh/authorized_keys
+
+sh /etc/init.d/ssh start
+
+su ${USER}

@@ -1,4 +1,5 @@
 from fabric.api import env, task, execute, runs_once, abort
+import os
 
 import config
 
@@ -23,7 +24,7 @@ def mess_with_roledefs(environment):
 
     environment.roledefs = {
         'master': ['localhost'],
-        'workers': [ip.strip() for ip in open(config.HOME_DIR + '/test-automation/worker-instances')],
+        'workers': [ip.strip() for ip in open(os.path.join(config.HOME_DIR, 'test-automation/worker-instances'))],
     }
 
     if environment.hosts or environment.roles:

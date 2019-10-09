@@ -186,12 +186,9 @@
         }
     },
     "variables": {
-        "UbuntuImageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "16.04.0-LTS",
-            "version": "latest"
-        },
+        "imagePublisher": "RedHat",
+        "imageOffer": "RHEL",
+        "imageSku": "7.2",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
@@ -386,7 +383,12 @@
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "imageReference": "[variables('UbuntuImageReference')]",
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
+                    },
                     "osDisk": {
                         "name": "[concat(parameters('clusterName'), 'osdisk', copyIndex())]",
                         "caching": "ReadWrite",
@@ -418,6 +420,33 @@
             },
             "copy": {
                 "name": "virtualMachineLoop",
+                "count": "[parameters('numberOfInstances')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('clusterName'), 'vm', copyIndex(), '/customscriptextension')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "location": "[parameters('location')]",
+            "apiVersion": "2018-06-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), 'vm', copyIndex())]",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "settings": {},
+                "protectedSettings": {
+                    "commandToExecute": "[sh init.sh]",
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
+                    ]
+                }
+            },
+            "tags": {},
+            "copy": {
+                "name": "extensionScriptLoop",
                 "count": "[parameters('numberOfInstances')]"
             }
         }

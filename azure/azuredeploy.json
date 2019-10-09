@@ -260,12 +260,26 @@
                         "properties": {
                             "description": "Allow ssh to localhost",
                             "protocol": "Tcp",
-                            "sourcePortRange": "22",
+                            "sourcePortRange": "*",
                             "destinationPortRange": "22",
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "citusclusterpgport",
+                        "properties": {
+                            "description": "Expose default pg port",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "5432",
+                            "destinationPortRange": "5432",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
                             "direction": "Inbound"
                         }
                     }
@@ -277,6 +291,9 @@
             "name": "[variables('vnetName')]",
             "apiVersion": "2016-03-30",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -290,7 +307,10 @@
                     {
                         "name": "[variables('subnetName')]",
                         "properties": {
-                            "addressPrefix": "[variables('subnetPrefix')]"
+                            "addressPrefix": "[variables('subnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            }
                         }
                     }
                 ]
@@ -303,7 +323,8 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]",
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
             ],
             "properties": {
                 "ipConfigurations": [

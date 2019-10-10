@@ -36,7 +36,7 @@ def enterprise(*args):
 
     # Do a local checkout to make sure this is a valid ref
     # (so we error as fast as possible)
-
+    utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     if len(args) != 1:
         abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
     git_ref = args[0]

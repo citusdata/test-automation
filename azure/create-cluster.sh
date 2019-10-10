@@ -1,3 +1,7 @@
 #!/bin/bash
 
-az group deployment create -g $1 --template-file azuredeploy.json --parameters azuredeploy.parameters.json --debug
+rg=$1
+
+az group create -l eastus -n ${rg}
+
+az group deployment create -g ${rg} --template-file azuredeploy.json --parameters azuredeploy.parameters.json --debug

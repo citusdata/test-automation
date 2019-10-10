@@ -8,6 +8,7 @@
         },
         "adminUsername": {
             "type": "string",
+            "defaultValue": "pguser",
             "metadata": {
                 "description": "Admin username for VM"
             }
@@ -45,7 +46,7 @@
             }
         },
         "numberOfInstances": {
-            "defaultValue": 4,
+            "defaultValue": 2,
             "minValue": 2,
             "maxValue": 21,
             "type": "int",
@@ -130,8 +131,8 @@
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
         "subnetName": "citusSubnet",
-        "addressPrefix": "10.0.0.0/16",
-        "subnetPrefix": "10.0.0.0/24",
+        "addressPrefix": "10.192.0.0/16",
+        "subnetPrefix": "10.192.0.0/24",
         "publicIPAddressType": "Static",
         "publicIPAddressName": "citusPublicIP"
     },
@@ -172,10 +173,7 @@
             "apiVersion": "2016-03-30",
             "location": "[parameters('location')]",
             "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
-                }
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
             },
             "copy": {
                 "name": "publicIPLoop",
@@ -366,8 +364,7 @@
             "location": "[parameters('location')]",
             "apiVersion": "2018-06-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), 'vm', copyIndex())]",
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
+                "virtualMachineLoop"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -380,11 +377,10 @@
                     ]
                 }
             },
-            "tags": {},
             "copy": {
                 "name": "extensionScriptLoop",
                 "count": "[parameters('numberOfInstances')]"
-            }
+              }
         }
     ]
 }

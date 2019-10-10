@@ -373,11 +373,10 @@
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
-                "settings": {},
-                "protectedSettings": {
-                    "commandToExecute": "[sh init.sh]",
+                "settings": {
+                    "commandToExecute": "sh init.sh",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/AzureSupport/azure/init.sh"
                     ]
                 }
             },

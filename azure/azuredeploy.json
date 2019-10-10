@@ -371,7 +371,7 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "sh init.sh",
+                    "commandToExecute": "[concat('sh init.sh ', reference(concat(parameters('clusterName'),'nic', copyIndex())).ipConfigurations[0].properties.privateIPAddress, ' ',copyIndex())]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/AzureSupport/azure/init.sh"
                     ]

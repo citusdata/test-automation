@@ -2,8 +2,26 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "adminPassword": {
-            "value": "2019@citus!"
+        "sshPublicKey": {
+            "value": "You should put your public key for ssh here"
+        },
+        "numberOfInstances": {
+            "value": 4
+        },
+        "diskType": {
+            "value": "Premium_LRS"
+        },
+        "coordinatorVmSize": {
+            "value": "Standard_D4s_v3"
+        },
+        "workerVmSize": {
+            "value": "Standard_D4s_v3"
+        },
+        "coordinatorDiskSizeGB": {
+            "value": 512
+        },
+        "workerDiskSizeGB": {
+            "value": 512
         }
     }
 }

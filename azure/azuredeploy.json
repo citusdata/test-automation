@@ -13,23 +13,10 @@
                 "description": "Admin username for VM"
             }
         },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Admin password for VMs"
-            }
-        },
-        "storageAccountType": {
+        "sshPublicKey": {
             "type": "string",
-            "defaultValue": "Premium_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS",
-                "Standard_ZRS",
-                "Premium_LRS"
-            ],
             "metadata": {
-                "description": "Storage Account type"
+                "description": "Configure the linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
             }
         },
         "diskType": {
@@ -46,7 +33,7 @@
             }
         },
         "numberOfInstances": {
-            "defaultValue": 2,
+            "defaultValue": 4,
             "minValue": 2,
             "maxValue": 21,
             "type": "int",
@@ -102,25 +89,6 @@
             "metadata": {
                 "description": "The instance type to use for coordinator"
             }
-        },
-        "serverGroupTags": {
-            "defaultValue": {},
-            "type": "object"
-        },
-        "dnsLabelPrefix": {
-            "type": "string",
-            "defaultValue": "citus",
-            "metadata": {
-                "description": "DNS for PublicIPAddressName1"
-            }
-        },
-        "workerNodeTags": {
-            "defaultValue": {},
-            "type": "object"
-        },
-        "coordinatorNodeTags": {
-            "defaultValue": {},
-            "type": "object"
         }
     },
     "variables": {
@@ -143,14 +111,12 @@
             "name": "[variables('storageAcctName')]",
             "location": "[parameters('location')]",
             "sku": {
-                "name": "[parameters('storageAccountType')]"
+                "name": "Standard_LRS"
             },
             "kind": "Storage",
             "properties": {
                 "networkAcls": {
                     "bypass": "AzureServices",
-                    "virtualNetworkRules": [],
-                    "ipRules": [],
                     "defaultAction": "Allow"
                 },
                 "supportsHttpsTrafficOnly": false,
@@ -232,9 +198,6 @@
                         "[variables('addressPrefix')]"
                     ]
                 },
-                "dhcpOptions": {
-                    "dnsServers": []
-                },
                 "subnets": [
                     {
                         "name": "[variables('subnetName')]",
@@ -315,7 +278,17 @@
                 "osProfile": {
                     "computerName": "[concat(parameters('clusterName'), 'vm', copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('sshPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -364,14 +337,15 @@
             "location": "[parameters('location')]",
             "apiVersion": "2018-06-01",
             "dependsOn": [
-                "virtualMachineLoop"
+                "virtualMachineLoop",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', reference(concat(parameters('clusterName'),'nic', copyIndex())).ipConfigurations[0].properties.privateIPAddress, ' ',copyIndex())]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', parameters('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/AzureSupport/azure/init.sh"
                     ]
@@ -380,7 +354,13 @@
             "copy": {
                 "name": "extensionScriptLoop",
                 "count": "[parameters('numberOfInstances')]"
-              }
+            }
         }
-    ]
+    ],
+    "outputs": {
+        "ssh": {
+            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "type": "string"
+        }
+    }
 }

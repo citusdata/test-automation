@@ -1,23 +1,32 @@
 # test-automation
 
 Tools for making our tests easier to run. Automates setting up a cluster with
-CloudFormation and installs a script which automates setting up citus and everything
+Azure/Cloudformation and installs a script which automates setting up citus and everything
 required for testing citus.
 
-# Table of Contents
+## Table of Contents
 
-* [Getting Started](#getting-started)
-  * [Basic Cluster Setup](#basic-cluster-setup)
-  * [Running PgBench Tests](#pgbench)
-  * [Running Scale Tests](#scale)
-  * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
-  * [Running TPC-H Tests](#tpch)
-  * [Running TPC-H Tests Against Citus Cloud](#tpch-cloud)
-* [Detailed Configuration](#detailed-configuration)
-  * [Starting a Cluster](#start-a-cluster)
-  * [Connecting to the Master](#connect-to-master)
-  * [Example fab Commands](#fab-examples)
-  * [Tasks, and Ordering of Tasks](#fab-tasks)
+* [Azure](#azure)
+  * [Getting Started](#azure-getting-started)
+    * [Basic Cluster Setup](#azure-basic-cluster-setup)
+    * [Running PgBench Tests](#azure-pgbench)
+    * [Running Scale Tests](#azure-scale)
+    * [Running PgBench Tests Against Citus Cloud](#azure-pgbench-cloud)
+    * [Running TPC-H Tests](#azure-tpch)
+    * [Running TPC-H Tests Against Citus Cloud](#azure-tpch-cloud)
+* [Amazon(Deprecated)](#amazon)
+  * [Getting Started](#getting-started)
+    * [Basic Cluster Setup](#basic-cluster-setup)
+    * [Running PgBench Tests](#pgbench)
+    * [Running Scale Tests](#scale)
+    * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
+    * [Running TPC-H Tests](#tpch)
+    * [Running TPC-H Tests Against Citus Cloud](#tpch-cloud)
+  * [Detailed Configuration](#detailed-configuration)
+    * [Starting a Cluster](#start-a-cluster)
+    * [Connecting to the Master](#connect-to-master)
+    * [Example fab Commands](#fab-examples)
+    * [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
   * [`use`, Choose Exactly What to Install](#use)
   * [`add`, Add add-ons (such as extensions) to a Citus Cluster](#add)
@@ -26,7 +35,266 @@ required for testing citus.
 * [Advanced fab Usage](#advanced-fab)
   * [Using Multiple Citus Installations](#multiple-installs)
 
-# <a name="getting-started"></a> Getting Started
+## <a name="azure"></a>Azure
+
+## <a name="azure-getting-started"></a> Getting Started
+
+You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
+
+You should have `az cli` in your local to continue.
+
+You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
+
+## <a name="azure-basic-cluster-setup"></a> Basic Cluster Setup
+
+On your local machine:
+
+```bash
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+# Setup your test cluster with PostgreSQL 11.5 and Citus master branch
+fab use.postgres:11.5 use.citus:master setup.basic_testing
+
+# Lets change some conf values 
+fab pg.set_config:max_wal_size,"'5GB'"
+fab pg.set_config:max_connections,1000
+
+# And restart the cluster
+fab pg.restart
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="azure-pgbench"></a> Running PgBench Tests
+
+On your local machine:
+
+```bash
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+# This will run default pgBench tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to pgbench_results_{timemark}.csv file
+# Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
+fab run.pgbench_tests
+
+# It's possible to provide another configuration file for tests
+# Such as with this, we run the same set of default pgBench tests without transactions
+fab run.pgbench_tests:pgbench_default_without_transaction.ini
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="azure-scale"></a> Running Scale Tests
+
+On your local machine:
+
+```bash
+
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+# This will run scale tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to pgbench_results_{timemark}.csv file
+# You can change settings in files under the fabfile/pgbench_confs/ directory
+fab run.pgbench_tests:scale_test.ini
+fab run.pgbench_tests:scale_test_no_index.ini
+fab run.pgbench_tests:scale_test_prepared.ini
+fab run.pgbench_tests:scale_test_reference.ini
+fab run.pgbench_tests:scale_test_foreign.ini
+fab run.pgbench_tests:scale_test_100_columns.ini
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="azure-pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
+
+On your local machine:
+
+```bash
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+
+# Use pgbench_cloud.ini config file with connection string of your Citus Cloud cluster
+# Don't forget to escape `=` at the end of your connection string
+fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="azure-tpch"></a> Running TPC-H Tests
+
+On your local machine:
+
+```bash
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+# This will run TPC-H tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to their own files on the home directory. You can use diff to 
+# compare results.
+# You can change settings in files under the fabfile/tpch_confs/ directory
+fab run.tpch_automate
+
+# If you want to run only Q1 with scale factor=1 against community master,
+# you can use this config file. Feel free to edit conf file
+fab run.tpch_automate:tpch_q1.ini
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="azure-tpch-cloud"></a> Running TPC-H Tests Against Citus Cloud
+
+On your local machine:
+
+```bash
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+./create-cluster.sh talha_test_resource_group
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
+```
+
+On the coordinator node:
+
+```bash
+# Provide your tpch config file or go with the default file
+# Don't forget to escape `=` at the end of your connection string
+fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
+On your local machine:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh talha_test_resource_group
+```
+
+## <a name="amazon"></a>Amazon
+
+## <a name="getting-started"></a> Getting Started
 
 You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
 

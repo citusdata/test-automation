@@ -42,8 +42,11 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
 
+
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
-    results_file = open(os.path.join(config.paths[config.HOME_DIRECTORY], 'pgbench_results_{}.csv'.format(current_time_mark)), 'w')
+    utils.mkdir_if_not_exists(config.paths[config.RESULTS_DIRECTORY])
+    path = os.path.join(config.paths[config.RESULTS_DIRECTORY], 'pgbench_results_{}_{}.csv'.format(current_time_mark, config_file))
+    results_file = open(path, 'w')
 
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
 
@@ -180,16 +183,17 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 
             execute(add.tpch, connectionURI= connectionURI, scale_factor=scale_factor)
             execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), connectionURI,
-                    pg_version, citus_version)
+                    pg_version, citus_version, config_file)
             execute(pg.stop)
 
 
 @task
 @roles('master')
-def tpch_queries(query_info, connectionURI, pg_version, citus_version):
-    results_file = open(
-        os.path.join(config.paths[config.HOME_DIRECTORY],'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version)),
-        'a')
+def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_file):
+    utils.mkdir_if_not_exists(config.paths[config.RESULTS_DIRECTORY])
+    path = os.path.join(config.paths[config.RESULTS_DIRECTORY], 'tpch_benchmark_results_{}_PG-{}_Citus-{}.txt'.format(config_file, pg_version, citus_version))
+    results_file = open(path, 'a')
+
     psql = '{}/bin/psql'.format(config.paths[config.PG_LATEST])
     tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths[config.TESTS_REPO])
 

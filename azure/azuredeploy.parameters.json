@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sshPublicKey": {
-            "value": "You should put your public key for ssh here"
+            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCrdgQvHNzHdWVolaZG8RhrrSqIGwxWJP+XWc9jre4CEwT0paziJMcF8qo0Jrm9sbQuF10UO30dPZFo0MtN1darLD8TZe8J4A/l4XoOJq9uXuZ2FhVsz2MFEnFS2xYVF30sZvyeqMu/LtEfRS8/Q6FhXBkFQEyuf4FdiLDAYSO0NpBQZpTbQfcFwmYZl26QKY9W1O74O2v90X3JBsAoQfb3vcFL7ZBM657S0SpcGdyJeB/KKSkLb0VNMXx0u3zfX70qILJmtKoZpnaTHlZ2rCY7MV7wwvJwWU3+Es9NY2iI5gRYwdOcrWqlL3NEcPKGidqK/oeunGSD/M3Y+mu442Sfk+7kdOUFRAOXcxgLj7qRDiCMYarucoc8zmJ4hnJYOykVYRwb7J7eUhInAtRaP+nJPqw7M8H3nHiHeS97OBKKrhE48cxQQoMZgKScaFBYD6V/lrEX7r7f9/zydxxX1vH0hd2lHBwnwIC9927I0uSrOskZS+NgqP1Fobd+8wUDqUqjmqJG7Bxy+PJsR5KNnUJCIR46AdwSJ+3gaP3A4ckYuqNIR6STcUT1hnUtO2ZrtqXRacbxChvp8llPlKxHs5Tub6Ht8LOwo2Y3t8AzFOpmvj9ubstaLeu7l6/lGG0cjXmx+wRpb4XOcsjqqND9ENyuUKbcKWRBm224ONouE9Txkw== s.talhanisanci@gmail.com"
         },
         "numberOfInstances": {
             "value": 4

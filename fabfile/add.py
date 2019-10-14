@@ -41,7 +41,7 @@ class InstallExtensionTask(Task):
     def repo_path_for_url(repo_url):
         repo_name = run('basename {}'.format(repo_url))
         repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
-        return os.path.join(config.paths['code-directory'], repo_name)
+        return os.path.join(config.CODE_DIRECTORY, repo_name)
 
     def run(self, *args):
         if self.before_run_hook:
@@ -60,7 +60,7 @@ class InstallExtensionTask(Task):
         utils.rmdir(repo, force=True) # force because git write-protects files
         run('git clone -q {} {}'.format(self.repo_url, repo))
 
-        with cd(repo), path('{}/bin'.format(config.paths['pg-latest'])):
+        with cd(repo), path('{}/bin'.format(config.PG_LATEST)):
             run('git checkout {}'.format(git_ref))
             run('make install')
 
@@ -83,7 +83,7 @@ hll = InstallExtensionTask(
 )
 
 def add_cstore_to_shared_preload_libraries():
-    conf = '{}/data/postgresql.conf'.format(config.paths['pg-latest'])
+    conf = '{}/data/postgresql.conf'.format(config.PG_LATEST)
 
     existing_line = run('grep "^shared_preload_libraries" {}'.format(conf))
 
@@ -121,14 +121,14 @@ def tpch(**kwargs):
     'Generates and loads tpc-h data into the instance at pg-latest'
     prefix.check_for_pg_latest()
 
-    psql = '{}/bin/psql'.format(config.paths['pg-latest'])
+    psql = '{}/bin/psql'.format(config.PG_LATEST)
 
     connectionURI = kwargs.get('connectionURI', kwargs.get('connectionURI', ''))
     scale = kwargs.get('scale-factor', kwargs.get('scale_factor', 10))
     partition_type = kwargs.get('partition-type', kwargs.get('partition_type', 'default'))
 
     # generate tpc-h data
-    tpch_path = '{}/tpch_2_13_0'.format(config.paths['tests-repo'])
+    tpch_path = '{}/tpch_2_13_0'.format(config.TESTS_REPO)
     with cd(tpch_path):
         run('make')
         run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))

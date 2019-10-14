@@ -21,7 +21,7 @@ def citus(*args):
         abort('You must provide a single argument, with a command such as "use.citus:v6.0.1"')
     git_ref = args[0]
 
-    path = config.paths['citus-repo']
+    path = config.CITUS_REPO
     local('rm -rf {} || true'.format(path))
     local('git clone -q https://github.com/citusdata/citus.git {}'.format(path))
     with lcd(path):
@@ -41,7 +41,7 @@ def enterprise(*args):
         abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
     git_ref = args[0]
 
-    path = config.paths['enterprise-repo']
+    path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))
     local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
     with lcd(path):
@@ -59,15 +59,15 @@ def postgres(*args):
         abort('You must provide a single argument. For example: "postgres:9.6.1"')
     version = args[0]
 
-    config.settings['pg-version'] = version
+    config.PG_VERSION = version
     utils.download_pg() # Check that this doesn't 404
 
 @task
 def asserts(*args):
     'Enable asserts in pg (and therefore citus) by passing --enable-cassert'
-    config.settings['pg-configure-flags'].append('--enable-cassert')
+    config.PG_CONFIGURE_FLAGS.append('--enable-cassert')
 
 @task
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
-    config.settings['pg-configure-flags'].append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+    config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')

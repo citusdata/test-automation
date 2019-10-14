@@ -1,5 +1,5 @@
 '''
-$HOME/pg-latest (config.paths['pg-latest']) should always point to the
+$HOME/pg-latest (config.paths[config.PG_LATEST]) should always point to the
 installation of citus we're currently working with. This way tasks which interact with an
 installation can just use pg-latest and not care where it points to. (We use this instead
 of something like a "use" task because this is long-term state which should be kept
@@ -19,7 +19,7 @@ def set_prefix(prefix):
     if not os.path.isabs(prefix):
         abort('{} is not an absolute path'.format(prefix))
         
-    latest = config.paths['pg-latest']
+    latest = config.paths[config.PG_LATEST]
 
     # -f to overwrite any existing links
     # -n to not follow the {latest} link, if it exists, and instead replace it
@@ -28,7 +28,7 @@ def set_prefix(prefix):
 
 def ensure_pg_latest_exists(default):
     'If there is no valid working directory make one and point it at prefix'
-    latest = config.paths['pg-latest']
+    latest = config.paths[config.PG_LATEST]
 
     # make sure pg-latest exists
     if not exists(latest):
@@ -44,7 +44,7 @@ def ensure_pg_latest_exists(default):
 
 def check_for_pg_latest():
     "Fail-fast if there isn't a valid working directory"
-    latest = config.paths['pg-latest']
+    latest = config.paths[config.PG_LATEST]
 
     if not exists(latest):
         abort('There is no pg-latest symlink, run a setup.XXX task to create a cluster or the set_pg_latest task to point pg-latest to a citus installation')

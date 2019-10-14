@@ -18,7 +18,7 @@ def rmdir(path, force=False):
         run('rm {} -r {}'.format(flag, path))
 
 def psql(command, connectionURI=''):
-    with cd(config.paths['pg-latest']):
+    with cd(config.paths[config.PG_LATEST]):
         return run('bin/psql {} -c "{}"'.format(connectionURI, command))
 
 def add_github_to_known_hosts():
@@ -28,10 +28,10 @@ def add_github_to_known_hosts():
 
 def download_pg():
     "Idempotent, does not download if file already exists. Returns the file's location"
-    version = config.settings['pg-version']
+    version = config.settings[config.PG_VERSION]
     url = pg_url_for_version(version)
 
-    target_dir = config.paths['pg-source-balls']
+    target_dir = config.paths[config.PG_SOURCE_BALLS]
     run('mkdir -p {}'.format(target_dir))
 
     target_file = '{}/{}'.format(target_dir, os.path.basename(url))

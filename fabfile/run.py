@@ -29,7 +29,7 @@ def jdbc():
 @roles('master')
 def regression():
     'Runs Citus\' regression tests'
-    with cd(config.paths['citus-repo']):
+    with cd(config.paths[config.CITUS_REPO]):
         run('make check')
 
 
@@ -43,7 +43,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_parser.read(config_folder_path + config_file)
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
-    results_file = open(os.path.join(config.paths['home-directory'], 'pgbench_results_{}.csv'.format(current_time_mark)), 'w')
+    results_file = open(os.path.join(config.paths[config.HOME_DIRECTORY], 'pgbench_results_{}.csv'.format(current_time_mark)), 'w')
 
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
 
@@ -188,10 +188,10 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 @roles('master')
 def tpch_queries(query_info, connectionURI, pg_version, citus_version):
     results_file = open(
-        os.path.join(config.paths['home-directory'],'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version)),
+        os.path.join(config.paths[config.HOME_DIRECTORY],'tpch_benchmark_results_PG-{}_Citus-{}.txt'.format(pg_version, citus_version)),
         'a')
-    psql = '{}/bin/psql'.format(config.paths['pg-latest'])
-    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths['tests-repo'])
+    psql = '{}/bin/psql'.format(config.paths[config.PG_LATEST])
+    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.paths[config.TESTS_REPO])
 
     for query_code, executor_type in query_info:
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)

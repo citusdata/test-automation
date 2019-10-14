@@ -24,7 +24,7 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 @task
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
+    execute(prefix.ensure_pg_latest_exists, default=config.paths[config.CITUS_INSTALLATION])
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -32,7 +32,7 @@ def basic_testing():
 @task
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
+    execute(prefix.ensure_pg_latest_exists, default=config.paths[config.CITUS_INSTALLATION])
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -41,14 +41,14 @@ def tpch():
 @task
 def valgrind():
     'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
-    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
+    execute(prefix.ensure_pg_latest_exists, default=config.paths[config.CITUS_INSTALLATION])
 
     # we do this execute dance so valgrind is installed on every node, not just the master
     def install_valgrind():
         sudo('yum install -q -y valgrind')
     execute(install_valgrind)
 
-    config.settings['pg-configure-flags'].append('--enable-debug')
+    config.settings[config.PG_CONFIGURE_FLAGS].append('--enable-debug')
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -56,7 +56,7 @@ def valgrind():
 @task
 def enterprise():
     'Installs the enterprise version of Citus'
-    execute(prefix.ensure_pg_latest_exists, default=config.paths['citus-installation'])
+    execute(prefix.ensure_pg_latest_exists, default=config.paths[config.CITUS_INSTALLATION])
 
     execute(common_setup, build_enterprise)
     execute(add_workers)
@@ -68,7 +68,7 @@ def common_setup(build_citus_func):
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
-    run('rm -r {}/ || true'.format(config.paths['pg-latest']))
+    run('rm -r {}/ || true'.format(config.paths[config.PG_LATEST]))
 
     redhat_install_packages()
     build_postgres()
@@ -76,7 +76,7 @@ def common_setup(build_citus_func):
     create_database()
     pg.start()
 
-    pg_latest = config.paths['pg-latest']
+    pg_latest = config.paths[config.PG_LATEST]
     with cd(pg_latest):
         while getattr(run('bin/pg_isready'), 'return_code') != 0:
             print ('Waiting for database to be ready')
@@ -88,7 +88,7 @@ def common_setup(build_citus_func):
 
 @roles('master')
 def add_workers():
-    with cd('{}/data'.format(config.paths['pg-latest'])):
+    with cd('{}/data'.format(config.paths[config.PG_LATEST])):
         for ip in env.roledefs['workers']:
             with hide('stdout'):
                 utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
@@ -111,7 +111,7 @@ def build_postgres():
     if env.host_string != 'localhost':
         put(local_path=sourceball_loc, remote_path=sourceball_loc)
 
-    with cd(config.paths['pg-source-balls']):
+    with cd(config.paths[config.PG_SOURCE_BALLS]):
         final_dir = os.path.basename(sourceball_loc).split('.tar.bz2')[0]
         # rm makes this idempotent, if not a bit inefficient
 
@@ -120,8 +120,8 @@ def build_postgres():
             run('tar -xf {}.tar.bz2'.format(final_dir))
 
         with cd(final_dir):
-            pg_latest = config.paths['pg-latest']
-            flags = ' '.join(config.settings['pg-configure-flags'])
+            pg_latest = config.paths[config.PG_LATEST]
+            flags = ' '.join(config.settings[config.PG_CONFIGURE_FLAGS])
             with hide('stdout'):
                 run('./configure --prefix={} {}'.format(pg_latest, flags))
 
@@ -134,14 +134,14 @@ def build_postgres():
                 run('make -s install')
 
 def build_citus():
-    repo = config.paths['citus-repo']
+    repo = config.paths[config.CITUS_REPO]
     utils.rmdir(repo, force=True) # force because git write-protects files
     run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'master')
         run('git checkout {}'.format(git_ref))
 
-        pg_latest = config.paths['pg-latest']
+        pg_latest = config.paths[config.PG_LATEST]
         with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
@@ -153,14 +153,14 @@ def build_citus():
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
-    repo = config.paths['enterprise-repo']
+    repo = config.paths[config.ENTERPRISE_REPO]
     utils.rmdir(repo, force=True)
     run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
         run('git checkout {}'.format(git_ref))
 
-        pg_latest = config.paths['pg-latest']
+        pg_latest = config.paths[config.PG_LATEST]
         with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
@@ -170,7 +170,7 @@ def build_enterprise():
             run('make -s -j{} install'.format(core_count))
 
 def create_database():
-    pg_latest = config.paths['pg-latest']
+    pg_latest = config.paths[config.PG_LATEST]
     with cd(pg_latest), hide('stdout'):
         run('bin/initdb -D data')
     with cd('{}/data'.format(pg_latest)):

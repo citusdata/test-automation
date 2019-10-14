@@ -3,18 +3,15 @@ import os
 
 HOME_DIR = expanduser("~")
 
-paths = {
-    'code-directory': os.path.join(HOME_DIR, 'code'),
-    'tests-repo': os.path.join(HOME_DIR, 'test-automation'),
-    'citus-repo': os.path.join(HOME_DIR, 'citus'),
-    'enterprise-repo': os.path.join(HOME_DIR, 'citus-enterprise'),
-    'pg-latest': os.path.join(HOME_DIR, 'pg-latest'),
-    'pg-source-balls': os.path.join(HOME_DIR, 'postgres-source'),
-    'home-directory': HOME_DIR, 
-    'citus-installation': os.path.join(HOME_DIR, 'citus-installation')
-}
+CODE_DIRECTORY = os.path.join(HOME_DIR, 'code')
+TESTS_REPO = os.path.join(HOME_DIR, 'test-automation')
+CITUS_REPO = os.path.join(HOME_DIR, 'citus')
+ENTERPRISE_REPO = os.path.join(HOME_DIR, 'citus-enterprise')
+PG_LATEST = os.path.join(HOME_DIR, 'pg-latest')
+PG_SOURCE_BALLS = os.path.join(HOME_DIR, 'postgres-source')
+HOME_DIRECTORY = HOME_DIR
+RESULTS_DIRECTORY = os.path.join(HOME_DIR, 'results')
+CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
 
-settings = {
-    'pg-version': '9.6.1',
-    'pg-configure-flags': ['--with-openssl'],
-}
+PG_VERSION = '9.6.1'
+PG_CONFIGURE_FLAGS = ['--with-openssl']

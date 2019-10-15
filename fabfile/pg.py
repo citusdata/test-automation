@@ -1,6 +1,6 @@
 from fabric.api import task, run, cd
 
-from config import paths
+import config
 import prefix
 from utils import psql
 
@@ -13,7 +13,7 @@ def start():
     'Start the database in pg-latest'
     prefix.check_for_pg_latest()
 
-    with cd(paths['pg-latest']):
+    with cd(config.PG_LATEST):
         # "set -m" spawns postgres in a new process group so it runs in the background
         run('set -m; bin/pg_ctl -D data -l logfile start')
 
@@ -23,7 +23,7 @@ def stop():
     'Stop the database in pg-latest'
     prefix.check_for_pg_latest()
 
-    with cd(paths['pg-latest']):
+    with cd(config.PG_LATEST):
         run('set -m; bin/pg_ctl -D data stop')
 
 
@@ -32,7 +32,7 @@ def restart():
     'Restart the database in pg-latest'
     prefix.check_for_pg_latest()
 
-    with cd(paths['pg-latest']):
+    with cd(config.PG_LATEST):
         run('set -m; bin/pg_ctl -D data -l logfile restart')
 
         # TODO: Maybe also check that the server started properly. And if it didn't tail the log file?

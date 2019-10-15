@@ -1,0 +1,31 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: buildpack-deps:trusty
+    steps:
+      - run:
+          command: echo 'normal-build'
+  nightly-build:
+    docker:
+      - image: buildpack-deps:trusty
+    steps:
+      - run:
+          command: echo 'nightly-build'
+workflows:
+  version: 2
+
+  test:
+    jobs:
+      - build
+
+  scheduled-workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - nightly-build

@@ -7,9 +7,10 @@ set -e
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
-rg=citusbot_test_resource_group5
+rg=citusbot_test_resource_group3
 export RESOURCE_GROUP_NAME=${rg}
 sh ./create-cluster.sh ${rg}
+
 
 public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
 
@@ -20,6 +21,7 @@ ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 
 sh ./delete_security_rule.sh
 
-ssh -A pguser@${public_ip} sh /home/pguser/test-automation/azure/run_all_tests.sh
+# ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
+ssh -A pguser@${public_ip} "source ~/.bash_profile; sh /home/pguser/test-automation/azure/run_all_tests.sh"
 
 # sh ./delete_resource_group.sh ${rg}

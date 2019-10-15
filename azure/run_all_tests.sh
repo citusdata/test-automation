@@ -7,10 +7,10 @@ set -e
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
-#fab run.pgbench_tests
+fab run.pgbench_tests
 # mock tests
-mkdir ${HOME}/test-automation/results
-echo "mocking tests" > ${HOME}/test-automation/results/mock_pgbench_tests.out
+# mkdir ${HOME}/test-automation/results
+# echo "mocking tests" > ${HOME}/test-automation/results/mock_pgbench_tests.out
 
 
 # add github to known hosts

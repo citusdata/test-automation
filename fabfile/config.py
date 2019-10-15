@@ -15,3 +15,7 @@ CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
 
 PG_VERSION = '9.6.1'
 PG_CONFIGURE_FLAGS = ['--with-openssl']
+
+settings = {
+
+}

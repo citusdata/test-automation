@@ -23,7 +23,7 @@ git config --global user.name "citus bot"
 
 now=$(date +"%m_%d_%Y")
 
-mv ${HOME}/test-automation/results ${HOME}/release-test-results/periodic_job_results/${now}
+mv ${HOME}/results ${HOME}/release-test-results/periodic_job_results/${now}
 
 cd ${HOME}/release-test-results
 

@@ -4,8 +4,6 @@
 set -u
 # exit immediately if a command fails
 set -e
-# fail in a pipeline if any of the commands fails
-set -o pipefail
 
 echo ${RESOURCE_GROUP_NAME}
 

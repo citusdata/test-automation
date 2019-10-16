@@ -14,6 +14,7 @@ required for testing citus.
     * [Running PgBench Tests Against Citus Cloud](#azure-pgbench-cloud)
     * [Running TPC-H Tests](#azure-tpch)
     * [Running TPC-H Tests Against Citus Cloud](#azure-tpch-cloud)
+  * [How it works](#how-it-works)  
 * [Amazon(Deprecated)](#amazon)
   * [Getting Started](#getting-started)
     * [Basic Cluster Setup](#basic-cluster-setup)
@@ -63,6 +64,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
 
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
+
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
 ```
@@ -110,6 +114,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
 
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
+
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
 ```
@@ -155,6 +162,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
+
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -203,6 +213,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
 
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
+
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
 ```
@@ -244,6 +257,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
+
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -292,6 +308,9 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
 ./create-cluster.sh
 
+# Delete security rule 103 to be able to connect
+./delete_security_rule.sh
+
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
 ```
@@ -311,6 +330,60 @@ On your local machine:
 # It's a good practice to check deletion status from the azure console
 ./delete_resource_group.sh
 ```
+
+## <a name="how-it-works"></a>How it works
+<details>
+  <summary>Click to expand!</summary>
+  
+  Azure has ARM templates that can be used to deploy servers with ease. There are two main files for ARM templates, `azuredeploy.json` and `azuredeploy.parameters.json`. `azuredeploy.json` has the main template and `azuredeploy.parameters.json` contains the parameters that are used in the main template. For example if you want to change the number of instances, you would do that in the parameters. You shouldnt change anything in the template file for configuration.
+
+  The main template has 4 main parts:
+  
+* Parameters
+* Variables
+* Resources
+* Outputs
+
+Parameters can be configured from the parameters file. Variables are constants. Resources have all of the resource definitions such as VMs, network security groups. Outputs can be useful for displaying a connection string.
+
+When creating resources, we can specify the order so that if a resource depends on some other resource, it wont be created before the dependant is created. We can also specify how many instances of a resource to create with a `copy` command.
+
+The first virtual machine with index 0 is treated as a coordinator. When all the virtual machines are ready, a custom script is installed to do initialization in vms. The initailization script is retrieved from the github with a url.
+
+The initialization script also finds the private ip addresses of workers and puts them to the coordinator. The way this is done is with a storage account resource. This storage account resource is created within the template itself and all the vms upload their private ip addresses to the storage. After all are uploaded the coordinator downloads all the private ip addresses from the storage account and puts it to `worker-instances` file, which is then used when creating a citus cluster.
+
+We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete_security_rule.sh`, which deletes that rule for you.
+
+Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
+
+```bash
+export RESOURCE_GROUP_NAME=talhatest_resource_group
+```
+
+You should use a single session because the exported variable is only available in the current session and its children sessions. You should start `ssh-agent` and add your key with `ssh-add`.
+
+Even if you want to use the defaults, you still need to put your public key to parameters. This public key will be put to the virtual machines so that you can ssh to them.
+
+To simplify this process, there is a script called `create-cluster.sh`, which:
+
+* creates a resource group from the environment variable `RESOURCE_GROUP_NAME`
+* creates a cluster with the `azuredeploy.json` template in the resource group
+* prints the connection string to ssh
+
+then you should run:
+
+```bash
+./delete_security_rule.sh
+ssh -A pguser@<public ip of coordinator>
+```
+
+After you are done with testing, you can delete the resource group with:
+
+```bash
+./delete_resource_group.sh
+```
+
+</details>
 
 ## <a name="amazon"></a>Amazon
 

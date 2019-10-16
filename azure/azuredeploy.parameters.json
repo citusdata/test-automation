@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sshPublicKey": {
-            "value": "You should put your public key for ssh here"
+            "value": "your public key goes here"
         },
         "numberOfInstances": {
             "value": 4

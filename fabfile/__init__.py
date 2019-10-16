@@ -58,7 +58,7 @@ def set_pg_latest(*args):
     'Use this if you want multiple simultaneous installs, the README has more information'
 
     if len(args) != 1:
-        abort('You must provide an argument. Such as: "set_prefix:/home/ec2-user/prefix"')
+        abort('You must provide an argument. Such as: "set_prefix:~/prefix"')
     new_prefix = args[0]
 
     execute(prefix.set_prefix, new_prefix)

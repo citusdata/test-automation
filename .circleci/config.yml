@@ -1,0 +1,45 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - add_ssh_keys
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            sh ./install_deps.sh
+            sh ./citus_bot.sh
+          name: install dependencies and run tests
+  nightly-build:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - run:
+          command: echo 'nightly-build'    
+
+orbs:
+  azure-cli: circleci/azure-cli@1.0.0      
+
+workflows:
+  version: 2
+
+  test:
+    jobs:
+      - build
+
+  scheduled-workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - nightly-build

@@ -51,14 +51,17 @@ On your local machine:
 
 ```bash
 
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+# start ssh agent
+eval `ssh-agent -s`
 
-```bash
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -82,8 +85,8 @@ On your local machine:
 
 ```bash
 # Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+# It's a good practice to check deletion status from the azure console. You can simply check resource_groups
+./delete_resource_group.sh
 ```
 
 ## <a name="azure-pgbench"></a> Running PgBench Tests
@@ -92,17 +95,20 @@ On your local machine:
 
 ```bash
 
+# start ssh agent
+eval `ssh-agent -s`
+
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
 # Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-
-```bash
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -126,7 +132,7 @@ On your local machine:
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+./delete_resource_group.sh
 ```
 
 ## <a name="azure-scale"></a> Running Scale Tests
@@ -135,18 +141,20 @@ On your local machine:
 
 ```bash
 
+# start ssh agent
+eval `ssh-agent -s`
 
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
 # Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-
-```bash
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -171,7 +179,7 @@ On your local machine:
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+./delete_resource_group.sh
 ```
 
 ## <a name="azure-pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
@@ -180,14 +188,20 @@ On your local machine:
 
 ```bash
 
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+# start ssh agent
+eval `ssh-agent -s`
 
-```bash
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
+
+# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -207,7 +221,7 @@ On your local machine:
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+./delete_resource_group.sh
 ```
 
 ## <a name="azure-tpch"></a> Running TPC-H Tests
@@ -216,17 +230,20 @@ On your local machine:
 
 ```bash
 
+# start ssh agent
+eval `ssh-agent -s`
+
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
 # Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-
-```bash
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -251,7 +268,7 @@ On your local machine:
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+./delete_resource_group.sh
 ```
 
 ## <a name="azure-tpch-cloud"></a> Running TPC-H Tests Against Citus Cloud
@@ -260,17 +277,20 @@ On your local machine:
 
 ```bash
 
+# start ssh agent
+eval `ssh-agent -s`
+
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
 # Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-
-```bash
 cat ~/.ssh/id_rsa.pub
-```
+
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=talha_test_resource_group
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh talha_test_resource_group
+./create-cluster.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -289,7 +309,7 @@ On your local machine:
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh talha_test_resource_group
+./delete_resource_group.sh
 ```
 
 ## <a name="amazon"></a>Amazon

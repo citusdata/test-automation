@@ -347,7 +347,7 @@
                 "settings": {
                     "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', parameters('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/AzureSupport/azure/init.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/add-azure-support/azure/init.sh"
                     ]
                 }
             },

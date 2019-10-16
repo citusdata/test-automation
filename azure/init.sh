@@ -28,7 +28,7 @@ su - ${TARGET_USER} <<'EOSU'
  # add pg and local binaries to the path
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
 
-  cd ${HOME} && git clone https://github.com/citusdata/test-automation.git
+  cd ${HOME} && git clone --branch add-azure-support https://github.com/citusdata/test-automation.git
 
   # create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile

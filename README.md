@@ -383,6 +383,17 @@ After you are done with testing, you can delete the resource group with:
 ./delete_resource_group.sh
 ```
 
+Currently each pgbench test is run for 300 seconds, and as we have many pgbench tests it might take a while to run all the tests. So when testing a change, it is better to change the tests times to something short such as 5 seconds. The time can be changed with the -T parameter:
+
+```bash
+pgbench_command: pgbench -c 32 -j 16 -T 300 -P 10 -r
+
+->
+
+pgbench_command: pgbench -c 32 -j 16 -T 5 -P 10 -r
+
+```
+
 </details>
 
 ## <a name="amazon"></a>Amazon

@@ -8,6 +8,8 @@ required for testing citus.
 
 * [Azure](#azure)
   * [Getting Started](#azure-getting-started)
+    * [Setup steps for each test](#azure-setup-steps)
+    * [Steps to delete a cluster](#azure-delete-cluster)
     * [Basic Cluster Setup](#azure-basic-cluster-setup)
     * [Running PgBench Tests](#azure-pgbench)
     * [Running Scale Tests](#azure-scale)
@@ -15,7 +17,7 @@ required for testing citus.
     * [Running TPC-H Tests](#azure-tpch)
     * [Running TPC-H Tests Against Citus Cloud](#azure-tpch-cloud)
   * [How it works](#how-it-works)  
-* [Amazon(Deprecated)](#amazon)
+* [AWS(Deprecated)](#AWS)
   * [Getting Started](#getting-started)
     * [Basic Cluster Setup](#basic-cluster-setup)
     * [Running PgBench Tests](#pgbench)
@@ -46,14 +48,21 @@ You should have `az cli` in your local to continue.
 
 You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
 
-## <a name="azure-basic-cluster-setup"></a> Basic Cluster Setup
+In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of instances, you will need to change the parameter `numberOfInstances`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
 
-On your local machine:
+After you run tests, you can see the results in `results` folder. The `results` folder will have the name of the config used for the test.
+
+## <a name="azure-setup-steps"></a> Setup Steps For Each Test
+
+You will need to follow these steps to create a cluster and connect to it, on your local machine:
 
 ```bash
 
 # start ssh agent
 eval `ssh-agent -s`
+
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
 
 # Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
 cat ~/.ssh/id_rsa.pub
@@ -70,6 +79,18 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
 ```
+
+## <a name="azure-delete-cluster"></a> Steps to delete a cluster
+
+After you are done with testing you can run the following the delete a cluster and the relevant resource group:
+
+```bash
+# Delete the formation
+# It's a good practice to check deletion status from the azure console
+./delete_resource_group.sh
+```
+
+## <a name="azure-basic-cluster-setup"></a> Basic Cluster Setup
 
 On the coordinator node:
 
@@ -85,41 +106,7 @@ fab pg.set_config:max_connections,1000
 fab pg.restart
 ```
 
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console. You can simply check resource_groups
-./delete_resource_group.sh
-```
-
 ## <a name="azure-pgbench"></a> Running PgBench Tests
-
-On your local machine:
-
-```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
-
-# in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
-
-# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh
-
-# Delete security rule 103 to be able to connect
-./delete_security_rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
-```
 
 On the coordinator node:
 
@@ -134,41 +121,7 @@ fab run.pgbench_tests
 fab run.pgbench_tests:pgbench_default_without_transaction.ini
 ```
 
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
-```
-
 ## <a name="azure-scale"></a> Running Scale Tests
-
-On your local machine:
-
-```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
-
-# in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
-
-# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh
-
-# Delete security rule 103 to be able to connect
-./delete_security_rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
-```
 
 On the coordinator node:
 
@@ -184,41 +137,7 @@ fab run.pgbench_tests:scale_test_foreign.ini
 fab run.pgbench_tests:scale_test_100_columns.ini
 ```
 
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
-```
-
 ## <a name="azure-pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
-
-On your local machine:
-
-```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
-
-# in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
-
-# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh
-
-# Delete security rule 103 to be able to connect
-./delete_security_rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
-```
 
 On the coordinator node:
 
@@ -229,41 +148,7 @@ On the coordinator node:
 fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
 ```
 
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
-```
-
 ## <a name="azure-tpch"></a> Running TPC-H Tests
-
-On your local machine:
-
-```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
-
-# in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
-
-# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh
-
-# Delete security rule 103 to be able to connect
-./delete_security_rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
-```
 
 On the coordinator node:
 
@@ -279,41 +164,7 @@ fab run.tpch_automate
 fab run.tpch_automate:tpch_q1.ini
 ```
 
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
-```
-
 ## <a name="azure-tpch-cloud"></a> Running TPC-H Tests Against Citus Cloud
-
-On your local machine:
-
-```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
-
-# in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
-
-# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-./create-cluster.sh
-
-# Delete security rule 103 to be able to connect
-./delete_security_rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
-```
 
 On the coordinator node:
 
@@ -321,14 +172,6 @@ On the coordinator node:
 # Provide your tpch config file or go with the default file
 # Don't forget to escape `=` at the end of your connection string
 fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
-```
-
-On your local machine:
-
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
 ```
 
 ## <a name="how-it-works"></a>How it works
@@ -396,7 +239,10 @@ pgbench_command: pgbench -c 32 -j 16 -T 5 -P 10 -r
 
 </details>
 
-## <a name="amazon"></a>Amazon
+<details>
+  <summary>AWS, Click to expand!</summary>
+
+## <a name="aws"></a>AWS
 
 ## <a name="getting-started"></a> Getting Started
 
@@ -778,6 +624,8 @@ fab setup.basic_testing use.citus:v.7.1.1
 
 Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
 is already installed and running. They must be run after a `setup` task!
+
+</details>
 
 # <a name="task-namespaces"></a> Task Namespaces
 

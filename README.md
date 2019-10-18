@@ -64,7 +64,7 @@ eval `ssh-agent -s`
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
-# Put your public ip to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
+# Put your public key to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
 cat ~/.ssh/id_rsa.pub
 
 # in the session that you will use to ssh, set the resource group name

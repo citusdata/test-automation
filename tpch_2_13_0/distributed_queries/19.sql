@@ -35,5 +35,6 @@ WHERE
         AND p_size between 1 AND 15
         AND l_shipmode in ('AIR', 'AIR REG')
         AND l_shipinstruct = 'DELIVER IN PERSON'
-    );
+    )
+LIMIT 4;    
 

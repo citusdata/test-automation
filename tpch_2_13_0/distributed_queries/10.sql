@@ -32,4 +32,4 @@ GROUP BY
     c_comment
 ORDER BY
     revenue desc
-LIMIT 20;
+LIMIT 4;

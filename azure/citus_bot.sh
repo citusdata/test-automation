@@ -9,7 +9,7 @@ set -e
 set -x
 
 
-rg=citusbot_test_resource_group6
+rg=citusbot_test_resource_group2
 export RESOURCE_GROUP_NAME=${rg}
 sh ./create-cluster.sh ${rg}
 
@@ -20,8 +20,6 @@ public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}
 ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
-echo "showing known hosts"
-cat ~/.ssh/known_hosts
 
 # these need to be run with sudo.
 # echo "Host *" >> /etc/ssh/ssh_config

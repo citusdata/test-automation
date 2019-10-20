@@ -13,4 +13,5 @@ FROM
 WHERE
     l_partkey = p_partkey
     AND l_shipdate >= date '1995-09-01'
-    AND l_shipdate < date '1995-09-01' + interval '1' month;
+    AND l_shipdate < date '1995-09-01' + interval '1' month
+LIMIT 4;    

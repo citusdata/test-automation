@@ -15,6 +15,7 @@ jobs:
             sh ./install_deps.sh
             sh ./citus_bot.sh
           name: install dependencies and run tests
+          no_output_timeout: 40m
   nightly-build:
     docker:
       - image: buildpack-deps:trusty

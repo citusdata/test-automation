@@ -5,8 +5,8 @@
         "sshPublicKey": {
             "value": "your public key goes here"
         },
-        "numberOfInstances": {
-            "value": 4
+        "numberOfWorkers": {
+            "value": 3
         },
         "diskType": {
             "value": "Premium_LRS"

@@ -74,7 +74,7 @@ export RESOURCE_GROUP_NAME=talha_test_resource_group
 ./create-cluster.sh
 
 # Delete security rule 103 to be able to connect
-./delete_security_rule.sh
+./delete-security-rule.sh
 
 # When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
 ssh -A pguser@<public ip of coordinator>
@@ -87,7 +87,7 @@ After you are done with testing you can run the following the delete a cluster a
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the azure console
-./delete_resource_group.sh
+./delete-resource-group.sh
 ```
 
 ## <a name="azure-basic-cluster-setup"></a> Basic Cluster Setup
@@ -195,7 +195,7 @@ The first virtual machine with index 0 is treated as a coordinator. When all the
 
 The initialization script also finds the private ip addresses of workers and puts them to the coordinator. The way this is done is with a storage account resource. This storage account resource is created within the template itself and all the vms upload their private ip addresses to the storage. After all are uploaded the coordinator downloads all the private ip addresses from the storage account and puts it to `worker-instances` file, which is then used when creating a citus cluster.
 
-We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete_security_rule.sh`, which deletes that rule for you.
+We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete-security-rule.sh`, which deletes that rule for you.
 
 Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
 
@@ -216,17 +216,17 @@ To simplify this process, there is a script called `create-cluster.sh`, which:
 then you should run:
 
 ```bash
-./delete_security_rule.sh
+./delete-security-rule.sh
 ssh -A pguser@<public ip of coordinator>
 ```
 
 After you are done with testing, you can delete the resource group with:
 
 ```bash
-./delete_resource_group.sh
+./delete-resource-group.sh
 ```
 
-Currently each pgbench test is run for 300 seconds, and as we have many pgbench tests it might take a while to run all the tests. So when testing a change, it is better to change the tests times to something short such as 5 seconds. The time can be changed with the -T parameter:
+Currently the default time for tests 300 seconds, and as we have many tests it might take a while to run all the tests. So when testing a change, it is better to change the test times to something short such as 5 seconds. The time can be changed with the -T parameter:
 
 ```bash
 pgbench_command: pgbench -c 32 -j 16 -T 300 -P 10 -r

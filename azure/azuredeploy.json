@@ -32,13 +32,13 @@
                 "description": "Disk type"
             }
         },
-        "numberOfInstances": {
-            "defaultValue": 4,
-            "minValue": 2,
+        "numberOfWorkers": {
+            "defaultValue": 3,
+            "minValue": 1,
             "maxValue": 21,
             "type": "int",
             "metadata": {
-                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+                "description": "Number of workers"
             }
         },
         "location": {
@@ -120,7 +120,8 @@
         "addressPrefix": "10.192.0.0/16",
         "subnetPrefix": "10.192.0.0/24",
         "publicIPAddressType": "Static",
-        "publicIPAddressName": "citusPublicIP"
+        "publicIPAddressName": "citusPublicIP",
+        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]"
     },
     "resources": [
         {
@@ -161,7 +162,7 @@
             },
             "copy": {
                 "name": "publicIPLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -257,7 +258,7 @@
             },
             "copy": {
                 "name": "nicLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -276,7 +277,7 @@
             },
             "copy": {
                 "name": "diskLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -346,7 +347,7 @@
             },
             "copy": {
                 "name": "virtualMachineLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -363,7 +364,7 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', parameters('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/add-azure-support/azure/init.sh"
                     ]
@@ -371,7 +372,7 @@
             },
             "copy": {
                 "name": "extensionScriptLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         }
     ],

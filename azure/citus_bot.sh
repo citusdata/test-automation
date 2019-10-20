@@ -9,7 +9,7 @@ set -e
 set -x
 
 
-rg=citusbot_test_resource_group2
+rg=citusbot_test_resource_group6
 export RESOURCE_GROUP_NAME=${rg}
 sh ./create-cluster.sh ${rg}
 

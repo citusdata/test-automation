@@ -1,14 +1,23 @@
 #!/bin/bash
 
 # fail if trying to reference a variable that is not set.
-set -u
+set -u / set -o nounset
 # exit immediately if a command fails
 set -e
 
+## Set mydir to the directory containing the script
+## The ${var%pattern} format will remove the shortest match of
+## pattern from the end of the string. Here, it will remove the
+## script's name,. leaving only the directory. 
+azuredir="${0%/*}"
+cd ${azuredir}
+
 rg=${RESOURCE_GROUP_NAME}
+region=${AZURE_REGION:=eastus}
+echo ${region}
+az group create -l ${region} -n ${rg}
 
-az group create -l eastus2 -n ${rg}
-
+echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
 az group deployment create -g ${rg} --template-file azuredeploy.json --parameters azuredeploy.parameters.json
 
 connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)

@@ -20,6 +20,13 @@ yum install -y git
 # this is the username in our instances
 TARGET_USER=pguser
 
+# attach disk and mount it for data
+mkfs.ext4 -F /dev/sdc
+mkdir -p /home/${TARGET_USER}/citus-installation
+mount /dev/sdc /home/${TARGET_USER}/citus-installation
+rm -r /home/${TARGET_USER}/citus-installation/*
+chown ${TARGET_USER}:${TARGET_USER} /home/${TARGET_USER}/citus-installation
+
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers

@@ -22,6 +22,7 @@ import prefix
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
 @task
+@roles('master')
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
@@ -30,6 +31,7 @@ def basic_testing():
     execute(add_workers)
 
 @task
+@roles('master')
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)

@@ -19,8 +19,14 @@ az group create -l ${region} -n ${rg}
 
 public_key=$(cat ~/.ssh/id_rsa.pub)
 
+start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
+
 az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" 
+
+end_time=`date +%s`
+echo execution time was `expr $end_time - $start_time` s.
+
 
 connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
 

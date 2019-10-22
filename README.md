@@ -49,6 +49,8 @@ In `azuredeploy.parameters.json` file, you will see the parameters that you can 
 
 After you run tests, you can see the results in `results` folder. The `results` folder will have the name of the config used for the test.
 
+The data will be stored on the attached disk, size of which can be configured in the parameters.
+
 ## <a name="azure-setup-steps"></a> Setup Steps For Each Test
 
 You will need to follow these steps to create a cluster and connect to it, on your local machine:
@@ -60,9 +62,6 @@ eval `ssh-agent -s`
 
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
-
-# Put your public key to sshPublicKey in azuredeploy.parameters.json. You can see your public key with:
-cat ~/.ssh/id_rsa.pub
 
 # in the session that you will use to ssh, set the resource group name
 export RESOURCE_GROUP_NAME=talha_test_resource_group
@@ -127,13 +126,19 @@ Before starting the process you should set the environment variable `RESOURCE_GR
 export RESOURCE_GROUP_NAME=talhatest_resource_group
 ```
 
+if you want to configure the region, you can also set that:
+
+```bash
+export AZURE_REGION=eastus2
+```
+
 You should use a single session because the exported variable is only available in the current session and its children sessions. You should start `ssh-agent` and add your key with `ssh-add`.
 
-Even if you want to use the defaults, you still need to put your public key to parameters. This public key will be put to the virtual machines so that you can ssh to them.
+By default, your public key from `~/.ssh/id_rsa.pub` will be used. This public key will be put to the virtual machines so that you can ssh to them.
 
 To simplify this process, there is a script called `create-cluster.sh`, which:
 
-* creates a resource group from the environment variable `RESOURCE_GROUP_NAME`
+* creates a resource group from the environment variable `RESOURCE_GROUP_NAME`, and `AZURE_REGION`.
 * creates a cluster with the `azuredeploy.json` template in the resource group
 * prints the connection string to ssh
 

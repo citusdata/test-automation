@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sshPublicKey": {
-            "value": "your public key goes here"
+            "value": "your key will be used from ~/.ssh/id_rsa.pub automatically"
         },
         "numberOfWorkers": {
             "value": 3

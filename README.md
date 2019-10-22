@@ -22,9 +22,9 @@ required for testing citus.
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
-  * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
+  * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
-  * [Running TPC-H Tests Against Citus Cloud](#tpch-cloud)
+  * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
 * [Example fab Commands](#fab-examples)
 * [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
@@ -384,13 +384,13 @@ fab run.pgbench_tests:scale_test_foreign.ini
 fab run.pgbench_tests:scale_test_100_columns.ini
 ```
 
-## <a name="pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
+## <a name="pgbench-cloud"></a> Running PgBench Tests Against Hyperscale (Citus)
 
 On the coordinator node:
 
 ```bash
 
-# Use pgbench_cloud.ini config file with connection string of your Citus Cloud cluster
+# Use pgbench_cloud.ini config file with connection string of your Hyperscale (Citus) cluster
 # Don't forget to escape `=` at the end of your connection string
 fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
 ```
@@ -411,7 +411,7 @@ fab run.tpch_automate
 fab run.tpch_automate:tpch_q1.ini
 ```
 
-## <a name="tpch-cloud"></a> Running TPC-H Tests Against Citus Cloud
+## <a name="tpch-cloud"></a> Running TPC-H Tests Against Hyperscale (Citus)
 
 On the coordinator node:
 

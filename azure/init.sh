@@ -20,12 +20,59 @@ yum install -y git
 # this is the username in our instances
 TARGET_USER=pguser
 
+#A set of disks to ignore from partitioning and formatting
+BLACKLIST="/dev/sda|/dev/sdb"
+
+is_partitioned() {
+    OUTPUT=$(partx -s ${1} 2>&1)
+    egrep "partition table does not contains usable partitions|failed to read partition table" <<< "${OUTPUT}" >/dev/null 2>&1
+    if [ ${?} -eq 0 ]; then
+        return 1
+    else
+        return 0
+    fi    
+}
+
+has_filesystem() {
+    DEVICE=${1}
+    OUTPUT=$(file -L -s ${DEVICE})
+    grep filesystem <<< "${OUTPUT}" > /dev/null 2>&1
+    return ${?}
+}
+
+scan_for_new_disks() {
+    # Looks for unpartitioned disks
+    declare -a RET
+    DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+    for DEV in "${DEVS[@]}";
+    do
+        # The disk will be considered a candidate for partitioning
+        # and formatting if it does not have a sd?1 entry or
+        # if it does have an sd?1 entry and does not contain a filesystem
+        is_partitioned "${DEV}"
+        if [ ${?} -eq 0 ];
+        then
+            has_filesystem "${DEV}1"
+            if [ ${?} -ne 0 ];
+            then
+                RET+=" ${DEV}"
+            fi
+        else
+            RET+=" ${DEV}"
+        fi
+    done
+    echo "${RET}"
+}
+
+# disk=$(scan_for_new_disks)
+# echo ${disk}
+
 # attach disk and mount it for data
-mkfs.ext4 -F /dev/sdc
-mkdir -p /home/${TARGET_USER}/citus-installation
-mount /dev/sdc /home/${TARGET_USER}/citus-installation
-rm -r /home/${TARGET_USER}/citus-installation/*
-chown ${TARGET_USER}:${TARGET_USER} /home/${TARGET_USER}/citus-installation
+# mkfs.ext4 -F /dev/sdc
+# mv /home/${TARGET_USER}/ /tmp/home_copy
+# mkdir -p /home/${TARGET_USER}
+# mount /dev/sdc /home/${TARGET_USER}/
+# rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
@@ -35,7 +82,7 @@ su - ${TARGET_USER} <<'EOSU'
  # add pg and local binaries to the path
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
 
-  cd ${HOME} && git clone --branch add-azure-support https://github.com/citusdata/test-automation.git
+  cd ${HOME} && git clone --branch azure-attach-disks https://github.com/citusdata/test-automation.git
 
   # create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile

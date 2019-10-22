@@ -18,10 +18,10 @@
             "value": "Standard_E8s_v3"
         },
         "coordinatorDiskSizeGB": {
-            "value": 512
+            "value": 14512
         },
         "workerDiskSizeGB": {
-            "value": 512
+            "value": 14512
         }
     }
 }

@@ -45,7 +45,7 @@ You should have `az cli` in your local to continue.
 
 You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
 
-In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of instances, you will need to change the parameter `numberOfInstances`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
+In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
 
 After you run tests, you can see the results in `results` folder. The `results` folder will have the name of the config used for the test.
 
@@ -99,7 +99,7 @@ After you are done with testing you can run the following the delete a cluster a
 
 ## <a name="under-the-hood"></a>Under The Hood
 
-  Azure has ARM templates that can be used to deploy servers with ease. There are two main files for ARM templates, `azuredeploy.json` and `azuredeploy.parameters.json`. `azuredeploy.json` has the main template and `azuredeploy.parameters.json` contains the parameters that are used in the main template. For example if you want to change the number of instances, you would do that in the parameters. You shouldnt change anything in the template file for configuration.
+  Azure has ARM templates that can be used to deploy servers with ease. There are two main files for ARM templates, `azuredeploy.json` and `azuredeploy.parameters.json`. `azuredeploy.json` has the main template and `azuredeploy.parameters.json` contains the parameters that are used in the main template. For example if you want to change the number of workers, you would do that in the parameters. You shouldnt change anything in the template file for configuration.
 
   The main template has 4 main parts:
   

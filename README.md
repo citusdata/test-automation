@@ -174,6 +174,9 @@ pgbench_command: pgbench -c 32 -j 16 -T 5 -P 10 -r
 
 If you want to add different vm sizes, you should change the allowed values for `coordinatorVMSize` and `workerVMSize` in `azuredeploy.json`.
 
+We run a custom script to initialize the vms. The script is downloaded to `/var/lib/waagent/custom-script/download/0 `. You can find the script logs
+in this file.
+
 </details>
 
 <details>

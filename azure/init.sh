@@ -20,12 +20,17 @@ yum install -y git
 # this is the username in our instances
 TARGET_USER=pguser
 
+#A set of disks to ignore from partitioning and formatting
+BLACKLIST="/dev/sda|/dev/sdb"
+DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+read DEV __ <<< ${DEVS}
+
 # attach disk and mount it for data
-mkfs.ext4 -F /dev/sdc
-mkdir -p /home/${TARGET_USER}/citus-installation
-mount /dev/sdc /home/${TARGET_USER}/citus-installation
-rm -r /home/${TARGET_USER}/citus-installation/*
-chown ${TARGET_USER}:${TARGET_USER} /home/${TARGET_USER}/citus-installation
+mkfs.ext4 -F ${DEV}
+mv /home/${TARGET_USER}/ /tmp/home_copy
+mkdir -p /home/${TARGET_USER}
+mount ${DEV} /home/${TARGET_USER}/
+rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input

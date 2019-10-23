@@ -64,7 +64,7 @@ eval `ssh-agent -s`
 ssh-add
 
 # in the session that you will use to ssh, set the resource group name
-export RESOURCE_GROUP_NAME=talha_test_resource_group
+export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 
 # if you want to configure the region
 export REGION=eastus2
@@ -123,7 +123,7 @@ You can use `connect.sh` which will delete the security rule and connect to the 
 Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
 
 ```bash
-export RESOURCE_GROUP_NAME=talhatest_resource_group
+export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 ```
 
 if you want to configure the region, you can also set that:

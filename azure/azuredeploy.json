@@ -105,7 +105,7 @@
                 "Standard_E64is_v3"
             ],
             "metadata": {
-                "description": "The instance type to use for coordinator"
+                "description": "The instance type to use for worker"
             }
         }
     },

@@ -50,7 +50,7 @@
         },
         "coordinatorVmSize": {
             "type": "string",
-            "defaultValue": "Standard_D8s_v3",
+            "defaultValue": "Standard_D4s_v3",
             "allowedValues": [
                 "Standard_D2s_v3",
                 "Standard_D4s_v3",
@@ -85,7 +85,7 @@
         },
         "workerVmSize": {
             "type": "string",
-            "defaultValue": "Standard_E8s_v3",
+            "defaultValue": "Standard_E4s_v3",
             "allowedValues": [
                 "Standard_D2s_v3",
                 "Standard_D4s_v3",

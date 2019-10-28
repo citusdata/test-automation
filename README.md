@@ -51,6 +51,8 @@ After you run tests, you can see the results in `results` folder. The `results` 
 
 The data will be stored on the attached disk, size of which can be configured in the parameters.
 
+If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformaly from different regions.
+
 ## <a name="azure-setup-steps"></a> Setup Steps For Each Test
 
 You will need to follow these steps to create a cluster and connect to it, on your local machine:

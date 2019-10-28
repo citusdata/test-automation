@@ -12,8 +12,14 @@ set -e
 azuredir="${0%/*}"
 cd ${azuredir}
 
+regions=(eastus southcentralus westus2)
+
+size=${#regions[@]}
+index=$(($RANDOM % $size))
+random_region=${regions[$index]}
+
 rg=${RESOURCE_GROUP_NAME}
-region=${AZURE_REGION:=eastus}
+region=${AZURE_REGION:=$random_region}
 echo ${region}
 az group create -l ${region} -n ${rg}
 

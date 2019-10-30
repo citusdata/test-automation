@@ -1,1 +1,1 @@
-COPY test_table FROM '/home/ec2-user/test_data.csv';
+COPY test_table FROM '${HOME}/test_data.csv';

@@ -1,23 +1,32 @@
 # test-automation
 
 Tools for making our tests easier to run. Automates setting up a cluster with
-CloudFormation and installs a script which automates setting up citus and everything
+Azure/Cloudformation and installs a script which automates setting up citus and everything
 required for testing citus.
 
-# Table of Contents
+## Table of Contents
 
-* [Getting Started](#getting-started)
+* [Azure](#azure)
+  * [Getting Started](#azure-getting-started)
+    * [Setup steps for each test](#azure-setup-steps)
+    * [Steps to delete a cluster](#azure-delete-cluster)
+  * [Under The Hood](#under-the-hood)  
+* [AWS(Deprecated)](#AWS)
+  * [Getting Started](#getting-started)
+    * [Setup steps for each test](#aws-setup-steps)
+    * [Steps to delete a cluster](#aws-delete-cluster)
+  * [Detailed Configuration](#detailed-configuration)
+    * [Starting a Cluster](#start-a-cluster)
+    * [Connecting to the Master](#connect-to-master)
+* [Running Rests](#running-tests)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
-  * [Running PgBench Tests Against Citus Cloud](#pgbench-cloud)
+  * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
-  * [Running TPC-H Tests Against Citus Cloud](#tpch-cloud)
-* [Detailed Configuration](#detailed-configuration)
-  * [Starting a Cluster](#start-a-cluster)
-  * [Connecting to the Master](#connect-to-master)
-  * [Example fab Commands](#fab-examples)
-  * [Tasks, and Ordering of Tasks](#fab-tasks)
+  * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
+* [Example fab Commands](#fab-examples)
+* [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
   * [`use`, Choose Exactly What to Install](#use)
   * [`add`, Add add-ons (such as extensions) to a Citus Cluster](#add)
@@ -26,50 +35,174 @@ required for testing citus.
 * [Advanced fab Usage](#advanced-fab)
   * [Using Multiple Citus Installations](#multiple-installs)
 
-# <a name="getting-started"></a> Getting Started
+## <a name="azure"></a>Azure
+
+## <a name="azure-getting-started"></a> Getting Started
 
 You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
 
-## <a name="basic-cluster-setup"></a> Basic Cluster Setup
+You should have `az cli` in your local to continue.
 
-On your local machine:
+You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
+
+In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
+
+After you run tests, you can see the results in `results` folder. The `results` folder will have the name of the config used for the test.
+
+The data will be stored on the attached disk, size of which can be configured in the parameters.
+
+If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformaly from different regions.
+
+## <a name="azure-setup-steps"></a> Setup Steps For Each Test
+
+You will need to follow these steps to create a cluster and connect to it, on your local machine:
+
 ```bash
 
-# Add your EC2 keypair's private key to your agent
-ssh-add path_to_keypair/metin-keypair.pem
+# start ssh agent
+eval `ssh-agent -s`
 
-# Quickly start a cluster of (1 + 2) c3.xlarge nodes at availability zone us-east-1b
-cloudformation/create-stack.sh -k metin-keypair -s FormationMetin -n 2 -i c3.xlarge -a us-east-1b
+# Add your Github ssh key for enterprise (private) repo
+ssh-add
 
-# When your cluster is ready, it will prompt you with the connection string, connect to master node
-ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
+# in the session that you will use to ssh, set the resource group name
+export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
+
+# if you want to configure the region
+# export REGION=eastus2
+
+# open and modify the instance types/discs as you wish
+less azuredeploy.parameters.json
+
+# Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
+cd azure
+./create-cluster.sh
+
+# connect to the coordinator
+./connect.sh
+
+# ALTERNATIVATELY instead of ./connect.sh you can do the following
+
+# Delete security rule 103 to be able to connect
+./delete-security-rule.sh
+
+# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
+ssh -A pguser@<public ip of coordinator>
 ```
 
-On the coordinator node:
-```bash
-# Setup your test cluster with PostgreSQL 10.1 and Citus master branch
-fab use.postgres:10.2 use.citus:master setup.basic_testing
+## <a name="azure-delete-cluster"></a> Steps to delete a cluster
 
-# Lets change some conf values 
-fab pg.set_config:max_wal_size,"'5GB'"
-fab pg.set_config:max_connections,1000
+After you are done with testing you can run the following the delete a cluster and the relevant resource group:
 
-# And restart the cluster
-fab pg.restart
-```
-
-On your local machine:
 ```bash
 # Delete the formation
-# It's a good practice to check deletion status from the cloud formation console
-aws cloudformation delete-stack --stack-name "FormationMetin"
+# It's a good practice to check deletion status from the azure console
+./delete-resource-group.sh
+```
+
+<details>
+  <summary>Under the hood</summary>
+
+## <a name="under-the-hood"></a>Under The Hood
+
+  Azure has ARM templates that can be used to deploy servers with ease. There are two main files for ARM templates, `azuredeploy.json` and `azuredeploy.parameters.json`. `azuredeploy.json` has the main template and `azuredeploy.parameters.json` contains the parameters that are used in the main template. For example if you want to change the number of workers, you would do that in the parameters. You shouldnt change anything in the template file for configuration.
+
+  The main template has 4 main parts:
+  
+* Parameters
+* Variables
+* Resources
+* Outputs
+
+Parameters can be configured from the parameters file. Variables are constants. Resources have all of the resource definitions such as VMs, network security groups. Outputs can be useful for displaying a connection string.
+
+When creating resources, we can specify the order so that if a resource depends on some other resource, it wont be created before the dependant is created. We can also specify how many instances of a resource to create with a `copy` command.
+
+The first virtual machine with index 0 is treated as a coordinator. When all the virtual machines are ready, a custom script is installed to do initialization in vms. The initailization script is retrieved from the github with a url.
+
+The initialization script also finds the private ip addresses of workers and puts them to the coordinator. The way this is done is with a storage account resource. This storage account resource is created within the template itself and all the vms upload their private ip addresses to the storage. After all are uploaded the coordinator downloads all the private ip addresses from the storage account and puts it to `worker-instances` file, which is then used when creating a citus cluster.
+
+We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete-security-rule.sh`, which deletes that rule for you.
+
+You can use `connect.sh` which will delete the security rule and connect to the coordinator for you.
+
+Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
+
+```bash
+export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
+```
+
+if you want to configure the region, you can also set that:
+
+```bash
+export AZURE_REGION=eastus2
+```
+
+You should use a single session because the exported variable is only available in the current session and its children sessions. You should start `ssh-agent` and add your key with `ssh-add`.
+
+By default, your public key from `~/.ssh/id_rsa.pub` will be used. This public key will be put to the virtual machines so that you can ssh to them.
+
+To simplify this process, there is a script called `create-cluster.sh`, which:
+
+* creates a resource group from the environment variable `RESOURCE_GROUP_NAME`, and `AZURE_REGION`.
+* creates a cluster with the `azuredeploy.json` template in the resource group
+* prints the connection string to ssh
+
+then you should run:
+
+```bash
+./connect.sh
+```
+
+or
+
+```bash
+./delete-security-rule.sh
+ssh -A pguser@<public ip of coordinator>
+```
+
+After you are done with testing, you can delete the resource group with:
+
+```bash
+./delete-resource-group.sh
+```
+
+Currently the default time for tests 300 seconds, and as we have many tests it might take a while to run all the tests. So when testing a change, it is better to change the test times to something short such as 5 seconds. The time can be changed with the -T parameter:
+
+```bash
+pgbench_command: pgbench -c 32 -j 16 -T 300 -P 10 -r
+
+->
+
+pgbench_command: pgbench -c 32 -j 16 -T 5 -P 10 -r
 
 ```
 
-## <a name="pgbench"></a> Running PgBench Tests
+If you want to add different vm sizes, you should change the allowed values for `coordinatorVMSize` and `workerVMSize` in `azuredeploy.json`.
 
-On your local machine:
+We run a custom script to initialize the vms. The script is downloaded to `/var/lib/waagent/custom-script/download/0 `. You can find the script logs
+in this file.
+
+</details>
+
+<details>
+  <summary>AWS(Deprecated)</summary>
+
+## <a name="aws"></a>AWS
+
+## <a name="getting-started"></a> Getting Started
+
+You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
+
+
+## <a name="aws-setup-steps"></a> Setup Steps For Each Test
+
+You will need to follow these steps to create a cluster and connect to it, on your local machine:
+
 ```bash
+
+# start ssh agent
+eval `ssh-agent -s`
 
 # Add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
@@ -77,169 +210,21 @@ ssh-add path_to_keypair/metin-keypair.pem
 # Add your Github ssh key for enterprise (private) repo
 ssh-add
 
-# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
+# Quickly start a cluster of (1 + 3) c3.4xlarge nodes
 cloudformation/create-stack.sh -k metin-keypair -s PgBenchFormation -n 3 -i c3.4xlarge
 
 # When your cluster is ready, it will prompt you with the connection string, connect to master node
 ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
 ```
 
-On the coordinator node:
-
-```bash
-# This will run default pgBench tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
-# and it will log results to pgbench_results_{timemark}.csv file
-# Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
-fab run.pgbench_tests
-
-# It's possible to provide another configuration file for tests
-# Such as with this, we run the same set of default pgBench tests without transactions
-fab run.pgbench_tests:pgbench_default_without_transaction.ini
-```
+## <a name="aws-delete-cluster"></a> Steps to delete a cluster
 
 On your local machine:
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the cloud formation console
-aws cloudformation delete-stack --stack-name "PgBenchFormation"
-```
-
-## <a name="scale"></a> Running Scale Tests
-
-On your local machine:
-```bash
-
-# Add your EC2 keypair's private key to your agent
-ssh-add path_to_keypair/metin-keypair.pem
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
-cloudformation/create-stack.sh -k metin-keypair -s ScaleFormation -n 3 -i c3.4xlarge
-
-# When your cluster is ready, it will prompt you with the connection string, connect to master node
-ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
-```
-
-On the coordinator node:
-```bash
-# This will run scale tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
-# and it will log results to pgbench_results_{timemark}.csv file
-# You can change settings in files under the fabfile/pgbench_confs/ directory
-fab run.pgbench_tests:scale_test.ini
-fab run.pgbench_tests:scale_test_no_index.ini
-fab run.pgbench_tests:scale_test_prepared.ini
-fab run.pgbench_tests:scale_test_reference.ini
-fab run.pgbench_tests:scale_test_foreign.ini
-fab run.pgbench_tests:scale_test_100_columns.ini
-```
-
-On your local machine:
+'
 ```bash
 # Delete the formation
 # It's a good practice to check deletion status from the cloud formation console
 aws cloudformation delete-stack --stack-name "ScaleFormation"
-```
-
-## <a name="pgbench-cloud"></a> Running PgBench Tests Against Citus Cloud
-
-On your local machine:
-```bash
-
-# Add your EC2 keypair's private key to your agent
-ssh-add path_to_keypair/metin-keypair.pem
-
-# Quickly start a cluster with no worker nodes
-cloudformation/create-stack.sh -k metin-keypair -s PgBenchFormation -n 0 -i c3.4xlarge
-
-# When your cluster is ready, it will prompt you with the connection string, connect to master node
-ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
-```
-
-On the coordinator node:
-```bash
-
-# Use pgbench_cloud.ini config file with connection string of your Citus Cloud cluster
-# Don't forget to escape `=` at the end of your connection string
-fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
-```
-
-On your local machine:
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the cloud formation console
-aws cloudformation delete-stack --stack-name "PgBenchFormation"
-```
-
-## <a name="tpch"></a> Running TPC-H Tests
-
-On your local machine:
-```bash
-
-# Add your EC2 keypair's private key to your agent
-ssh-add path_to_keypair/metin-keypair.pem
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Quickly start a cluster of (1 + 3) c3.4xlarge nodes 
-cloudformation/create-stack.sh -k metin-keypair -s TPCHFormation -n 3 -i c3.4xlarge
-
-# When your cluster is ready, it will prompt you with the connection string, connect to master node
-ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
-```
-
-On the coordinator node:
-```bash
-# This will run TPC-H tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
-# and it will log results to their own files on the home directory. You can use diff to 
-# compare results.
-# You can change settings in files under the fabfile/tpch_confs/ directory
-fab run.tpch_automate
-
-# If you want to run only Q1 with scale factor=1 against community master,
-# you can use this config file. Feel free to edit conf file
-fab run.tpch_automate:tpch_q1.ini
-```
-
-On your local machine:
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the cloud formation console
-aws cloudformation delete-stack --stack-name "TPCHFormation"
-```
-
-## <a name="tpch-cloud"></a> Running TPC-H Tests Against Citus Cloud
-
-On your local machine:
-```bash
-
-# Add your EC2 keypair's private key to your agent
-ssh-add path_to_keypair/metin-keypair.pem
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
-
-# Quickly start a cluster with no worker nodes
-cloudformation/create-stack.sh -k metin-keypair -s TPCHFormation -n 0 -i c3.4xlarge
-
-# When your cluster is ready, it will prompt you with the connection string, connect to master node
-ssh -A ec2-user@ec2-35-153-66-69.compute-1.amazonaws.com
-```
-
-On the coordinator node:
-```bash
-# Provide your tpch config file or go with the default file
-# Don't forget to escape `=` at the end of your connection string
-fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
-```
-
-On your local machine:
-```bash
-# Delete the formation
-# It's a good practice to check deletion status from the cloud formation console
-aws cloudformation delete-stack --stack-name "TPCHFormation"
 ```
 
 # <a name="detailed-configuration"></a> Detailed Configuration
@@ -357,6 +342,94 @@ To get the hostname of the master you can run:
 It's unfortunate that you have no flexibility here. This restriction which will hopefully
 be lifted in the future.
 
+</details>
+
+# <a name="running-tests"></a> Running Tests
+## <a name="basic-cluster-setup"></a> Basic Cluster Setup
+
+On the coordinator node:
+
+```bash
+# Setup your test cluster with PostgreSQL 11.5 and Citus master branch
+fab use.postgres:11.5 use.citus:master setup.basic_testing
+
+# Lets change some conf values 
+fab pg.set_config:max_wal_size,"'5GB'"
+fab pg.set_config:max_connections,1000
+
+# And restart the cluster
+fab pg.restart
+```
+
+
+## <a name="pgbench"></a> Running PgBench Tests
+
+On the coordinator node:
+
+```bash
+# This will run default pgBench tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to pgbench_results_{timemark}.csv file
+# Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
+fab run.pgbench_tests
+
+# It's possible to provide another configuration file for tests
+# Such as with this, we run the same set of default pgBench tests without transactions
+fab run.pgbench_tests:pgbench_default_without_transaction.ini
+```
+
+## <a name="scale"></a> Running Scale Tests
+
+On the coordinator node:
+
+```bash
+# This will run scale tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to pgbench_results_{timemark}.csv file
+# You can change settings in files under the fabfile/pgbench_confs/ directory
+fab run.pgbench_tests:scale_test.ini
+fab run.pgbench_tests:scale_test_no_index.ini
+fab run.pgbench_tests:scale_test_prepared.ini
+fab run.pgbench_tests:scale_test_reference.ini
+fab run.pgbench_tests:scale_test_foreign.ini
+fab run.pgbench_tests:scale_test_100_columns.ini
+```
+
+## <a name="pgbench-cloud"></a> Running PgBench Tests Against Hyperscale (Citus)
+
+On the coordinator node:
+
+```bash
+
+# Use pgbench_cloud.ini config file with connection string of your Hyperscale (Citus) cluster
+# Don't forget to escape `=` at the end of your connection string
+fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
+## <a name="tpch"></a> Running TPC-H Tests
+
+On the coordinator node:
+
+```bash
+# This will run TPC-H tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# and it will log results to their own files on the home directory. You can use diff to 
+# compare results.
+# You can change settings in files under the fabfile/tpch_confs/ directory
+fab run.tpch_automate
+
+# If you want to run only Q1 with scale factor=1 against community master,
+# you can use this config file. Feel free to edit conf file
+fab run.tpch_automate:tpch_q1.ini
+```
+
+## <a name="tpch-cloud"></a> Running TPC-H Tests Against Hyperscale (Citus)
+
+On the coordinator node:
+
+```bash
+# Provide your tpch config file or go with the default file
+# Don't forget to escape `=` at the end of your connection string
+fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
 ## <a name="fab-examples"></a> Example fab Commands
 
 Use `fab --list` to see all the tasks you can run! This is just a few examples.
@@ -406,6 +479,7 @@ fab setup.basic_testing use.citus:v.7.1.1
 
 Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
 is already installed and running. They must be run after a `setup` task!
+
 
 # <a name="task-namespaces"></a> Task Namespaces
 
@@ -495,23 +569,23 @@ simply use the installation in `pg-latest`. Tasks such as `setup.basic_testing` 
 install postgres will overwrite whatever is currently in `pg-latest`.
 
 You can change where `pg-latest` points by running `fab set_pg_latest:some-absolute-path`. For
-example: `fab set_pg_latest:/home/ec2-user/enterprise-installation`. Using multiple
+example: `fab set_pg_latest:$HOME/enterprise-installation`. Using multiple
 installations is a matter of changing your prefix whenever you want to act upon or create
 a different installation.
 
 Here's an example:
 
 ```bash
-fab set_pg_latest:/home/ec2-user/pg-960-citus-600
+fab set_pg_latest:$HOME/pg-960-citus-600
 fab use.postgres:9.6.0 use.citus:v6.0.0 setup.basic_testing
-fab set_pg_latest:/home/ec2-user/pg-961-citus-601
+fab set_pg_latest:$HOME/pg-961-citus-601
 fab use.postgres:9.6.1 use.citus:v6.0.1 setup.basic_testing
 # you now have 2 installations of Citus!
 fab pg.stop  # stop the existing Citus instance
-fab set_pg_latest:/home/ec2-user/pg-960-citus-600  # switch to using the new instance
+fab set_pg_latest:$HOME/pg-960-citus-600  # switch to using the new instance
 fab pg.start  # start the new instance
 # now you've switched back to the first installation
 
 # the above can be abbreviated by writing the following:
-fab pg.stop set_pg_latest:/home/ec2-user/pg-960-citus-600 pg.start
+fab pg.stop set_pg_latest:$HOME/pg-960-citus-600 pg.start
 ```

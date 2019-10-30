@@ -1,0 +1,389 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "defaultValue": "citustestcluster",
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "pguser",
+            "metadata": {
+                "description": "Admin username for VM"
+            }
+        },
+        "sshPublicKey": {
+            "type": "string",
+            "metadata": {
+                "description": "Configure the linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+            }
+        },
+        "diskType": {
+            "type": "string",
+            "defaultValue": "Premium_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Premium_LRS"
+            ],
+            "metadata": {
+                "description": "Disk type"
+            }
+        },
+        "numberOfWorkers": {
+            "defaultValue": 3,
+            "minValue": 1,
+            "maxValue": 21,
+            "type": "int",
+            "metadata": {
+                "description": "Number of workers"
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "coordinatorVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D4s_v3",
+            "allowedValues": [
+                "Standard_D2s_v3",
+                "Standard_D4s_v3",
+                "Standard_D8s_v3",
+                "Standard_D16s_v3",
+                "Standard_D32s_v3",
+                "Standard_D48s_v3",
+                "Standard_D64s_v3",
+                "Standard_E2s_v3",
+                "Standard_E4s_v3",
+                "Standard_E8s_v3",
+                "Standard_E16s_v3",
+                "Standard_E20s_v3",
+                "Standard_E32s_v3",
+                "Standard_E48s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
+            ],
+            "metadata": {
+                "description": "The instance type to use for coordinator"
+            }
+        },
+        "coordinatorDiskSizeGB": {
+            "defaultValue": 512,
+            "minValue": 512,
+            "type": "int"
+        },
+        "workerDiskSizeGB": {
+            "defaultValue": 512,
+            "minValue": 512,
+            "type": "int"
+        },
+        "workerVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_E4s_v3",
+            "allowedValues": [
+                "Standard_D2s_v3",
+                "Standard_D4s_v3",
+                "Standard_D8s_v3",
+                "Standard_D16s_v3",
+                "Standard_D32s_v3",
+                "Standard_D48s_v3",
+                "Standard_D64s_v3",
+                "Standard_E2s_v3",
+                "Standard_E4s_v3",
+                "Standard_E8s_v3",
+                "Standard_E16s_v3",
+                "Standard_E20s_v3",
+                "Standard_E32s_v3",
+                "Standard_E48s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
+            ],
+            "metadata": {
+                "description": "The instance type to use for worker"
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "RedHat",
+        "imageOffer": "RHEL",
+        "imageSku": "7.2",
+        "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
+        "networkSecurityGroupName": "networkSecurityGroup1",
+        "vnetName": "citusVNet",
+        "subnetName": "citusSubnet",
+        "addressPrefix": "10.192.0.0/16",
+        "subnetPrefix": "10.192.0.0/24",
+        "publicIPAddressType": "Static",
+        "publicIPAddressName": "citusPublicIP",
+        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2017-10-01",
+            "name": "[variables('storageAcctName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+            "apiVersion": "2016-03-30",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+            },
+            "copy": {
+                "name": "publicIPLoop",
+                "count": "[variables('numberOfInstances')]"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "cituscluster",
+                        "properties": {
+                            "description": "Allow ssh to localhost",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "citusclusterpgport",
+                        "properties": {
+                            "description": "Expose default pg port",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "5432",
+                            "destinationPortRange": "5432",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vnetName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2016-03-30",
+            "name": "[concat(parameters('clusterName'),'nic', copyindex())]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('clusterName'),'ip', copyindex())]",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "copy": {
+                "name": "nicLoop",
+                "count": "[variables('numberOfInstances')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2018-06-01",
+            "name": "[concat(parameters('clusterName'),'datadisk', copyindex())]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('diskType')]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": "[if(equals(copyindex(),0), parameters('coordinatorDiskSizeGB'), parameters('workerDiskSizeGB'))]"
+            },
+            "copy": {
+                "name": "diskLoop",
+                "count": "[variables('numberOfInstances')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2016-04-30-preview",
+            "name": "[concat(parameters('clusterName'), 'vm', copyIndex())]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "nicLoop",
+                "[resourceId('Microsoft.Compute/disks/', concat(parameters('clusterName'), 'datadisk', copyIndex()))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[if(equals(copyindex(),0), parameters('coordinatorVmSize'), parameters('workerVmSize'))]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('clusterName'), 'vm', copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('sshPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('clusterName'), 'osdisk', copyIndex())]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "diskSizeGB": 128,
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('diskType')]"
+                        }
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[concat(parameters('clusterName'), 'datadisk', copyIndex())]",
+                            "createOption": "Attach",
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('diskType')]",
+                                "id": "[resourceId('Microsoft.Compute/disks/', concat(parameters('clusterName'), 'datadisk', copyIndex()))]"
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('clusterName'),'nic', copyindex()))]"
+                        }
+                    ]
+                }
+            },
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[variables('numberOfInstances')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('clusterName'), 'vm', copyIndex(), '/customscriptextension')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "location": "[parameters('location')]",
+            "apiVersion": "2018-06-01",
+            "dependsOn": [
+                "virtualMachineLoop",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "settings": {
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
+                    ]
+                }
+            },
+            "copy": {
+                "name": "extensionScriptLoop",
+                "count": "[variables('numberOfInstances')]"
+            }
+        }
+    ],
+    "outputs": {
+        "ssh": {
+            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "type": "string"
+        },
+        "publicIP": {
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress]",
+            "type": "string"
+        }
+    }
+}

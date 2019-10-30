@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "numberOfWorkers": {
+            "value": 2
+        },
+        "diskType": {
+            "value": "Premium_LRS"
+        },
+        "coordinatorVmSize": {
+            "value": "Standard_D4s_v3"
+        },
+        "workerVmSize": {
+            "value": "Standard_E4s_v3"
+        },
+        "coordinatorDiskSizeGB": {
+            "value": 512
+        },
+        "workerDiskSizeGB": {
+            "value": 512
+        }
+    }
+}

@@ -7,13 +7,12 @@ jobs:
     steps:
       - azure-cli/install
       - azure-cli/login-with-service-principal
-      - add_ssh_keys
       - checkout
       - run:
           command: |
             cd ./azure
-            sh ./add-sshkey.sh
-            sh ./citus_bot.sh
+            ./add-sshkey.sh
+            ./citus-bot.sh
           name: install dependencies and run tests
           no_output_timeout: 40m
   nightly-build:

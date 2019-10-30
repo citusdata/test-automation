@@ -20,6 +20,18 @@ yum install -y git screen
 # this is the username in our instances
 TARGET_USER=pguser
 
+#A set of disks to ignore from partitioning and formatting
+BLACKLIST="/dev/sda|/dev/sdb"
+DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+read DEV __ <<< ${DEVS}
+
+# attach disk and mount it for data
+mkfs.ext4 -F ${DEV}
+mv /home/${TARGET_USER}/ /tmp/home_copy
+mkdir -p /home/${TARGET_USER}
+mount ${DEV} /home/${TARGET_USER}/
+rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
+
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
@@ -28,7 +40,7 @@ su - ${TARGET_USER} <<'EOSU'
  # add pg and local binaries to the path
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
 
-  cd ${HOME} && git clone --branch AzureSupport https://github.com/citusdata/test-automation.git
+  cd ${HOME} && git clone https://github.com/citusdata/test-automation.git
 
   # create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile

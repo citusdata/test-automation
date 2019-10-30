@@ -32,13 +32,13 @@
                 "description": "Disk type"
             }
         },
-        "numberOfInstances": {
-            "defaultValue": 4,
-            "minValue": 2,
+        "numberOfWorkers": {
+            "defaultValue": 3,
+            "minValue": 1,
             "maxValue": 21,
             "type": "int",
             "metadata": {
-                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+                "description": "Number of workers"
             }
         },
         "location": {
@@ -58,7 +58,16 @@
                 "Standard_D16s_v3",
                 "Standard_D32s_v3",
                 "Standard_D48s_v3",
-                "Standard_D64s_v3"
+                "Standard_D64s_v3",
+                "Standard_E2s_v3",
+                "Standard_E4s_v3",
+                "Standard_E8s_v3",
+                "Standard_E16s_v3",
+                "Standard_E20s_v3",
+                "Standard_E32s_v3",
+                "Standard_E48s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
             ],
             "metadata": {
                 "description": "The instance type to use for coordinator"
@@ -76,7 +85,7 @@
         },
         "workerVmSize": {
             "type": "string",
-            "defaultValue": "Standard_D4s_v3",
+            "defaultValue": "Standard_E4s_v3",
             "allowedValues": [
                 "Standard_D2s_v3",
                 "Standard_D4s_v3",
@@ -84,10 +93,19 @@
                 "Standard_D16s_v3",
                 "Standard_D32s_v3",
                 "Standard_D48s_v3",
-                "Standard_D64s_v3"
+                "Standard_D64s_v3",
+                "Standard_E2s_v3",
+                "Standard_E4s_v3",
+                "Standard_E8s_v3",
+                "Standard_E16s_v3",
+                "Standard_E20s_v3",
+                "Standard_E32s_v3",
+                "Standard_E48s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
             ],
             "metadata": {
-                "description": "The instance type to use for coordinator"
+                "description": "The instance type to use for worker"
             }
         }
     },
@@ -102,7 +120,8 @@
         "addressPrefix": "10.192.0.0/16",
         "subnetPrefix": "10.192.0.0/24",
         "publicIPAddressType": "Static",
-        "publicIPAddressName": "citusPublicIP"
+        "publicIPAddressName": "citusPublicIP",
+        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]"
     },
     "resources": [
         {
@@ -143,7 +162,7 @@
             },
             "copy": {
                 "name": "publicIPLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -239,7 +258,7 @@
             },
             "copy": {
                 "name": "nicLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -258,7 +277,7 @@
             },
             "copy": {
                 "name": "diskLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -328,7 +347,7 @@
             },
             "copy": {
                 "name": "virtualMachineLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         },
         {
@@ -345,15 +364,15 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', parameters('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/AzureSupport/azure/init.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
                     ]
                 }
             },
             "copy": {
                 "name": "extensionScriptLoop",
-                "count": "[parameters('numberOfInstances')]"
+                "count": "[variables('numberOfInstances')]"
             }
         }
     ],

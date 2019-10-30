@@ -1,1 +1,1 @@
-COPY test_table FROM '/home/pguser/test_data.csv';
+COPY test_table FROM '${HOME}/test_data.csv';

@@ -4,14 +4,13 @@
 set -u
 # exit immediately if a command fails
 set -e
-
 # echo commands
 set -x
 
 
-rg=citusbot_test_resource_group5
+rg=citusbot_test_resource_group
 export RESOURCE_GROUP_NAME=${rg}
-sh ./create-cluster.sh ${rg}
+sh ./create-cluster.sh
 
 
 public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
@@ -25,7 +24,7 @@ chmod 600 ~/.ssh/known_hosts
 # echo "Host *" >> /etc/ssh/ssh_config
 # echo "ServerAliveInterval 120" >> /etc/ssh/ssh_config
 
-sh ./delete_security_rule.sh
+sh ./delete-security-rule.sh
 
 echo "adding public ip to known hosts in remote"
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"

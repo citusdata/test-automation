@@ -12,7 +12,7 @@ jobs:
       - run:
           command: |
             cd ./azure
-            sh ./install_deps.sh
+            sh ./add-sshkey.sh
             sh ./citus_bot.sh
           name: install dependencies and run tests
           no_output_timeout: 40m

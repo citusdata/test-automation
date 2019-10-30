@@ -2,11 +2,8 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "sshPublicKey": {
-            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOo83aBMot/1XmcnJSxuRR2k1X0gelwdDsiQh/y+tHqfv9Px4mzeyM237U63/KYeJBrMJnAhhVIHqHCMiFCyj5qqP9nkLxz2L7NEtgMzZNz4sT6WwN9nnrcwaKPYx2Vqb3UipdKMvQViUzj8DCPgrtH6ljIaM3m6/R6sMYydSmInRXoBaScR+WAJGZv35xuNsUpiitlvvgvfMqgMS4qPBSLyOmP6kigMUN59NoQgod5N7GIE6Sf8J51irLW81TXNENwWU6A7S5r1KolNRCQIFLKYxyr7PopNgekIJHJKcU1T+s2Of67FdRPioFH3LenTRL7upWhB2KKxYswiU2mUnp"
-        },
-        "numberOfInstances": {
-            "value": 4
+        "numberOfWorkers": {
+            "value": 2
         },
         "diskType": {
             "value": "Premium_LRS"
@@ -15,7 +12,7 @@
             "value": "Standard_D4s_v3"
         },
         "workerVmSize": {
-            "value": "Standard_D4s_v3"
+            "value": "Standard_E4s_v3"
         },
         "coordinatorDiskSizeGB": {
             "value": 512

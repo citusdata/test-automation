@@ -69,7 +69,7 @@ ssh-add
 export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 
 # if you want to configure the region
-export REGION=eastus2
+# export REGION=eastus2
 
 # open and modify the instance types/discs as you wish
 less azuredeploy.parameters.json

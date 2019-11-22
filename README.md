@@ -350,8 +350,8 @@ be lifted in the future.
 On the coordinator node:
 
 ```bash
-# Setup your test cluster with PostgreSQL 11.5 and Citus master branch
-fab use.postgres:11.5 use.citus:master setup.basic_testing
+# Setup your test cluster with PostgreSQL 12.1 and Citus master branch
+fab use.postgres:12.1 use.citus:master setup.basic_testing
 
 # Lets change some conf values 
 fab pg.set_config:max_wal_size,"'5GB'"
@@ -367,7 +367,7 @@ fab pg.restart
 On the coordinator node:
 
 ```bash
-# This will run default pgBench tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run default pgBench tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
 # and it will log results to pgbench_results_{timemark}.csv file
 # Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
 fab run.pgbench_tests
@@ -382,7 +382,7 @@ fab run.pgbench_tests:pgbench_default_without_transaction.ini
 On the coordinator node:
 
 ```bash
-# This will run scale tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run scale tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
 # and it will log results to pgbench_results_{timemark}.csv file
 # You can change settings in files under the fabfile/pgbench_confs/ directory
 fab run.pgbench_tests:scale_test.ini
@@ -409,7 +409,7 @@ fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98C
 On the coordinator node:
 
 ```bash
-# This will run TPC-H tests with PG=11.5 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run TPC-H tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
 # and it will log results to their own files on the home directory. You can use diff to 
 # compare results.
 # You can change settings in files under the fabfile/tpch_confs/ directory

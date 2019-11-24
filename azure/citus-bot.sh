@@ -8,7 +8,7 @@ set -e
 set -x
 
 
-rg=citusbot_test_resource_group2
+rg=citusbot_test_resource_group
 export RESOURCE_GROUP_NAME=${rg}
 ./create-cluster.sh
 
@@ -32,4 +32,4 @@ echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "source ~/.bash_profile;sh /home/pguser/test-automation/azure/run-all-tests.sh"
 
-yes | sh ./delete-resource-group.sh
+sh ./delete-resource-group.sh

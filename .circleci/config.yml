@@ -14,7 +14,7 @@ jobs:
             ./add-sshkey.sh
             ./citus-bot.sh
           name: install dependencies and run tests
-          no_output_timeout: 40m
+          no_output_timeout: 10m
   nightly-build:
     docker:
       - image: buildpack-deps:trusty

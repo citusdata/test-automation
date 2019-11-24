@@ -32,4 +32,4 @@ echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "source ~/.bash_profile;sh /home/pguser/test-automation/azure/run-all-tests.sh"
 
-# sh ./delete_resource_group.sh ${rg}
+yes | sh ./delete_resource_group.sh

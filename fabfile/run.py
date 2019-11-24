@@ -201,4 +201,5 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)
         run_string = '{} {} -c "{}" -c "\\timing" -f "{}"'.format(psql, connectionURI, executor_string, tpch_path + query_code)
         out_val = run(run_string)
+        results_file.write(out_val)
         results_file.write('\n')

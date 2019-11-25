@@ -20,10 +20,6 @@ echo ${public_ip}
 ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
 
-# these need to be run with sudo.
-# echo "Host *" >> /etc/ssh/ssh_config
-# echo "ServerAliveInterval 120" >> /etc/ssh/ssh_config
-
 sh ./delete-security-rule.sh
 
 echo "adding public ip to known hosts in remote"

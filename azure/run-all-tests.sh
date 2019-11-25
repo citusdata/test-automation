@@ -9,7 +9,7 @@ set -o pipefail
 
 # fab run.pgbench_tests
 # fab run.pgbench_tests:pgbench_default_without_transaction.ini
-# fab run.pgbench_tests:scale_test.ini
+fab run.pgbench_tests:scale_test.ini
 # fab run.tpch_automate
 
 # add github to known hosts

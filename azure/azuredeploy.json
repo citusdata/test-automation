@@ -366,7 +366,7 @@
                 "settings": {
                     "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value)]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/add-periodic-performance-job/azure/init.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/all_test_try/azure/init.sh"
                     ]
                 }
             },

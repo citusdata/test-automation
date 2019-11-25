@@ -40,4 +40,4 @@ cd ${HOME}/release-test-results
 git checkout -b ${rg_name}/${now}
 git add -A 
 git commit -m "add test results for performance tests ${rg_name}"
-git push origin ${now}
+git push origin ${rg_name}/${now}

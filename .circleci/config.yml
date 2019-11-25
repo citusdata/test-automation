@@ -59,12 +59,18 @@ workflows:
       - pgbench:
           filters:
             branches:
-              only: [pgbench.*, all_test.*]
+              only:
+                - /pgbench.*/
+                - /all_test.*/
       - scale:
           filters:
             branches:
-              only: [scale.*, all_test.*]  
+              only: 
+                - /scale.*/
+                - /all_test.*/  
       - tpch:
           filters:
             branches:
-              only: [tpch.*, all_test.*]
+              only: 
+                - /tpch.*/
+                - /all_test.*/

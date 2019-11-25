@@ -31,13 +31,13 @@ git clone git@github.com:citusdata/release-test-results.git
 git config --global user.email "citus-bot@microsoft.com" 
 git config --global user.name "citus bot" 
 
-now=$(date +"%m_%d_%Y")
+now=$(date +"%m_%d_%Y_%s")
 
 mv ${HOME}/results ${HOME}/release-test-results/periodic_job_results/${now}
 
 cd ${HOME}/release-test-results
 
-git checkout -b ${now}
+git checkout -b ${rg_name}/${now}
 git add -A 
-git commit -m "add test results for performance tests ${now}"
+git commit -m "add test results for performance tests ${rg_name}"
 git push origin ${now}

@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  build:
+  pgbench:
     docker:
       - image: buildpack-deps:trusty
     working_directory: /home/circleci/project  
@@ -12,16 +12,41 @@ jobs:
           command: |
             cd ./azure
             ./add-sshkey.sh
-            ./citus-bot.sh
-          name: install dependencies and run tests
-          no_output_timeout: 10m
-  nightly-build:
+            ./citus-bot.sh citusbot_pgbench_test_resource_group
+          name: install dependencies and run pgbench tests
+          no_output_timeout: 10m  
+          
+  scale:
     docker:
       - image: buildpack-deps:trusty
     working_directory: /home/circleci/project  
     steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
       - run:
-          command: echo 'nightly-build'    
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_scale_test_resource_group
+          name: install dependencies and run scale tests
+          no_output_timeout: 10m  
+  
+  tpch:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_tpch_test_resource_group
+          name: install dependencies and run tpch tests
+          no_output_timeout: 10m         
 
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
@@ -29,17 +54,17 @@ orbs:
 workflows:
   version: 2
 
-  test:
+  performance-tests:
     jobs:
-      - build
-
-  scheduled-workflow:
-    triggers:
-      - schedule:
-          cron: "0 1 * * *"
+      - pgbench:
           filters:
             branches:
-              only:
-                - master
-    jobs:
-      - nightly-build
+              only: [pgbench.*, all_test.*]
+      - scale:
+          filters:
+            branches:
+              only: [scale.*, all_test.*]  
+      - tpch:
+          filters:
+            branches:
+              only: [tpch.*, all_test.*]

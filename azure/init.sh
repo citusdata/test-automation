@@ -32,16 +32,22 @@ mkdir -p /home/${TARGET_USER}
 mount ${DEV} /home/${TARGET_USER}/
 rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
+
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 
-su - ${TARGET_USER} <<'EOSU'
+
+BRANCH=$5
+
+echo ${BRANCH} > /tmp/branch_name
+
+su --login ${TARGET_USER} <<'EOSU'
  # add pg and local binaries to the path
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
 
-  echo ${CIRCLE_BRANCH}
-  cd ${HOME} && git clone --branch ${CIRCLE_BRANCH} https://github.com/citusdata/test-automation.git
+  branch=$(</tmp/branch_name)
+  cd ${HOME} && git clone --branch ${branch} https://github.com/citusdata/test-automation.git
 
   # create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile

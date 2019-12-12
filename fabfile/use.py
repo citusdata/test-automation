@@ -5,7 +5,9 @@ when building Citus.
 '''
 import re
 
-from fabric.api import task, runs_once, abort, local, lcd, roles
+from fabric.api import task, runs_once, abort, local, lcd, roles, sudo
+
+import setup
 
 import config
 import utils
@@ -21,7 +23,12 @@ def citus(*args):
         abort('You must provide a single argument, with a command such as "use.citus:v6.0.1"')
     git_ref = args[0]
 
-    path = config.CITUS_REPO
+    # set community repo specific variables
+    config.settings[config.REPO_PATH] = config.CITUS_REPO
+    config.settings[config.BUILD_CITUS_FUNC] = setup.build_citus
+
+    # check if we can clone citus successfully, then remove it
+    path = "/tmp/tmp_citus"
     local('rm -rf {} || true'.format(path))
     local('git clone -q https://github.com/citusdata/citus.git {}'.format(path))
     with lcd(path):
@@ -41,7 +48,12 @@ def enterprise(*args):
         abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
     git_ref = args[0]
 
-    path = config.ENTERPRISE_REPO
+    # set enterprise repo specific variables
+    config.settings[config.REPO_PATH] = config.ENTERPRISE_REPO
+    config.settings[config.BUILD_CITUS_FUNC] = setup.build_enterprise
+
+    # check if we can clone citus successfully, then remove it
+    path = "/tmp/tmp_citus"
     local('rm -rf {} || true'.format(path))
     if config.settings[config.IS_SSH_KEYS_USED]:
         local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
@@ -79,3 +91,9 @@ def asserts(*args):
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
     config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+
+
+@task
+def valgrind(*args):
+    config.PG_CONFIGURE_FLAGS.append('--with-icu --enable-cassert --enable-debug CFLAGS="-ggdb -Og -DUSE_VALGRIND"')
+    

@@ -5,7 +5,9 @@ when building Citus.
 '''
 import re
 
-from fabric.api import task, runs_once, abort, local, lcd, roles
+from fabric.api import task, runs_once, abort, local, lcd, roles, sudo
+
+import setup
 
 import config
 import utils
@@ -19,7 +21,12 @@ def citus(*args):
 
     if len(args) != 1:
         abort('You must provide a single argument, with a command such as "use.citus:v6.0.1"')
+    
     git_ref = args[0]
+
+    # set community repo specific variables
+    config.settings[config.REPO_PATH] = config.CITUS_REPO
+    config.settings[config.BUILD_CITUS_FUNC] = setup.build_citus
 
     path = config.CITUS_REPO
     local('rm -rf {} || true'.format(path))
@@ -39,7 +46,12 @@ def enterprise(*args):
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     if len(args) != 1:
         abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
+    
     git_ref = args[0]
+
+    # set enterprise repo specific variables
+    config.settings[config.REPO_PATH] = config.ENTERPRISE_REPO
+    config.settings[config.BUILD_CITUS_FUNC] = setup.build_enterprise
 
     path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))
@@ -71,3 +83,9 @@ def asserts(*args):
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
     config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+
+
+@task
+def valgrind(*args):
+    config.PG_CONFIGURE_FLAGS.append('--enable-cassert --enable-debug CFLAGS="-ggdb -Og -DUSE_VALGRIND"')
+    

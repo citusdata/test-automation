@@ -1,4 +1,5 @@
-from fabric.api import task, run, cd, runs_once, roles, execute
+from fabric.api import task, run, cd, runs_once, roles, execute, abort
+from fabric.context_managers import settings
 
 import config
 import use
@@ -12,7 +13,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind']
 
 
 @task
@@ -41,7 +42,6 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
-
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
@@ -203,3 +203,56 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         out_val = run(run_string)
         results_file.write(out_val)
         results_file.write('\n')
+
+# Filter (possibly) citus-related valgrind test logs, put under results directory
+# If no error logs exist, then simply put valgrind_success file 
+def filter_put_citus_valgrind_outputs(repo_path):
+    # cd to directory that we performed valgrind(regression) tests
+    os.chdir(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH))
+
+    regression_diffs_exist = False
+    citus_related_out_exists = False
+
+    # ship regression.diffs (if exists) to result file in order to push to github
+    if os.path.isfile(config.REGRESSION_DIFFS_FILE):
+        run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, config.RESULTS_DIRECTORY))
+
+        regression_diffs_exist = True
+
+    if os.path.isfile(config.VALGRIND_LOGS_FILE):
+        # get stack trace id that includes calls to citus
+        run('cat {} | grep -i "citus" | awk \'{{ print $1 }}\' | uniq  > trace_ids'.format(config.VALGRIND_LOGS_FILE))
+
+        if os.path.isfile('trace_ids'):
+            # filter stack traces with stack trace ids that we found above (if any)
+            run('while read line; do grep {} -e $line ; done < trace_ids > {}'.format(
+                config.VALGRIND_LOGS_FILE, 
+                os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOG_FILE)))
+
+            citus_related_out_exists = True
+
+    # if we have neither regression.diffs nor citus-related valgrind outputs
+    # then just put an empty file named as valgrind_success
+    if not regression_diffs_exist and not citus_related_out_exists:
+        run('touch {}'.format(os.path.join(config.RESULTS_DIRECTORY, 'valgrind_success')))
+
+@task
+@roles('master')
+def valgrind(*args): 
+    'Runs valgrind tests'
+
+    # set citus path variable
+    repo_path = config.settings[config.REPO_PATH]
+    
+    use.valgrind()
+    setup.valgrind()
+
+    with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
+        # make check-multi-vg returns 2 in case of failures in regression tests
+        # we should do failure handling here
+        with settings(warn_only=True):
+            run('make check-multi-vg valgrind-log-file=$VALGRIND_LOGS_FILE')
+
+        # filter the (possibly) citus-related outputs and put to results file if exist
+        # if no error logs exist, then simply put valgrind_success file 
+        filter_put_citus_valgrind_outputs(repo_path)

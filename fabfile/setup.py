@@ -18,6 +18,7 @@ import config
 import pg
 import add
 import prefix
+import use
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
@@ -42,18 +43,19 @@ def tpch():
 
 @task
 def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
+    # install valgrind library
+    sudo('yum install -q -y valgrind valgrind-devel.x86_64 openssl-devel.x86_64')
+
+    # create results directory to put resulting log files there
+    # (for pushing them to results repository)
+    utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
+
+    # set build citus function
+    build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
+
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
-    # we do this execute dance so valgrind is installed on every node, not just the master
-    def install_valgrind():
-        sudo('yum install -q -y valgrind')
-    execute(install_valgrind)
-
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug')
-
-    execute(common_setup, build_citus)
-    execute(add_workers)
+    execute(common_setup, build_citus_func)
 
 @task
 def enterprise():
@@ -101,9 +103,8 @@ def redhat_install_packages():
     with hide('stdout'):
         sudo("yum groupinstall -q -y 'Development Tools'")
 
-    with hide('stdout'):
-        sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git')
+    with hide('stdout'):        
+        sudo('yum install -q -y libxml2-devel libxslt-devel openssl-devel pam-devel readline-devel libcurl-devel git')
 
 def build_postgres():
     'Installs postges'

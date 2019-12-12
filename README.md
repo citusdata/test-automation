@@ -26,6 +26,7 @@ required for testing citus.
   * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
   * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
+  * [Running Valgrind Tests](#valgrind)
 * [Example fab Commands](#fab-examples)
 * [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
@@ -143,6 +144,10 @@ export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 cd azure
 
 # open and modify the instance types/discs as you wish
+# For valgrind tests, you *need to set* `numberOfWorkers` to `0` as we only need a single machine cluster.
+# This is because we will already be using our regression test structure and it creates a local cluster itself.
+# Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
+# PostgreSQL as we require `valgrind` on workers too  and get error even if we do not need them :).
 less azuredeploy.parameters.json
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
@@ -498,6 +503,15 @@ On the coordinator node:
 # Provide your tpch config file or go with the default file
 # Don't forget to escape `=` at the end of your connection string
 fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
+```
+
+## <a name="valgrind"></a> Running Valgrind Tests
+On the coordinator node:
+
+```bash
+# example usage:
+# Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

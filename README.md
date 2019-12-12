@@ -41,29 +41,41 @@ required for testing citus.
 
 You can find more information about every step below in other categories. This list of commands show how to get started quickly. Please see other items below to understand details and solve any problems you face.
 
-You should have `az cli` in your local to continue.
+### Prerequisites
+1. You should have `az cli` in your local to continue. [Install instructions](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+2. Run `az login` to make the CLI log in to your account
+3. Make sure that your default subscription is the right one:
+    ```bash
+    # List your subscriptions
+    az account list
+    # Pick the correct one from the list and run
+    az account --set subscription {uuid-of-correct-subscription}
+    ```
 
-You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
+4. You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
+    ```bash
+    # start ssh agent
+    eval `ssh-agent -s`
 
+    # Add your Github ssh key for enterprise (private) repo
+    ssh-add
+    ```
+
+
+### General info
 In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
 
 After you run tests, you can see the results in `results` folder. The `results` folder will have the name of the config used for the test.
 
 The data will be stored on the attached disk, size of which can be configured in the parameters.
 
-If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformaly from different regions.
+If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformly from different regions.
 
 ## <a name="azure-setup-steps"></a> Setup Steps For Each Test
 
 You will need to follow these steps to create a cluster and connect to it, on your local machine:
 
 ```bash
-
-# start ssh agent
-eval `ssh-agent -s`
-
-# Add your Github ssh key for enterprise (private) repo
-ssh-add
 
 # in the session that you will use to ssh, set the resource group name
 export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g

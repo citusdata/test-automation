@@ -75,12 +75,12 @@
         },
         "coordinatorDiskSizeGB": {
             "defaultValue": 512,
-            "minValue": 512,
+            "minValue": 10,
             "type": "int"
         },
         "workerDiskSizeGB": {
             "defaultValue": 512,
-            "minValue": 512,
+            "minValue": 10,
             "type": "int"
         },
         "workerVmSize": {

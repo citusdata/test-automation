@@ -29,4 +29,7 @@ GROUP BY
     l_shipmode
 ORDER BY
     l_shipmode
+-- the following LIMIT is not part of the benchmark suite
+-- but required to run the tests automatically
+-- see https://github.com/citusdata/test-automation/issues/120    
 LIMIT 4;

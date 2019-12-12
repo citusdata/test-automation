@@ -69,13 +69,15 @@ ssh-add
 export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 
 # if you want to configure the region
-# export REGION=eastus2
+# export AZURE_REGION=eastus2
+
+# Go to the azure directory to have access to the scripts
+cd azure
 
 # open and modify the instance types/discs as you wish
 less azuredeploy.parameters.json
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-cd azure
 ./create-cluster.sh
 
 # connect to the coordinator

@@ -18,6 +18,7 @@ import config
 import pg
 import add
 import prefix
+import use
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
 
@@ -41,19 +42,36 @@ def tpch():
     execute(add.tpch)
 
 @task
-def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
+def valgrind(citus_repo, citus_version):
+
+    # validate and fetch arguments
+
+    if citus_repo not in ('enterprise', 'citus'):
+        abort('You must provide two arguments, with a command such as "run.valgrind:citus,v6.0.1"'
+            'First argument can only be "citus" or "enterprise".')
+
+    config.PG_CONFIGURE_FLAGS.extend(
+        [
+            '--enable-cassert',
+            '--enable-debug',
+            '--with-uuid=e2fs',
+            'CFLAGS="-ggdb -Og -DUSE_VALGRIND"'
+        ]
+    )
+
+    # install citus and set citus path variable
+    if citus_repo == 'citus':
+        repo_path = config.CITUS_REPO
+        execute(use.citus, citus_version)
+        build_citus_func = build_citus
+    else:
+        repo_path = config.ENTERPRISE_REPO
+        execute(use.enterprise, citus_version)
+        build_citus_func = build_enterprise
+
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
-    # we do this execute dance so valgrind is installed on every node, not just the master
-    def install_valgrind():
-        sudo('yum install -q -y valgrind')
-    execute(install_valgrind)
-
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug')
-
-    execute(common_setup, build_citus)
-    execute(add_workers)
+    execute(common_setup, build_citus_func)
 
 @task
 def enterprise():
@@ -103,7 +121,7 @@ def redhat_install_packages():
 
     with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git')
+            ' openssl-devel pam-devel readline-devel libcurl-devel git libuuid-devel')
 
 def build_postgres():
     'Installs postges'

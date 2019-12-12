@@ -1,4 +1,4 @@
-from fabric.api import task, run, cd, runs_once, roles, execute
+from fabric.api import task, run, cd, runs_once, roles, execute, abort
 
 import config
 import use
@@ -12,7 +12,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind']
 
 
 @task
@@ -41,7 +41,6 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
-
 
     current_time_mark = time.strftime('%Y-%m-%d-%H-%M')
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
@@ -203,3 +202,32 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         out_val = run(run_string)
         results_file.write(out_val)
         results_file.write('\n')
+
+@task
+@roles('master')
+def valgrind(*args): 
+    'Runs valgrind tests'
+
+    # validate arguments
+    if len(args) != 2 or args[0] not in ('enterprise', 'citus'):
+        abort('You must provide two arguments, with a command such as "run.valgrind:citus,v6.0.1".\n\
+            First argument can only be "citus" or "enterprise".')
+
+    citus_repo = args[0]
+    citus_version = args[1]
+
+    # install citus and set citus path variable
+    if citus_repo == 'citus':
+        repo_path = config.CITUS_REPO
+    else:
+        repo_path = config.ENTERPRISE_REPO
+    
+    setup.valgrind(citus_repo, citus_version)
+
+    with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
+        run('make check-multi-vg VALGRIND_LOG_FILE=logs.txt || true')
+        
+        # ship output files to result file in order to push to github
+        run('mv logs.txt ' + config.RESULTS_DIRECTORY)
+        run('mv regression.diffs ' + config.RESULTS_DIRECTORY)
+        

@@ -5,7 +5,7 @@ when building Citus.
 '''
 import re
 
-from fabric.api import task, runs_once, abort, local, lcd, roles
+from fabric.api import task, runs_once, abort, local, lcd, roles, sudo
 
 import config
 import utils
@@ -71,3 +71,8 @@ def asserts(*args):
 def debug_mode(*args):
     '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
     config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+
+
+@task
+def valgrind(*args):
+    sudo('yum install -q -y valgrind valgrind-devel.x86_64')

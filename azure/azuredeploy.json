@@ -34,7 +34,7 @@
         },
         "numberOfWorkers": {
             "defaultValue": 3,
-            "minValue": 1,
+            "minValue": 0,
             "maxValue": 21,
             "type": "int",
             "metadata": {

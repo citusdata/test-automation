@@ -88,7 +88,7 @@ export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 cd azure
 
 # open and modify the instance types/discs as you wish
-# for valgrind tests, set `numberOfWorkers` to `0` as we do not allocate seperate instances for workers.
+# for valgrind tests, set `numberOfWorkers` to `0` as we only need a single machine cluster 
 less azuredeploy.parameters.json
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
@@ -450,12 +450,9 @@ fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO
 On the coordinator node:
 
 ```bash
-# Note that we do not call use.citus(or enterprise) yet as we will do it in run.valgrind task
-# For run.valgrind, first argument can be "citus" or "enterprise" and second argument can be a branch name or a version tag
-# 
 # example usage:
 # Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
-fab use.valgrind use.postgres:12.1 run.valgrind:enterprise,enterprise-master
+fab use.valgrind use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

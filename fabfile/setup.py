@@ -42,31 +42,16 @@ def tpch():
     execute(add.tpch)
 
 @task
-def valgrind(citus_repo, citus_version):
+def valgrind():
+    # install valgrind
+    sudo('yum install -q -y valgrind valgrind-devel.x86_64')
 
-    # validate and fetch arguments
+    citus_repo = config.settings['community-enterprise']
 
-    if citus_repo not in ('enterprise', 'citus'):
-        abort('You must provide two arguments, with a command such as "run.valgrind:citus,v6.0.1"'
-            'First argument can only be "citus" or "enterprise".')
-
-    config.PG_CONFIGURE_FLAGS.extend(
-        [
-            '--enable-cassert',
-            '--enable-debug',
-            '--with-uuid=e2fs',
-            'CFLAGS="-ggdb -Og -DUSE_VALGRIND"'
-        ]
-    )
-
-    # install citus and set citus path variable
-    if citus_repo == 'citus':
-        repo_path = config.CITUS_REPO
-        execute(use.citus, citus_version)
+    # install citus
+    if citus_repo == 'community':
         build_citus_func = build_citus
-    else:
-        repo_path = config.ENTERPRISE_REPO
-        execute(use.enterprise, citus_version)
+    elif citus_repo == 'enterprise':
         build_citus_func = build_enterprise
 
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)

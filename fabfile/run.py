@@ -208,26 +208,25 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
 def valgrind(*args): 
     'Runs valgrind tests'
 
-    # validate arguments
-    if len(args) != 2 or args[0] not in ('enterprise', 'citus'):
-        abort('You must provide two arguments, with a command such as "run.valgrind:citus,v6.0.1".\n\
-            First argument can only be "citus" or "enterprise".')
-
-    citus_repo = args[0]
-    citus_version = args[1]
+    citus_repo = config.settings['community-enterprise']
 
     # install citus and set citus path variable
-    if citus_repo == 'citus':
+    if citus_repo == 'community':
         repo_path = config.CITUS_REPO
-    else:
+    elif citus_repo == 'enterprise':
         repo_path = config.ENTERPRISE_REPO
     
-    setup.valgrind(citus_repo, citus_version)
+    setup.valgrind()
 
     with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
-        run('make check-multi-vg VALGRIND_LOG_FILE=logs.txt || true')
+        run('make check-multi-vg VALGRIND_LOG_FILE=logs.txt')
         
         # ship output files to result file in order to push to github
-        run('mv logs.txt ' + config.RESULTS_DIRECTORY)
-        run('mv regression.diffs ' + config.RESULTS_DIRECTORY)
-        
+        run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, config.RESULTS_DIRECTORY))
+
+        # before shipping valgrind outputs, first filter the (possibly) citus-related ones
+        run('cat {} | grep citus.so | awk \'{ print $1 }\' | uniq  > trace_ids'.format(config.VALGRIND_LOGS_FILE))
+        run('while read line; do grep {} -e $line ; done < trace_ids > {}'.format(config.VALGRIND_LOGS_FILE, config.CITUS_RELATED_VALGRIND_LOGS_FILE))
+
+        run('mv {} {}'.format(config.CITUS_RELATED_VALGRIND_LOGS_FILE, config.RESULTS_DIRECTORY))
+

@@ -19,7 +19,11 @@ def citus(*args):
 
     if len(args) != 1:
         abort('You must provide a single argument, with a command such as "use.citus:v6.0.1"')
+    
     git_ref = args[0]
+
+    # register that we use community
+    config.settings['community-enterprise'] = 'community'
 
     path = config.CITUS_REPO
     local('rm -rf {} || true'.format(path))
@@ -39,7 +43,11 @@ def enterprise(*args):
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     if len(args) != 1:
         abort('You must provide a single argument, with a command such as "use.enterprise:v6.0.1"')
+    
     git_ref = args[0]
+
+    # register that we use enterprise
+    config.settings['community-enterprise'] = 'enterprise'
 
     path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))
@@ -75,4 +83,11 @@ def debug_mode(*args):
 
 @task
 def valgrind(*args):
-    sudo('yum install -q -y valgrind valgrind-devel.x86_64')
+    config.PG_CONFIGURE_FLAGS.extend(
+        [
+            '--enable-cassert',
+            '--enable-debug',
+            '--with-uuid=e2fs',
+            'CFLAGS="-ggdb -Og -DUSE_VALGRIND"'
+        ]
+    )

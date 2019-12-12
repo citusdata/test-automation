@@ -13,6 +13,10 @@ HOME_DIRECTORY = HOME_DIR
 RESULTS_DIRECTORY = os.path.join(HOME_DIR, 'results')
 CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
 RELATIVE_REGRESS_PATH = 'src/test/regress'
+# valgrind test variables
+VALGRIND_LOGS_FILE = 'logs.txt'
+REGRESSION_DIFFS_FILE = 'regression.diffs'
+CITUS_RELATED_VALGRIND_LOGS_FLE = 'valgrind_logs_citus_so.txt'
 
 PG_VERSION = '9.6.1'
 PG_CONFIGURE_FLAGS = ['--with-openssl']

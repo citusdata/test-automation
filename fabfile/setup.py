@@ -43,15 +43,15 @@ def tpch():
 
 @task
 def valgrind():
-    # install valgrind
+    # install valgrind library
     sudo('yum install -q -y valgrind valgrind-devel.x86_64')
 
     citus_repo = config.settings['community-enterprise']
 
     # install citus
-    if citus_repo == 'community':
+    if citus_repo == config.COMMUNITY_REPO:
         build_citus_func = build_citus
-    elif citus_repo == 'enterprise':
+    elif citus_repo == config.ENTERPRISE_REPO:
         build_citus_func = build_enterprise
 
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
@@ -104,9 +104,8 @@ def redhat_install_packages():
     with hide('stdout'):
         sudo("yum groupinstall -q -y 'Development Tools'")
 
-    with hide('stdout'):
-        sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git libuuid-devel')
+    with hide('stdout'):        
+        sudo('yum install -q -y libxml2-devel libxslt-devel openssl-devel pam-devel readline-devel libcurl-devel git')
 
 def build_postgres():
     'Installs postges'

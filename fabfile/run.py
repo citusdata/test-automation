@@ -203,6 +203,12 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         results_file.write(out_val)
         results_file.write('\n')
 
+def filter_and_put_citus_valgrind_outputs(valgrind_log_path):
+    run('cat {} | grep citus.so | awk \'{ print $1 }\' | uniq  > trace_ids'.format(valgrind_log_path))
+    run('while read line; do grep {} -e $line ; done < trace_ids > {}'.format(
+        valgrind_log_path, 
+        os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOGS_FILE)))
+
 @task
 @roles('master')
 def valgrind(*args): 
@@ -211,22 +217,18 @@ def valgrind(*args):
     citus_repo = config.settings['community-enterprise']
 
     # install citus and set citus path variable
-    if citus_repo == 'community':
+    if citus_repo == config.COMMUNITY_REPO:
         repo_path = config.CITUS_REPO
-    elif citus_repo == 'enterprise':
+    elif citus_repo == config.ENTERPRISE_REPO:
         repo_path = config.ENTERPRISE_REPO
     
     setup.valgrind()
 
     with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
-        run('make check-multi-vg VALGRIND_LOG_FILE=logs.txt')
+        run('make check-multi-vg VALGRIND_LOG_FILE=$VALGRIND_LOGS_FILE')
         
-        # ship output files to result file in order to push to github
+        # ship regression.diffs to result file in order to push to github
         run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, config.RESULTS_DIRECTORY))
 
-        # before shipping valgrind outputs, first filter the (possibly) citus-related ones
-        run('cat {} | grep citus.so | awk \'{ print $1 }\' | uniq  > trace_ids'.format(config.VALGRIND_LOGS_FILE))
-        run('while read line; do grep {} -e $line ; done < trace_ids > {}'.format(config.VALGRIND_LOGS_FILE, config.CITUS_RELATED_VALGRIND_LOGS_FILE))
-
-        run('mv {} {}'.format(config.CITUS_RELATED_VALGRIND_LOGS_FILE, config.RESULTS_DIRECTORY))
-
+        # first filter the (possibly) citus-related ones and put to results file
+        filter_and_put_citus_valgrind_outputs(config.VALGRIND_LOGS_FILE)

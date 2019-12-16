@@ -13,8 +13,10 @@ HOME_DIRECTORY = HOME_DIR
 RESULTS_DIRECTORY = os.path.join(HOME_DIR, 'results')
 CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
 RELATIVE_REGRESS_PATH = 'src/test/regress'
+COMMUNITY_REPO = 'community'
+ENTERPRISE_REPO = 'enterprise'
 # valgrind test variables
-VALGRIND_LOGS_FILE = 'logs.txt'
+VALGRIND_LOGS_FILE = 'valgrind_logs.txt'
 REGRESSION_DIFFS_FILE = 'regression.diffs'
 CITUS_RELATED_VALGRIND_LOGS_FLE = 'valgrind_logs_citus_so.txt'
 

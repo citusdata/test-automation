@@ -60,17 +60,17 @@ workflows:
           filters:
             branches:
               only:
-                - /pgbench.*/
-                - /all_test.*/
+                - /pgbench\/.*/ # match with pgbench/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix
       - scale:
           filters:
             branches:
               only: 
-                - /scale.*/
-                - /all_test.*/  
+                - /scale\/.*/ # match with scale/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix
       - tpch:
           filters:
             branches:
               only: 
-                - /tpch.*/
-                - /all_test.*/
+                - /tpch\/.*/ # match with tpch/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix

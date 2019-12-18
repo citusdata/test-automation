@@ -7,6 +7,8 @@ import re
 
 from fabric.api import task, runs_once, abort, local, lcd, roles, sudo
 
+import setup
+
 import config
 import utils
 
@@ -22,8 +24,9 @@ def citus(*args):
     
     git_ref = args[0]
 
-    # register that we use community
-    config.settings['community-enterprise'] = 'community'
+    # set community repo specific variables
+    config.settings['repo_path'] = config.CITUS_REPO
+    config.settings['build_citus_func'] = setup.build_citus
 
     path = config.CITUS_REPO
     local('rm -rf {} || true'.format(path))
@@ -46,8 +49,9 @@ def enterprise(*args):
     
     git_ref = args[0]
 
-    # register that we use enterprise
-    config.settings['community-enterprise'] = 'enterprise'
+    # set enterprise repo specific variables
+    config.settings['repo_path'] = config.ENTERPRISE_REPO
+    config.settings['build_citus_func'] = setup.build_enterprise
 
     path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))

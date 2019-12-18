@@ -204,7 +204,9 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         results_file.write('\n')
 
 def filter_and_put_citus_valgrind_outputs(valgrind_log_path):
+    # get stack trace id that includes calls to citus.so
     run('cat {} | grep citus.so | awk \'{ print $1 }\' | uniq  > trace_ids'.format(valgrind_log_path))
+    # filter stack traces with stack trace ids that we found with above command
     run('while read line; do grep {} -e $line ; done < trace_ids > {}'.format(
         valgrind_log_path, 
         os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOGS_FILE)))
@@ -214,14 +216,10 @@ def filter_and_put_citus_valgrind_outputs(valgrind_log_path):
 def valgrind(*args): 
     'Runs valgrind tests'
 
-    citus_repo = config.settings['community-enterprise']
-
-    # install citus and set citus path variable
-    if citus_repo == config.COMMUNITY_REPO:
-        repo_path = config.CITUS_REPO
-    elif citus_repo == config.ENTERPRISE_REPO:
-        repo_path = config.ENTERPRISE_REPO
+    # set citus path variable
+    repo_path = config.settings['repo_path']
     
+    use.valgrind()
     setup.valgrind()
 
     with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):

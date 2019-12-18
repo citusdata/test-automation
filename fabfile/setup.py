@@ -46,13 +46,8 @@ def valgrind():
     # install valgrind library
     sudo('yum install -q -y valgrind valgrind-devel.x86_64')
 
-    citus_repo = config.settings['community-enterprise']
-
-    # install citus
-    if citus_repo == config.COMMUNITY_REPO:
-        build_citus_func = build_citus
-    elif citus_repo == config.ENTERPRISE_REPO:
-        build_citus_func = build_enterprise
+    # set build citus function
+    build_citus_func = config.settings['build_citus_func']
 
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 

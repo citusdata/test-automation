@@ -455,7 +455,7 @@ On the coordinator node:
 ```bash
 # example usage:
 # Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
-fab use.valgrind use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

@@ -49,10 +49,10 @@ If you want, you can run trigger a job which can run pgbench, scale and tpch tes
 
 There is a separate job for each test and you can run any combinations of them. To trigger a job, you should create a branch which has specific prefixes.
 
-If the branch has a prefix pgbench, then pgbench job will be triggered.
-If the branch has a prefix scale, then scale job will be triggered.
-If the branch has a prefix tpch, then tpch job will be triggered.
-If the branch has a prefix all_test, then all jobs will be triggered.
+* If the branch has a prefix `pgbench/`, then pgbench job will be triggered.
+* If the branch has a prefix `scale/`, then scale job will be triggered.
+* If the branch has a prefix `tpch/`, then tpch job will be triggered.
+* If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
 
 You should push your branch to Github so that the circleci job will be triggerred.
 

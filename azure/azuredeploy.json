@@ -207,7 +207,7 @@
                         "properties": {
                             "description": "Expose default pg port",
                             "protocol": "Tcp",
-                            "sourcePortRange": "5432",
+                            "sourcePortRange": "*",
                             "destinationPortRange": "5432",
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",

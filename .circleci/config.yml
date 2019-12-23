@@ -1,0 +1,76 @@
+version: 2.1
+jobs:
+  pgbench:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_pgbench_test_resource_group
+          name: install dependencies and run pgbench tests
+          no_output_timeout: 10m  
+          
+  scale:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_scale_test_resource_group
+          name: install dependencies and run scale tests
+          no_output_timeout: 10m  
+  
+  tpch:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_tpch_test_resource_group
+          name: install dependencies and run tpch tests
+          no_output_timeout: 10m         
+
+orbs:
+  azure-cli: circleci/azure-cli@1.0.0      
+
+workflows:
+  version: 2
+
+  performance-tests:
+    jobs:
+      - pgbench:
+          filters:
+            branches:
+              only:
+                - /pgbench\/.*/ # match with pgbench/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+      - scale:
+          filters:
+            branches:
+              only: 
+                - /scale\/.*/ # match with scale/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+      - tpch:
+          filters:
+            branches:
+              only: 
+                - /tpch\/.*/ # match with tpch/ prefix
+                - /all_performance_test\/.*/ # match with all_performance_test/ prefix

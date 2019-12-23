@@ -32,4 +32,7 @@ GROUP BY
     c_comment
 ORDER BY
     revenue desc
-LIMIT 20;
+-- the following LIMIT is not part of the benchmark suite
+-- but required to run the tests automatically
+-- see https://github.com/citusdata/test-automation/issues/120    
+LIMIT 4;

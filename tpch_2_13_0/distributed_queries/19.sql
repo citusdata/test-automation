@@ -35,5 +35,9 @@ WHERE
         AND p_size between 1 AND 15
         AND l_shipmode in ('AIR', 'AIR REG')
         AND l_shipinstruct = 'DELIVER IN PERSON'
-    );
+    )
+-- the following LIMIT is not part of the benchmark suite
+-- but required to run the tests automatically
+-- see https://github.com/citusdata/test-automation/issues/120    
+LIMIT 4;    
 

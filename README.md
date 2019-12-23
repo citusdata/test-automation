@@ -85,6 +85,12 @@ By default, the following tests will be run for each test:
 
 If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
 
+If you want to change how long each test will be run, you can change the times with the `-T` parameter. https://github.com/citusdata/test-automation/blob/master/fabfile/pgbench_confs/pgbench_default.ini#L33 
+
+```
+pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
+```
+
 ## <a name="azure"></a>Azure
 
 ## <a name="azure-getting-started"></a> Getting Started

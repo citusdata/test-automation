@@ -22,13 +22,13 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG1
-driver_rg=HAMMERDB_DRIVER_RG1
+cluster_rg=CITUS_TEST_CLUSTER_RG2
+driver_rg=HAMMERDB_DRIVER_RG4
 
 export RESOURCE_GROUP_NAME=${driver_rg}
 cd ${topdir}/drivernode
 ./create-drivernode.sh
-
+exit 0
 export RESOURCE_GROUP_NAME=${cluster_rg}
 cd ${topdir}/azure
 ./create-cluster.sh

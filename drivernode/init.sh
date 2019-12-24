@@ -15,7 +15,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
 # install git to clone the repository
-yum install -y git screen tk
+yum install -y git screen
 
 # this is the username in our instances
 TARGET_USER=pguser
@@ -48,6 +48,5 @@ cd ${HOME} && git clone --branch ${branch} https://github.com/citusdata/test-aut
 
 wget "https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux.tar.gz"
 tar -zxvf HammerDB-3.3-Linux.tar.gz
-
 
 EOSU

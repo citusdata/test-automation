@@ -95,6 +95,7 @@ def hammerdb(*args):
         run('echo "effective_cache_size = {}MB" >> postgresql.conf'.format(effective_cache_size_mib))
         run('echo "maintenance_work_mem = {}MB" >> postgresql.conf'.format(maintenance_work_mem_mib))
         run('echo "work_mem = {}MB" >> postgresql.conf'.format(work_mem_mib))
+    execute(pg.restart)  
 
 def total_memory_in_gb():
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448

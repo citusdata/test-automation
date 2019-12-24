@@ -19,7 +19,7 @@ import pg
 import add
 import prefix
 
-__all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
+__all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
 @task
 @roles('master')
@@ -53,7 +53,7 @@ def valgrind():
     config.PG_CONFIGURE_FLAGS.append('--enable-debug')
 
     execute(common_setup, build_citus)
-    execute(add_workers)
+    execute(add_workers)    
 
 @task
 def enterprise():
@@ -62,6 +62,15 @@ def enterprise():
 
     execute(common_setup, build_enterprise)
     execute(add_workers)
+
+@task
+def hammerdb(*args):
+    driver_ip = args[0]
+
+    pg_latest = config.PG_LATEST
+    with cd('{}/data'.format(pg_latest)):
+        run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
+    
 
 @parallel
 def common_setup(build_citus_func):

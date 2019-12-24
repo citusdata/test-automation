@@ -16,14 +16,14 @@ function cleanup {
     sh ./delete-resource-group.sh
 }
 
-trap cleanup EXIT
+# trap cleanup EXIT
 
 hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG
-driver_rg=HAMMERDB_DRIVER_RG
+cluster_rg=CITUS_TEST_CLUSTER_RG1
+driver_rg=HAMMERDB_DRIVER_RG1
 
 export RESOURCE_GROUP_NAME=${driver_rg}
 cd ${topdir}/drivernode
@@ -54,3 +54,8 @@ sh ${topdir}/azure/delete-security-rule.sh
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
 ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/drivernode/setup.sh ${cluster_ip}"
 
+export RESOURCE_GROUP_NAME=${cluster_rg}
+sh ${topdir}/azure/delete-security-rule.sh
+
+# ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
+ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab use.postgres:12.1 use.citus:master setup.basic_testing setup.hammerdb:${driver_ip}"

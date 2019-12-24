@@ -5,6 +5,8 @@ Ideally you can run `fab setup.tpch`, for example, and immdiately start running 
 queries.
 '''
 import os.path
+import os
+import math
 
 from fabric.api import (
     env, cd, hide, roles, task, parallel, execute, run,
@@ -67,10 +69,37 @@ def enterprise():
 def hammerdb(*args):
     driver_ip = args[0]
 
+    total_mem_in_gb = total_memory_in_gb()
+    mem_mib = total_mem_in_gb * 1024
+
+    shared_buffers_mib = int(0.25 * mem_mib)
+    effective_cache_size_mib = int(mem_mib - shared_buffers_mib)
+    maintenance_work_mem_mib = int(82.5 * math.log(total_mem_in_gb, 10) + 40)
+    work_mem_mib = int(30 * math.log(total_mem_in_gb, 10) + 10)
+
     pg_latest = config.PG_LATEST
     with cd('{}/data'.format(pg_latest)):
         run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
-    
+
+        run('echo "autovacuum_vacuum_cost_delay = 0" >> postgresql.conf')
+        run('echo "checkpoint_completion_target = 0.9" >> postgresql.conf')
+        run('echo "checkpoint_timeout = 30min" >> postgresql.conf')
+        run('echo "max_connections = 300" >> postgresql.conf')
+        run('echo "max_prepared_transactions = 300" >> postgresql.conf')
+        run('echo "min_wal_size = 32" >> postgresql.conf')
+        run('echo "max_wal_size = 50GB" >> postgresql.conf')
+        run('echo "wal_buffers = 16MB" >> postgresql.conf')
+        run('echo "wal_compression = on" >> postgresql.conf')
+        run('echo "wal_level = logical" >> postgresql.conf')
+        run('echo "shared_buffers = {}MB" >> postgresql.conf'.format(shared_buffers_mib))
+        run('echo "effective_cache_size = {}MB" >> postgresql.conf'.format(effective_cache_size_mib))
+        run('echo "maintenance_work_mem = {}MB" >> postgresql.conf'.format(maintenance_work_mem_mib))
+        run('echo "work_mem = {}MB" >> postgresql.conf'.format(work_mem_mib))
+
+def total_memory_in_gb():
+    mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
+    mem_gib = mem_bytes/(1024.**3)
+    return mem_gib
 
 @parallel
 def common_setup(build_citus_func):

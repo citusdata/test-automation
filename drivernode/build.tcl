@@ -16,9 +16,9 @@ diset tpcc pg_defaultdbase pguser
 #diset tpcc pg_pass yourpasswordhere
 #diset tpcc pg_superuserpass yourpasswordhere
 diset tpcc pg_storedprocs true
-diset tpcc pg_num_vu 256
-diset tpcc pg_count_ware 256
-diset tpcc pg_total_iterations 1000000
+diset tpcc pg_num_vu 25
+diset tpcc pg_count_ware 25
+diset tpcc pg_total_iterations 1000
 diset tpcc pg_driver timed
 diset tpcc pg_rampup 1
 diset tpcc pg_duration 10

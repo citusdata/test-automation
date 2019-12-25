@@ -30,8 +30,8 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG6
-driver_rg=HAMMERDB_DRIVER_RG6
+cluster_rg=CITUS_TEST_CLUSTER_RG7
+driver_rg=HAMMERDB_DRIVER_RG7
 
 export RESOURCE_GROUP_NAME=${driver_rg}
 cd ${topdir}/drivernode

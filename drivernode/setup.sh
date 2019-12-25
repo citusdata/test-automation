@@ -9,6 +9,7 @@ set -e
 set -x
 
 ip_address=$1
+rg_name=$2
 
 driverdir="${0%/*}"
 cd ${driverdir}
@@ -31,8 +32,33 @@ sudo yum -y install postgresql12-server postgresql12
 
 cd ${hammerdb_dir}
 
-# build hammerdb related tables
-# ./hammerdbcli auto build.tcl
-# run hammerdb benchmark
-# ./hammerdbcli auto run.tcl
+mkdir -p results
 
+# build hammerdb related tables
+./hammerdbcli auto build.tcl | tee -a ./results/build.log
+# run hammerdb benchmark
+./hammerdbcli auto run.tcl | tee -a ./results/run.log
+
+cp build.tcl ./results
+cp run.tcl ./results
+
+cd $HOME
+
+# add github to known hosts
+echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> ~/.ssh/known_hosts
+
+git clone git@github.com:citusdata/release-test-results.git
+
+git config --global user.email "citus-bot@microsoft.com" 
+git config --global user.name "citus bot" 
+
+now=$(date +"%m_%d_%Y_%s")
+
+mv ${hammerdb_dir}/results ${HOME}/release-test-results/hammerdb/${now}
+
+cd ${HOME}/release-test-results
+
+git checkout -b ${rg_name}/${now}
+git add -A 
+git commit -m "add test results for hammerdb tests ${rg_name}"
+git push origin ${rg_name}/${now}

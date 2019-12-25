@@ -32,7 +32,7 @@ sudo yum -y install postgresql12-server postgresql12
 cd ${hammerdb_dir}
 
 # build hammerdb related tables
-./hammerdbcli auto build.tcl
+# ./hammerdbcli auto build.tcl
 # run hammerdb benchmark
-./hammerdbcli auto run.tcl
+# ./hammerdbcli auto run.tcl
 

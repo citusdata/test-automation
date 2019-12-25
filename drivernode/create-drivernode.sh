@@ -19,7 +19,7 @@ index=$(($RANDOM % $size))
 random_region=${regions[$index]}
 
 rg=${RESOURCE_GROUP_NAME}
-region=$random_region
+region=${AZURE_REGION:=$random_region}
 echo ${region}
 az group create -l ${region} -n ${rg}
 

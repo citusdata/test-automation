@@ -21,6 +21,7 @@ sed -i "s/replace_with_ip_address/${ip_address}/g" run.tcl
 
 cp build.tcl ${hammerdb_dir}/
 cp run.tcl ${hammerdb_dir}/
+cp tpcc-distribute.sql ${hammerdb_dir}/ 
 
 cd ${hammerdb_dir}/src/postgresql
 # comment out create database and user as citus cannot do that
@@ -33,9 +34,13 @@ sudo yum -y install postgresql12-server postgresql12
 cd ${hammerdb_dir}
 
 mkdir -p results
-
+exit 0
 # build hammerdb related tables
 ./hammerdbcli auto build.tcl | tee -a ./results/build.log
+
+# distribute tpcc tables in cluster
+psql -h ${ip_address} -f tpcc-distribute.sql
+
 # run hammerdb benchmark
 ./hammerdbcli auto run.tcl | tee -a ./results/run.log
 

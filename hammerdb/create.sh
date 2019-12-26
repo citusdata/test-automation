@@ -30,8 +30,10 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG7
-driver_rg=HAMMERDB_DRIVER_RG7
+cluster_rg=CITUS_TEST_CLUSTER_RG4
+driver_rg=HAMMERDB_DRIVER_RG4
+
+branch_name=hammerdb
 
 export RESOURCE_GROUP_NAME=${driver_rg}
 cd ${topdir}/drivernode
@@ -66,16 +68,13 @@ do
    ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab use.postgres:12.1 use.citus:master setup.basic_testing setup.hammerdb:${driver_ip}" && break
    n=$[$n+1]
 done
-# ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
-
-
 
 n=0
 until [ $n -ge 4 ]
 do
    export RESOURCE_GROUP_NAME=${driver_rg}
    sh ${topdir}/azure/delete-security-rule.sh 
-   ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/drivernode/setup.sh ${cluster_ip}" && break
+   ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/drivernode/setup.sh ${cluster_ip} ${branch_name}" && break
    n=$[$n+1]
 done
 set -e

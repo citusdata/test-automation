@@ -118,7 +118,8 @@
     "variables": {
         "imagePublisher": "RedHat",
         "imageOffer": "RHEL",
-        "imageSku": "7.5",
+        "imageSku": "7.2",
+        "driverImageSku" : "7.5",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
@@ -127,7 +128,8 @@
         "subnetPrefix": "10.192.0.0/24",
         "publicIPAddressType": "Static",
         "publicIPAddressName": "citusPublicIP",
-        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]"
+        "numberOfInstances":"[add(parameters('numberOfWorkers'), 2)]",
+        "driverNodeIndex" : "[add(parameters('numberOfWorkers'), 1)]"
     },
     "resources": [
         {
@@ -319,7 +321,7 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSku')]",
+                        "sku": "[if(equals(copyindex(),variables('driverNodeIndex')), variables('driverImageSku'), variables('imageSku'))]",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -370,9 +372,11 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', parameters('branchName'))]",
+                    "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/drivernode/init.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/drivernode/entry.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/drivernode/driver-init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/azure/init.sh"
                     ]
                 }
             },
@@ -390,6 +394,18 @@
         "publicIP": {
             "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress]",
             "type": "string"
+        },
+        "driverPublicIP": {
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), variables('driverNodeIndex')))).IpAddress]",
+            "type": "string"
+        },
+        "coordinatorPrivateIP":{
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', '0'))).ipConfigurations[0].properties.privateIPAddress]",
+            "type": "string"
+        },
+        "driverPrivateIP": {
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', variables('driverNodeIndex')))).ipConfigurations[0].properties.privateIPAddress]",
+            "type": "string" 
         }
     }
 }

@@ -80,7 +80,9 @@ def hammerdb(*args):
     pg_latest = config.PG_LATEST
     with cd('{}/data'.format(pg_latest)):
         run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
-
+        
+        run('echo "tcp_keepalives_idle = 120" >> postgresql.conf')
+        run('echo "tcp_keepalives_interval = 30" >> postgresql.conf')
         run('echo "autovacuum_vacuum_cost_delay = 0" >> postgresql.conf')
         run('echo "checkpoint_completion_target = 0.9" >> postgresql.conf')
         run('echo "checkpoint_timeout = 30min" >> postgresql.conf')

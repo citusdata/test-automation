@@ -17,8 +17,10 @@ from fabric.contrib.files import exists
 
 import utils
 import config
+import ConfigParser
 import pg
 import add
+import use
 import prefix
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
@@ -67,6 +69,24 @@ def enterprise():
 
 @task
 def hammerdb(*args):
+
+    config_parser = ConfigParser.ConfigParser()
+
+    config_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/hammerdb_confs/hammerdb.ini")
+    config_parser.read(config_path)
+
+    use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
+    pg_version, citus_version = eval(config_parser.get('DEFAULT', 'postgres_citus_version'))
+    # create database for the given citus and pg versions
+    if use_enterprise == 'on':
+        execute(use.postgres, pg_version)
+        execute(use.enterprise, citus_version)
+        enterprise()
+    else:
+        execute(use.postgres, pg_version)
+        execute(use.citus, citus_version)
+        basic_testing()
+
     driver_ip = args[0]
 
     total_mem_in_gb = total_memory_in_gb()
@@ -77,27 +97,20 @@ def hammerdb(*args):
     maintenance_work_mem_mib = int(82.5 * math.log(total_mem_in_gb, 10) + 40)
     work_mem_mib = int(30 * math.log(total_mem_in_gb, 10) + 10)
 
+    pg.set_config_str("shared_buffers = '{}MB'".format(shared_buffers_mib))
+    pg.set_config_str("effective_cache_size = '{}MB'".format(effective_cache_size_mib))
+    pg.set_config_str("maintenance_work_mem = '{}MB'".format(maintenance_work_mem_mib))
+    pg.set_config_str("work_mem = '{}MB'".format(work_mem_mib))
+
+    postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
+    for postgresql_conf in postgresql_conf_list:
+        pg.set_config_str(postgresql_conf)
+
     pg_latest = config.PG_LATEST
     with cd('{}/data'.format(pg_latest)):
         run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
-        
-        run('echo "tcp_keepalives_idle = 120" >> postgresql.conf')
-        run('echo "tcp_keepalives_interval = 30" >> postgresql.conf')
-        run('echo "autovacuum_vacuum_cost_delay = 0" >> postgresql.conf')
-        run('echo "checkpoint_completion_target = 0.9" >> postgresql.conf')
-        run('echo "checkpoint_timeout = 30min" >> postgresql.conf')
-        run('echo "max_connections = 300" >> postgresql.conf')
-        run('echo "max_prepared_transactions = 300" >> postgresql.conf')
-        run('echo "min_wal_size = 32" >> postgresql.conf')
-        run('echo "max_wal_size = 50GB" >> postgresql.conf')
-        run('echo "wal_buffers = 16MB" >> postgresql.conf')
-        run('echo "wal_compression = on" >> postgresql.conf')
-        run('echo "wal_level = logical" >> postgresql.conf')
-        run('echo "shared_buffers = {}MB" >> postgresql.conf'.format(shared_buffers_mib))
-        run('echo "effective_cache_size = {}MB" >> postgresql.conf'.format(effective_cache_size_mib))
-        run('echo "maintenance_work_mem = {}MB" >> postgresql.conf'.format(maintenance_work_mem_mib))
-        run('echo "work_mem = {}MB" >> postgresql.conf'.format(work_mem_mib))
-    execute(pg.restart)  
+
+    pg.restart()
 
 def total_memory_in_gb():
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448

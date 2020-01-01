@@ -22,13 +22,11 @@ size=${#regions[@]}
 index=$(($RANDOM % $size))
 random_region=${regions[$index]}
 
-export AZURE_REGION=${random_region}
-
 hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG123
+cluster_rg=CITUS_TEST_CLUSTER_RG17
 
 branch_name=hammerdb
 
@@ -68,9 +66,13 @@ n=0
 until [ $n -ge 4 ]
 do
    sh ${topdir}/azure/delete-security-rule.sh
-   ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab use.postgres:12.1 use.citus:master setup.basic_testing setup.hammerdb:${driver_private_ip}" && break
+   ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab setup.hammerdb:${driver_private_ip}" && break
    n=$[$n+1]
 done
+
+if [[ $n == 4 ]]; then 
+exit 1
+fi
 
 n=0
 until [ $n -ge 4 ]
@@ -79,4 +81,8 @@ do
    ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/drivernode/setup.sh ${coordinator_private_ip} ${branch_name}" && break
    n=$[$n+1]
 done
+
+if [[ $n == 4 ]]; then 
+exit 1
+fi
 set -e

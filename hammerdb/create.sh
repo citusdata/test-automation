@@ -26,7 +26,7 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG17
+cluster_rg=CITUS_TEST_CLUSTER_RG10
 
 branch_name=hammerdb
 

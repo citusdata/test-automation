@@ -16,8 +16,8 @@ diset tpcc pg_defaultdbase pguser
 #diset tpcc pg_pass yourpasswordhere
 #diset tpcc pg_superuserpass yourpasswordhere
 diset tpcc pg_storedprocs true
-diset tpcc pg_num_vu 50
-diset tpcc pg_count_ware 250
+diset tpcc pg_num_vu 250
+diset tpcc pg_count_ware 1200
 diset tpcc pg_total_iterations 1000000
 diset tpcc pg_driver timed
 diset tpcc pg_rampup 1
@@ -27,7 +27,7 @@ diset tpcc pg_allwarehouse false
 diset tpcc pg_keyandthink false
 loadscript
 print dict
-vuset vu 50
+vuset vu 250
 vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0

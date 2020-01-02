@@ -1,20 +1,16 @@
 #!/bin/bash
 
 # fail if trying to reference a variable that is not set.
-set -u
+set -u / set -o nounset
 # exit immediately if a command fails
 set -e
-# echo commands
-set -x
 
-
-function cleanup {
-    cd ${topdir}/azure
-    export RESOURCE_GROUP_NAME=${cluster_rg}
-    sh ./delete-resource-group.sh
-}
-
-# trap cleanup EXIT
+## Set mydir to the directory containing the script
+## The ${var%pattern} format will remove the shortest match of
+## pattern from the end of the string. Here, it will remove the
+## script's name,. leaving only the directory. 
+driverdir="${0%/*}"
+cd ${driverdir}
 
 regions=(eastus southcentralus westus2)
 
@@ -22,67 +18,23 @@ size=${#regions[@]}
 index=$(($RANDOM % $size))
 random_region=${regions[$index]}
 
-hammerdb_dir="${0%/*}"
-cd ${hammerdb_dir}
-topdir=${hammerdb_dir}/..
+rg=${RESOURCE_GROUP_NAME}
+region=${AZURE_REGION:=$random_region}
+echo ${region}
+az group create -l ${region} -n ${rg}
 
-cluster_rg=CITUS_TEST_CLUSTER_RG10
+public_key=$(cat ~/.ssh/id_rsa.pub)
 
-branch_name=hammerdb
+start_time=`date +%s`
+echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
 
-export RESOURCE_GROUP_NAME=${cluster_rg}
-cd ${topdir}/drivernode
-./create.sh
+# if this is run on a job, use the branch for the job, otherwise use master(running in local or remote without a job)
+# store the branch name in a file so that target user can read it. Target user cannot see the envionment variables because
+# we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
+# so that $HOME, $PATH are set to the target users $HOME and $PATH.
+export BRANCH=${CIRCLE_BRANCH:=hammerdb}
 
+az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH"
 
-cluster_ip=$(az group deployment show -g ${cluster_rg} -n azuredeploy --query properties.outputs.publicIP.value)
-# remove the quotes 
-cluster_ip=$(echo ${cluster_ip} | cut -d "\"" -f 2)
-echo ${cluster_ip}
-
-coordinator_private_ip=$(az group deployment show -g ${cluster_rg} -n azuredeploy --query properties.outputs.coordinatorPrivateIP.value)
-# remove the quotes 
-coordinator_private_ip=$(echo ${coordinator_private_ip} | cut -d "\"" -f 2)
-echo ${coordinator_private_ip}
-
-
-driver_ip=$(az group deployment show -g ${cluster_rg} -n azuredeploy --query properties.outputs.driverPublicIP.value)
-# remove the quotes 
-driver_ip=$(echo ${driver_ip} | cut -d "\"" -f 2)
-echo ${driver_ip}
-
-driver_private_ip=$(az group deployment show -g ${cluster_rg} -n azuredeploy --query properties.outputs.driverPrivateIP.value)
-# remove the quotes 
-driver_private_ip=$(echo ${driver_private_ip} | cut -d "\"" -f 2)
-echo ${driver_private_ip}
-
-ssh-keyscan -H ${cluster_ip} >> ~/.ssh/known_hosts
-ssh-keyscan -H ${driver_ip} >> ~/.ssh/known_hosts
-chmod 600 ~/.ssh/known_hosts
-
-
-set +e
-n=0
-until [ $n -ge 4 ]
-do
-   sh ${topdir}/azure/delete-security-rule.sh
-   ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab setup.hammerdb:${driver_private_ip}" && break
-   n=$[$n+1]
-done
-
-if [[ $n == 4 ]]; then 
-exit 1
-fi
-
-n=0
-until [ $n -ge 4 ]
-do
-   sh ${topdir}/azure/delete-security-rule.sh 
-   ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/drivernode/setup.sh ${coordinator_private_ip} ${branch_name}" && break
-   n=$[$n+1]
-done
-
-if [[ $n == 4 ]]; then 
-exit 1
-fi
-set -e
+end_time=`date +%s`
+echo execution time was `expr $end_time - $start_time` s.

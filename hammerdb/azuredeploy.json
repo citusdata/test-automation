@@ -374,8 +374,8 @@
                 "settings": {
                     "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/drivernode/entry.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/drivernode/driver-init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/hammerdb/entry.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/hammerdb/driver-init.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb/azure/init.sh"
                     ]
                 }

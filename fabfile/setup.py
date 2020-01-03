@@ -68,6 +68,7 @@ def enterprise():
     execute(add_workers)
 
 @task
+@roles('master')
 def hammerdb(*args):
 
     config_parser = ConfigParser.ConfigParser()
@@ -88,7 +89,10 @@ def hammerdb(*args):
         basic_testing()
 
     driver_ip = args[0]
+    execute(set_hammerdb_config, config_parser, driver_ip)
 
+@task
+def set_hammerdb_config(config_parser, driver_ip):
     total_mem_in_gb = total_memory_in_gb()
     mem_mib = total_mem_in_gb * 1024
 
@@ -111,6 +115,7 @@ def hammerdb(*args):
         run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
 
     pg.restart()
+
 
 def total_memory_in_gb():
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448

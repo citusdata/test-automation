@@ -26,7 +26,7 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG40
+cluster_rg=CITUS_TEST_CLUSTER_RG101
 
 branch_name=hammerdb
 
@@ -70,7 +70,7 @@ do
    n=$[$n+1]
 done
 
-if [[ $n == 4 ]]; then 
+if [[ $n == 4 ]]; then
 exit 1
 fi
 
@@ -82,7 +82,7 @@ do
    n=$[$n+1]
 done
 
-if [[ $n == 4 ]]; then 
+if [[ $n == 4 ]]; then
 exit 1
 fi
 set -e

@@ -69,11 +69,11 @@ def enterprise():
 
 @task
 @roles('master')
-def hammerdb(*args):
+def hammerdb(config_file='hammerdb.ini', driver_ip=''):
 
     config_parser = ConfigParser.ConfigParser()
 
-    config_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/hammerdb_confs/hammerdb.ini")
+    config_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/hammerdb_confs", config_file)
     config_parser.read(config_path)
 
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
@@ -88,7 +88,6 @@ def hammerdb(*args):
         execute(use.citus, citus_version)
         basic_testing()
 
-    driver_ip = args[0]
     execute(set_hammerdb_config, config_parser, driver_ip)
 
 @task

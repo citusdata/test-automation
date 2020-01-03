@@ -14,6 +14,23 @@ function cleanup {
     sh ./delete-resource-group.sh
 }
 
+ssh_execute() {
+   ip=$1
+   shift;
+   command=$@
+   n=0
+   until [ $n -ge 4 ]
+   do
+      sh ${topdir}/azure/delete-security-rule.sh
+      ssh -o "StrictHostKeyChecking no" -A pguser@${ip} "source ~/.bash_profile;${command}" && break
+      n=$[$n+1]
+   done
+
+   if [ $n == 4 ]; then
+      exit 1
+   fi
+}
+
 # trap cleanup EXIT
 
 regions=(eastus southcentralus westus2)
@@ -24,9 +41,9 @@ random_region=${regions[$index]}
 
 hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
-topdir=${hammerdb_dir}/..
+export topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG101
+cluster_rg=CITUS_TEST_CLUSTER_RG3
 
 branch_name=hammerdb
 
@@ -62,27 +79,16 @@ chmod 600 ~/.ssh/known_hosts
 
 
 set +e
-n=0
-until [ $n -ge 4 ]
+
+ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/setup.sh ${coordinator_private_ip} ${branch_name}"
+for config_file in "${topdir}/fabfile/hammerdb_confs"/*
 do
-   sh ${topdir}/azure/delete-security-rule.sh
-   ssh -o "StrictHostKeyChecking no" -A pguser@${cluster_ip} "source ~/.bash_profile;fab setup.hammerdb:${driver_private_ip}" && break
-   n=$[$n+1]
+  # get the file name from absolute path 
+  config_file=`basename $config_file`
+
+  ssh_execute ${cluster_ip} "fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
+  ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/build-and-run.sh ${coordinator_private_ip} ${config_file}"
 done
 
-if [[ $n == 4 ]]; then
-exit 1
-fi
-
-n=0
-until [ $n -ge 4 ]
-do
-   sh ${topdir}/azure/delete-security-rule.sh 
-   ssh -o "StrictHostKeyChecking no" -A pguser@${driver_ip} "source ~/.bash_profile;/home/pguser/test-automation/hammerdb/setup.sh ${coordinator_private_ip} ${branch_name}" && break
-   n=$[$n+1]
-done
-
-if [[ $n == 4 ]]; then
-exit 1
-fi
+ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/upload-results.sh ${branch_name}"
 set -e

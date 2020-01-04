@@ -21,5 +21,8 @@ psql -h ${coordinator_ip_address} -f drop-tables.sql
 # distribute tpcc tables in cluster
 psql -h ${coordinator_ip_address} -f tpcc-distribute.sql
 
+# distribute functions in cluster 
+psql -h ${coordinator_ip_address} -f tpcc-distribute-funcs.sql
+
 # run hammerdb benchmark
 ./hammerdbcli auto run.tcl | tee -a ./results/run_${file_name}.log

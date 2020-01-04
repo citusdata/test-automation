@@ -115,7 +115,6 @@ def set_hammerdb_config(config_parser, driver_ip):
 
     pg.restart()
 
-
 def total_memory_in_gb():
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
     mem_gib = mem_bytes/(1024.**3)

@@ -22,6 +22,7 @@ sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" run.tcl
 cp build.tcl ${hammerdb_dir}/
 cp run.tcl ${hammerdb_dir}/
 cp tpcc-distribute.sql ${hammerdb_dir}/ 
+cp tpcc-distribute-funcs.sql ${hammerdb_dir}/
 cp drop-tables.sql ${hammerdb_dir}/ 
 
 cd ${hammerdb_dir}/src/postgresql

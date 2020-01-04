@@ -32,7 +32,6 @@ mkdir -p /home/${TARGET_USER}
 mount ${DEV} /home/${TARGET_USER}/
 rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
-
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers

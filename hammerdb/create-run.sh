@@ -43,7 +43,7 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 export topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG13
+cluster_rg=CITUS_TEST_CLUSTER_RG11
 
 branch_name=hammerdb
 

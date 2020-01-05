@@ -46,7 +46,24 @@ jobs:
             ./add-sshkey.sh
             ./citus-bot.sh citusbot_tpch_test_resource_group
           name: install dependencies and run tpch tests
-          no_output_timeout: 10m         
+          no_output_timeout: 10m  
+
+  hammerdb:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            cd ../hammerdb
+            ./create-run.sh
+          name: install dependencies and run tpch tests
+          no_output_timeout: 10m                  
 
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
@@ -74,3 +91,9 @@ workflows:
               only: 
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+
+      - hammerdb:
+          filters:
+            branches:
+              only:
+                - hammerdb # match with hammerdb prefix

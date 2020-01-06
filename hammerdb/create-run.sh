@@ -43,11 +43,10 @@ hammerdb_dir="${0%/*}"
 cd ${hammerdb_dir}
 export topdir=${hammerdb_dir}/..
 
-cluster_rg=CITUS_TEST_CLUSTER_RG11
+cluster_rg=${RESOURCE_GROUP_NAME}
 
 branch_name=hammerdb
 
-export RESOURCE_GROUP_NAME=${cluster_rg}
 cd ${topdir}/hammerdb
 ./create.sh
 

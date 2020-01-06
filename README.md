@@ -7,6 +7,7 @@ required for testing citus.
 ## Table of Contents
 
 * [Running Automated Tests](#running-automated-tests)
+* [Running Automated Hammerdb](#running-automated-hammerdb)
 * [Azure](#azure)
   * [Getting Started](#azure-getting-started)
     * [Setup steps for each test](#azure-setup-steps)
@@ -90,6 +91,36 @@ If you want to change how long each test will be run, you can change the times w
 ```
 pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 ```
+
+## <a name="running-automated-hammerdb"></a>Running Automated Hammerdb
+
+Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
+You can customize the hammerdb cluster in the `hammerdb` folder using `azuredeploy.parameters.json`.
+
+In order to run hammerdb benchmark:
+
+```bash
+eval `ssh-agent -s`
+ssh-add
+EXPORT RESOURCE_GROUP_NAME=<your resource group name>
+cd hammerdb
+./create-run.sh
+```
+
+In `fabfile/hammerdb_confs` you can:
+
+* change postgres version
+* use enterprise or community
+* use a custom branch
+* change/add postgres/citus settings
+
+You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
+run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
+So if you want to compare two branches, you can create two identical config files with two different branches.
+
+`hammerdb/build.tcl` creates and fills hammerdb tpcc tables. You should have at least 1:5 ratio for vuuser:warehouse_count otherwise the build.tcl might get stuck.
+
+`hammerdb/run.tcl` runs tpcc benchmark. You can configure things such as test duration here.
 
 ## <a name="azure"></a>Azure
 

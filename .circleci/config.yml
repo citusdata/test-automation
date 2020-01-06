@@ -61,6 +61,7 @@ jobs:
             cd ./azure
             ./add-sshkey.sh
             cd ../hammerdb
+            export RESOURCE_GROUP_NAME=CITUS_TEST_RG2321
             ./create-run.sh
           name: install dependencies and run tpch tests
           no_output_timeout: 100m                  

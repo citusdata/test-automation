@@ -97,6 +97,9 @@ pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
 You can customize the hammerdb cluster in the `hammerdb` folder using `azuredeploy.parameters.json`.
 
+**You should create a new branch and change the settings in the new branch and push the branch so that
+when the tool clones the repository it can download your branch.**
+
 In order to run hammerdb benchmark:
 
 ```bash
@@ -104,8 +107,10 @@ eval `ssh-agent -s`
 ssh-add
 EXPORT RESOURCE_GROUP_NAME=<your resource group name>
 cd hammerdb
-./create-run.sh
+./create-run.sh # you should be in the branch that has the changes
 ```
+
+You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
 
 In `fabfile/hammerdb_confs` you can:
 
@@ -117,10 +122,20 @@ In `fabfile/hammerdb_confs` you can:
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
 run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
 So if you want to compare two branches, you can create two identical config files with two different branches.
+The result logs will contain the config file so that it is easy to know which config was used for a run.
+
+After adding the configs `fabfile/hammerdb_confs` could look like:
+
+* ./hammerdb.ini
+* ./hammerdb2.ini
+* ./hammerdb3.ini
 
 `hammerdb/build.tcl` creates and fills hammerdb tpcc tables. You should have at least 1:5 ratio for vuuser:warehouse_count otherwise the build.tcl might get stuck.
 
 `hammerdb/run.tcl` runs tpcc benchmark. You can configure things such as test duration here.
+
+Note that running a benchmark with a single config file with a vuuser of 150 and 1M iterations could 
+take around 3-4 hours. (the whole process)
 
 ## <a name="azure"></a>Azure
 

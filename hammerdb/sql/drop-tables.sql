@@ -7,3 +7,8 @@ DROP TABLE IF EXISTS new_order;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS order_line;
 DROP TABLE IF EXISTS item;
+
+-- ch benchmark tables
+DROP TABLE IF EXISTS region;
+DROP TABLE IF EXISTS nation;
+DROP TABLE IF EXISTS supplier;

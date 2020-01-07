@@ -34,7 +34,7 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=hammerdb}
 
-az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH"
+az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" 
 
 end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.

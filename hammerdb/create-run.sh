@@ -78,16 +78,5 @@ chmod 600 ~/.ssh/known_hosts
 
 
 set +e
-
-ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/setup.sh ${coordinator_private_ip} ${branch_name}"
-for config_file in "${topdir}/fabfile/hammerdb_confs"/*
-do
-  # get the file name from absolute path 
-  config_file=`basename $config_file`
-
-  ssh_execute ${cluster_ip} "fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
-  ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/build-and-run.sh ${coordinator_private_ip} ${config_file}"
-done
-
-ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/upload-results.sh ${branch_name}"
+ssh_execute ${driver_ip} "screen -d -m /home/pguser/test-automation/hammerdb/setup.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name}"
 set -e

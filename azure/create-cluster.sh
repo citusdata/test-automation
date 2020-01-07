@@ -34,11 +34,26 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=master}
 
-az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH"
+# below is the default create cluster command
+CREATE_CLUSTER_COMMAND=(az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH")
+
+# if VALGRIND_TEST variable is not exported, set it to 0
+valgrind_test=${VALGRIND_TEST:=0}
+
+# if we want to run valgrind tests, lets overwrite numberOfWorkers parameter with 0
+if [[ "$valgrind_test" == "1" ]]; then
+    # be on the safe side, add "--parameters" before "numberOfWorkers" as the order 
+    # of the parameters in CREATE_CLUSTER_COMMAND may change
+    CREATE_CLUSTER_COMMAND+=(--parameters)
+
+    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+fi
+
+# run CREATE_CLUSTER_COMMAND
+"${CREATE_CLUSTER_COMMAND[@]}"
 
 end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.
-
 
 connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
 

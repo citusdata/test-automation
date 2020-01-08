@@ -46,7 +46,39 @@ jobs:
             ./add-sshkey.sh
             ./citus-bot.sh citusbot_tpch_test_resource_group
           name: install dependencies and run tpch tests
-          no_output_timeout: 10m         
+          no_output_timeout: 10m       
+
+  valgrind-test:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_valgrind_test_resource_group
+          name: install dependencies and run valgrind tests
+          no_output_timeout: 10m 
+
+  finalize-valgrind-test:
+    docker:
+      - image: buildpack-deps:trusty
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ../results
+            ./add-sshkey.sh
+            ./finalize-valgrind-test.sh
+          name: install dependencies and run valgrind tests
+          no_output_timeout: 10m
 
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
@@ -74,3 +106,27 @@ workflows:
               only: 
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+
+  # perform weekly valgrind test on azure every monday at 01:00
+  weekly-valgrind:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - valgrind-test
+
+  # push valgrind test results and terminate the machine 16 hours after valgrind test (every monday at 17:00)
+  weekly-valgrind-finalize:
+    triggers:
+      - schedule:
+          cron: "0 17 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - finalize-valgrind-test

@@ -15,6 +15,7 @@ diset tpcc pg_superuser pguser
 diset tpcc pg_defaultdbase pguser
 #diset tpcc pg_pass yourpasswordhere
 #diset tpcc pg_superuserpass yourpasswordhere
+# if you change this, make sure to change tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
 diset tpcc pg_num_vu 150
 diset tpcc pg_count_ware 750

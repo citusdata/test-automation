@@ -22,22 +22,15 @@ if [ "$rg_name" = "citusbot_tpch_test_resource_group" ]; then
     fab run.tpch_automate
 fi 
 
+# If running valgrind tests, do not run cleanup function
+# This is because, as valgrind tests requires too much time to run,
+# we start valgrind tests in a tmux session in ci. Hence ssh session 
+# will immediately be closed just after the fabric command is run
+#
+# We have a seperate job to terminate the machine and push the results
+if [ "$rg_name" = "citusbot_valgrind_test_resource_group" ]; then
+    fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux
+    exit 0
+fi 
 
-# add github to known hosts
-echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> ~/.ssh/known_hosts
-
-git clone git@github.com:citusdata/release-test-results.git
-
-git config --global user.email "citus-bot@microsoft.com" 
-git config --global user.name "citus bot" 
-
-now=$(date +"%m_%d_%Y_%s")
-
-mv ${HOME}/results ${HOME}/release-test-results/periodic_job_results/${now}
-
-cd ${HOME}/release-test-results
-
-git checkout -b ${rg_name}/${now}
-git add -A 
-git commit -m "add test results for performance tests ${rg_name}"
-git push origin ${rg_name}/${now}
+sh "${HOME}"/test-automation/azure/push-results.sh "$1"

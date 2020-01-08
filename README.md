@@ -517,6 +517,14 @@ On the coordinator node:
 # example usage:
 # Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
 fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+# Note: In ci, call run.valgrind task with 'in_tmux' parameter not to wait the tests to complete
+<<<<<<< HEAD
+# Example usage on ci
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux run.valgrind_put_success
+=======
+# example usage on ci:
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux
+>>>>>>> fe6c2e0... f
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

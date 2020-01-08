@@ -13,7 +13,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind', 'valgrind_put_success']
 
 
 @task
@@ -205,19 +205,13 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         results_file.write('\n')
 
 # Filter (possibly) citus-related valgrind test logs, put under results directory
-# If no error logs exist, then simply put valgrind_success file 
 def filter_put_citus_valgrind_outputs(repo_path):
     # cd to directory that we performed valgrind(regression) tests
     os.chdir(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH))
 
-    regression_diffs_exist = False
-    citus_related_out_exists = False
-
     # ship regression.diffs (if exists) to result file in order to push to github
     if os.path.isfile(config.REGRESSION_DIFFS_FILE):
         run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, config.RESULTS_DIRECTORY))
-
-        regression_diffs_exist = True
 
     if os.path.isfile(config.VALGRIND_LOGS_FILE):
         # get stack trace id that includes calls to citus
@@ -229,17 +223,32 @@ def filter_put_citus_valgrind_outputs(repo_path):
                 config.VALGRIND_LOGS_FILE, 
                 os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOG_FILE)))
 
-            citus_related_out_exists = True
-
-    # if we have neither regression.diffs nor citus-related valgrind outputs
-    # then just put an empty file named as valgrind_success
-    if not regression_diffs_exist and not citus_related_out_exists:
-        run('touch {}'.format(os.path.join(config.RESULTS_DIRECTORY, 'valgrind_success')))
-
 @task
 @roles('master')
 def valgrind(*args): 
     'Runs valgrind tests'
+
+    # validate args and set config.settings[IN_TMUX] accordingly
+    
+    config.settings[config.IN_TMUX] = False
+    arg_error = False
+
+    nargs = len(args)
+
+    # no arguments or `config.IN_TMUX_PARAMETER` argument is applicable
+    if nargs == 1:
+        arg = args[0]
+
+        if arg == config.IN_TMUX_PARAMETER:
+            config.settings[config.IN_TMUX] = True
+        else:
+            arg_error = True
+    elif nargs != 0:
+        arg_error = True
+
+    if arg_error:
+        abort('You can only provide \"{}\" argument to \"run.valgrind\" task to run the tests within a tmux session.\n\
+            Do not give any other arguments otherwise'.format(config.IN_TMUX_PARAMETER))
 
     # set citus path variable
     repo_path = config.settings[config.REPO_PATH]
@@ -248,11 +257,31 @@ def valgrind(*args):
     setup.valgrind()
 
     with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
+
         # make check-multi-vg returns 2 in case of failures in regression tests
         # we should do failure handling here
         with settings(warn_only=True):
-            run('make check-multi-vg valgrind-log-file=$VALGRIND_LOGS_FILE')
+            valgrind_test_command = 'make check-multi-vg valgrind-log-file=$VALGRIND_LOGS_FILE'
+            
+            # wrap it with tmux
+            if config.settings[config.IN_TMUX]:
+                valgrind_test_command = "tmux new -d '{}'".format(valgrind_test_command)
+
+            run(valgrind_test_command)
 
         # filter the (possibly) citus-related outputs and put to results file if exist
         # if no error logs exist, then simply put valgrind_success file 
         filter_put_citus_valgrind_outputs(repo_path)
+
+# If no error logs exist results directory, then simply put valgrind_success file
+# under results directory.
+# This is done in a seperate job on ci before terminating the machine.
+# Hence we seperated fabric task into two as well.
+@task
+@roles('master')
+def valgrind_put_success(*args):
+
+    # if we have neither regression.diffs nor citus-related valgrind outputs
+    # then just put an empty file named as valgrind_success
+    if not os.listdir(config.RESULTS_DIRECTORY):
+        run('touch {}'.format(os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_SUCCESS_FNAME)))

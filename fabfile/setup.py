@@ -43,8 +43,15 @@ def tpch():
 
 @task
 def valgrind():
-    # install valgrind library
-    sudo('yum install -q -y valgrind valgrind-devel.x86_64 openssl-devel.x86_64')
+    # install tmux as well if specified
+    if config.settings[config.IN_TMUX]:
+        config.VALGRIND_REQUIRED_PACKAGES.append('tmux')
+
+    # prepare yum install command
+    install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
+
+    # install libraries required for valgrind test
+    sudo(install_required_packages_command)
 
     # create results directory to put resulting log files there
     # (for pushing them to results repository)

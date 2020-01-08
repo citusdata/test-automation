@@ -17,6 +17,6 @@ cd ${dir}
 public_ip=$(az group deployment show -g ${RESOURCE_GROUP_NAME} -n azuredeploy --query properties.outputs.driverPublicIP.value)
 # remove the quotes 
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
-sh ./delete-security-rule.sh
+sh ../azure/delete-security-rule.sh
 
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip}

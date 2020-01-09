@@ -33,6 +33,9 @@ psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f ch-benchmark-distribut
 # distribute functions in cluster 
 psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f tpcc-distribute-funcs.sql
 
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f vacuum-ch.sql
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f vacuum-tpcc.sql
+
 ./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} >> results/ch_benchmarks.log &
 ch_pid=$!
 echo ${ch_pid}

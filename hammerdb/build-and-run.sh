@@ -16,13 +16,13 @@ RAMPUP_TIME=3
 cd ${HOME}/HammerDB-3.3
 
 # drop tables if they exist since we might be running hammerdb multiple times with different configs
-psql -h ${coordinator_ip_address} -f drop-tables.sql
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f drop-tables.sql
 
 # create ch-benchmark tables in cluster
-psql -h ${coordinator_ip_address} -f ch-benchmark-tables.sql
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f ch-benchmark-tables.sql
 
 # distribute ch-benchmark tables
-psql -h ${coordinator_ip_address} -f ch-benchmark-distribute.sql
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f ch-benchmark-distribute.sql
 
 # build hammerdb related tables
 ./hammerdbcli auto build.tcl | tee -a ./results/build_${file_name}.log
@@ -31,7 +31,7 @@ psql -h ${coordinator_ip_address} -f ch-benchmark-distribute.sql
 # psql -h ${coordinator_ip_address} -f tpcc-distribute.sql
 
 # distribute functions in cluster 
-psql -h ${coordinator_ip_address} -f tpcc-distribute-funcs.sql
+psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f tpcc-distribute-funcs.sql
 
 ./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} >> results/ch_benchmarks.log &
 ch_pid=$!

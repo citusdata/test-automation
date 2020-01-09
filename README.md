@@ -108,6 +108,19 @@ ssh-add
 EXPORT RESOURCE_GROUP_NAME=<your resource group name>
 cd hammerdb
 ./create-run.sh # you should be in the branch that has the changes
+# you will be given a command to connect to the driver node and what
+# to run afterwards.
+```
+
+Note that you should be connected to the driver node at the times it requires ssh keys.
+`./connect-driver.sh` uses shh-agent forwarding while sshing to the driver node.
+For example while cloning the enterprise repository at the beginning of each config file,
+your ssh keys are necessary so you should be connected at that time.
+
+In order to see the process of the tests, from the driver node:
+
+```bash
+screen -r
 ```
 
 You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
@@ -136,6 +149,7 @@ After adding the configs `fabfile/hammerdb_confs` could look like:
 
 Note that running a benchmark with a single config file with a vuuser of 150 and 1M iterations could 
 take around 3-4 hours. (the whole process)
+
 
 ## <a name="azure"></a>Azure
 

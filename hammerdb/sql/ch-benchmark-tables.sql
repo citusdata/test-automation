@@ -19,7 +19,7 @@ SET row_security = off;
 SET default_tablespace = '';
 
 --
--- Name: nation; Type: TABLE; Schema: public; Owner: citus
+-- Name: nation; Type: TABLE; Schema: public; Owner: pguser
 --
 
 CREATE TABLE public.nation (
@@ -30,10 +30,10 @@ CREATE TABLE public.nation (
 );
 
 
-ALTER TABLE public.nation OWNER TO citus;
+ALTER TABLE public.nation OWNER TO pguser;
 
 --
--- Name: region; Type: TABLE; Schema: public; Owner: citus
+-- Name: region; Type: TABLE; Schema: public; Owner: pguser
 --
 
 CREATE TABLE public.region (
@@ -43,10 +43,10 @@ CREATE TABLE public.region (
 );
 
 
-ALTER TABLE public.region OWNER TO citus;
+ALTER TABLE public.region OWNER TO pguser;
 
 --
--- Name: supplier; Type: TABLE; Schema: public; Owner: citus
+-- Name: supplier; Type: TABLE; Schema: public; Owner: pguser
 --
 
 CREATE TABLE public.supplier (
@@ -60,10 +60,10 @@ CREATE TABLE public.supplier (
 );
 
 
-ALTER TABLE public.supplier OWNER TO citus;
+ALTER TABLE public.supplier OWNER TO pguser;
 
 --
--- Data for Name: nation; Type: TABLE DATA; Schema: public; Owner: citus
+-- Data for Name: nation; Type: TABLE DATA; Schema: public; Owner: pguser
 --
 
 COPY public.nation (n_nationkey, n_name, n_regionkey, n_comment) FROM stdin;
@@ -133,7 +133,7 @@ COPY public.nation (n_nationkey, n_name, n_regionkey, n_comment) FROM stdin;
 
 
 --
--- Data for Name: region; Type: TABLE DATA; Schema: public; Owner: citus
+-- Data for Name: region; Type: TABLE DATA; Schema: public; Owner: pguser
 --
 
 COPY public.region (r_regionkey, r_name, r_comment) FROM stdin;
@@ -146,7 +146,7 @@ COPY public.region (r_regionkey, r_name, r_comment) FROM stdin;
 
 
 --
--- Data for Name: supplier; Type: TABLE DATA; Schema: public; Owner: citus
+-- Data for Name: supplier; Type: TABLE DATA; Schema: public; Owner: pguser
 --
 
 COPY public.supplier (su_suppkey, su_name, su_address, su_nationkey, su_phone, su_acctbal, su_comment) FROM stdin;
@@ -10154,7 +10154,7 @@ COPY public.supplier (su_suppkey, su_name, su_address, su_nationkey, su_phone, s
 
 
 --
--- Name: nation nation_pkey; Type: CONSTRAINT; Schema: public; Owner: citus
+-- Name: nation nation_pkey; Type: CONSTRAINT; Schema: public; Owner: pguser
 --
 
 ALTER TABLE ONLY public.nation
@@ -10162,7 +10162,7 @@ ALTER TABLE ONLY public.nation
 
 
 --
--- Name: region region_pkey; Type: CONSTRAINT; Schema: public; Owner: citus
+-- Name: region region_pkey; Type: CONSTRAINT; Schema: public; Owner: pguser
 --
 
 ALTER TABLE ONLY public.region
@@ -10170,7 +10170,7 @@ ALTER TABLE ONLY public.region
 
 
 --
--- Name: supplier supplier_pkey; Type: CONSTRAINT; Schema: public; Owner: citus
+-- Name: supplier supplier_pkey; Type: CONSTRAINT; Schema: public; Owner: pguser
 --
 
 ALTER TABLE ONLY public.supplier
@@ -10178,7 +10178,7 @@ ALTER TABLE ONLY public.supplier
 
 
 --
--- Name: nation nation_n_regionkey_fkey; Type: FK CONSTRAINT; Schema: public; Owner: citus
+-- Name: nation nation_n_regionkey_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pguser
 --
 
 ALTER TABLE ONLY public.nation
@@ -10186,7 +10186,7 @@ ALTER TABLE ONLY public.nation
 
 
 --
--- Name: supplier supplier_su_nationkey_fkey; Type: FK CONSTRAINT; Schema: public; Owner: citus
+-- Name: supplier supplier_su_nationkey_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pguser
 --
 
 ALTER TABLE ONLY public.supplier

@@ -46,3 +46,6 @@ echo ${ch_pid}
 kill ${ch_pid}
 
 sleep 30
+
+# filter and save the NOPM( new orders per minute) to a new file
+grep -oP '[0-9]+(?= NOPM)' ./results/run_${file_name}.log >> ${file_name}_NOPM.log

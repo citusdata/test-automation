@@ -81,7 +81,3 @@ ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/send_pubkey.sh $
 set +e
 ssh_execute ${driver_ip} "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name}"
 set -e
-
-# echo "run ./connect-driver.sh" 
-# echo "then from the driver node run:"
-# echo "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name}"

@@ -389,8 +389,8 @@ def start_ch_thread():
 
     size = len(ch_queries)
 
-    cur_index = random.randint(0, size-1)
-    
+#     cur_index = random.randint(0, size-1)
+    cur_index = 0
     while not is_terminated:
         cur_index += 1
         cur_index %= size
@@ -405,7 +405,7 @@ def send_query(query):
 
 
 def give_stats(sent_query_amount, time_lapsed_in_secs):
-    stat = "sent {} operations in {} seconds".format(sent_query_amount, time_lapsed_in_secs)
+    stat = "sent {} operations in {} seconds\n".format(sent_query_amount, time_lapsed_in_secs)
     print(stat)
 
     f = open("results/ch_results.txt", "a")

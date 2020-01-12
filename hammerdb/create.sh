@@ -39,7 +39,7 @@ branch_name=${branch_name:-HEAD}
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=$branch_name}
 
-az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH"
+az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
 
 end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.

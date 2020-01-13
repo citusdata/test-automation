@@ -7,6 +7,8 @@ set -e
 # echo commands
 set -x
 
+is_tpcc=true # set to true if you want tpcc to be run, otherwise set to false
+is_ch=true # set to true if you want ch benchmark to be run, otherwise set to false
 
 function cleanup {
     cd ${topdir}/azure
@@ -45,7 +47,10 @@ export topdir=${hammerdb_dir}/..
 
 cluster_rg=${RESOURCE_GROUP_NAME}
 
-branch_name=hammerdb
+# https://stackoverflow.com/questions/1593051/how-to-programmatically-determine-the-current-checked-out-git-branch
+branch_name=$(git symbolic-ref -q HEAD)
+branch_name=${branch_name##refs/heads/}
+branch_name=${branch_name:-HEAD}
 
 cd ${topdir}/hammerdb
 ./create.sh
@@ -79,5 +84,5 @@ chmod 600 ~/.ssh/known_hosts
 ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/send_pubkey.sh ${coordinator_private_ip}" 
 
 set +e
-ssh_execute ${driver_ip} "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name}"
+ssh_execute ${driver_ip} "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch}"
 set -e

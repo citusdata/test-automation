@@ -9,9 +9,12 @@ set -x
 
 coordinator_ip_address=$1
 file_name=$2
+is_tpcc=$3
+is_ch=$4
 
 CH_THREAD_COUNT=1
 RAMPUP_TIME=3
+DEFAULT_CH_RUNTIME_IN_SECS=1800
 
 cd ${HOME}/HammerDB-3.3
 
@@ -36,16 +39,22 @@ psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f tpcc-distribute-funcs.
 psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f vacuum-ch.sql
 psql -v "ON_ERROR_STOP=1" -h ${coordinator_ip_address} -f vacuum-tpcc.sql
 
-./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} >> results/ch_benchmarks.log &
-ch_pid=$!
-echo ${ch_pid}
+if [ $is_ch = true ] ; then
+    ./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} >> results/ch_benchmarks.log &
+    ch_pid=$!
+    echo ${ch_pid}
+fi
 
-# run hammerdb benchmark
-./hammerdbcli auto run.tcl | tee -a ./results/run_${file_name}.log
+if [ $is_tpcc = true ] ; then
+    # run hammerdb tpcc benchmark
+    ./hammerdbcli auto run.tcl | tee -a ./results/run_${file_name}.log
+    # filter and save the NOPM( new orders per minute) to a new file
+    grep -oP '[0-9]+(?= NOPM)' ./results/run_${file_name}.log >> ./results/${file_name}_NOPM.log
+else
+    sleep $DEFAULT_CH_RUNTIME_IN_SECS
+fi
 
-kill ${ch_pid}
-
-sleep 30
-
-# filter and save the NOPM( new orders per minute) to a new file
-grep -oP '[0-9]+(?= NOPM)' ./results/run_${file_name}.log >> ./results/${file_name}_NOPM.log
+if [ $is_ch = true ] ; then
+    kill ${ch_pid}
+    sleep 30
+fi

@@ -106,24 +106,35 @@ In order to run hammerdb benchmark:
 eval `ssh-agent -s`
 ssh-add
 EXPORT RESOURCE_GROUP_NAME=<your resource group name>
+EXPORT GIT_USERNAME=<Your github username>
+EXPORT GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens. 
 cd hammerdb
 ./create-run.sh # you should be in the branch that has the changes
 # you will be given a command to connect to the driver node and what
 # to run afterwards.
 ```
 
-Note that you should be connected to the driver node at the times it requires ssh keys.
-`./connect-driver.sh` uses shh-agent forwarding while sshing to the driver node.
-For example while cloning the enterprise repository at the beginning of each config file,
-your ssh keys are necessary so you should be connected at that time.
+**After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
 
 In order to see the process of the tests, from the driver node:
 
 ```bash
+./connect-driver.sh
 screen -r
 ```
 
+You can see the screen logs in `~/screenlog.0`.
+
 You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
+What files are pushed to github:
+
+* build.tcl (This is the configuration file used for building hammerdb tables)
+* run.tcl (This is the configuration file used for running hammerdb tpcc benchmark)
+* build_<config_file_name>.log (These are the outputs of building the hammerdb tables for the 'config_file_name')
+* run_<config_file_name>.log (These are the outputs of running hammerdb tpcc benchmark for the 'config_file_name')
+* ch_benchmarks.log (This is the log file that is generated from ch-benCHmark script)
+* ch_results.txt (This is the file that contains the results of ch benchmark, each config file's result is saved in a new line)
+* <config_file_name>.NOPM.log (These are the files that contains the NOPM for the given config file name.)
 
 In `fabfile/hammerdb_confs` you can:
 

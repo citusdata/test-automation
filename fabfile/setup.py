@@ -127,7 +127,7 @@ def common_setup(build_citus_func):
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
-    run('rm -r {}/* || true'.format(config.PG_LATEST))
+    run('rm -rf {}/* || true'.format(config.PG_LATEST))
 
     redhat_install_packages()
     build_postgres()

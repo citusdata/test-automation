@@ -8,7 +8,7 @@ set -e
 set -x
 
 is_tpcc=true # set to true if you want tpcc to be run, otherwise set to false
-is_ch=true # set to true if you want ch benchmark to be run, otherwise set to false
+is_ch=false # set to true if you want ch benchmark to be run, otherwise set to false
 
 function cleanup {
     cd ${topdir}/azure

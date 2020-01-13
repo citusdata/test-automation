@@ -23,4 +23,5 @@ do
   ${HOME}/test-automation/hammerdb/build-and-run.sh ${coordinator_private_ip} ${config_file} ${is_tpcc} ${is_ch}
 done
 
+cp -r ${HOME}/test-automation/fabfile/hammerdb_confs ${HOME}/HammerDB-3.3/results
 ${HOME}/test-automation/hammerdb/upload-results.sh ${branch_name}

@@ -17,18 +17,18 @@ diset tpcc pg_defaultdbase pguser
 #diset tpcc pg_superuserpass yourpasswordhere
 # if you change this, make sure to change tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
-diset tpcc pg_num_vu 180
-diset tpcc pg_count_ware 800
+diset tpcc pg_num_vu 50
+diset tpcc pg_count_ware 250
 diset tpcc pg_total_iterations 1000000
 diset tpcc pg_driver timed
 diset tpcc pg_rampup 3
-diset tpcc pg_duration 20
+diset tpcc pg_duration 10
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse false
 diset tpcc pg_keyandthink false
 loadscript
 print dict
-vuset vu 180
+vuset vu 50
 vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0

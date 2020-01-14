@@ -392,15 +392,15 @@ def start_ch_thread():
 #     cur_index = random.randint(0, size-1)
     cur_index = 0
     while not is_terminated:
+        send_query(ch_queries[cur_index])
+        sent_query_amount += 1
+        
         cur_index += 1
         cur_index %= size
 
-        send_query(ch_queries[cur_index])
-        sent_query_amount += 1
-
 def send_query(query):
     global coord_ip
-    pg = ['psql', '-h', coord_ip, '-c', query]
+    pg = ['psql', '-P', 'pager=off', '-h', coord_ip, '-c', query]
     subprocess.call(pg)
 
 
@@ -458,9 +458,10 @@ if __name__ == "__main__":
         j.start()
         
     killer = GracefulKiller()
+    f = open("results/ch_logs.txt", "a")
     while not killer.kill_now:
         time.sleep(10)
 
         now = get_curtime_in_seconds()
-        print("running ch benchmarks ... sent {} queries in {} seconds".format(sent_query_amount, now - start_time_in_secs))    
-
+        f.write("running ch benchmarks ... sent {} queries in {} seconds\n".format(sent_query_amount, now - start_time_in_secs))    
+    f.close()

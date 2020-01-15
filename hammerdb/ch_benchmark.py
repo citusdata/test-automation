@@ -392,7 +392,10 @@ def start_ch_thread():
 #     cur_index = random.randint(0, size-1)
     cur_index = 0
     while not is_terminated:
-        send_query(ch_queries[cur_index])
+        return_code = send_query(ch_queries[cur_index])
+        # if there was an error, we will retry the same query
+        if return_code != 0:
+             continue
         sent_query_amount += 1
         
         cur_index += 1
@@ -400,8 +403,10 @@ def start_ch_thread():
 
 def send_query(query):
     global coord_ip
-    pg = ['psql', '-P', 'pager=off', '-h', coord_ip, '-c', query]
-    subprocess.call(pg)
+    pg = ['psql', '-P', 'pager=off', '-v', 'ON_ERROR_STOP=1', '-h', coord_ip, '-c', query]
+    return subprocess.call(pg)
+    
+
 
 
 def give_stats(sent_query_amount, time_lapsed_in_secs):

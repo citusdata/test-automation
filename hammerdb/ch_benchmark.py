@@ -21,7 +21,6 @@ select   ol_number,
      avg(ol_amount) as avg_amount,
      count(*) as count_order
 from     order_line
-where     ol_delivery_d > '2015-01-02 00:00:00.000000'
 group by ol_number order by ol_number LIMIT 10;
     """,
 """
@@ -59,16 +58,13 @@ where      c_state like 'A%'
      and ol_w_id = o_w_id
      and ol_d_id = o_d_id
      and ol_o_id = o_id
-     and o_entry_d > '2015-01-02 00:00:00.000000'
 group by ol_o_id, ol_w_id, ol_d_id, o_entry_d
 order by revenue desc, o_entry_d LIMIT 10;
 """,
 """
 select    o_ol_cnt, count(*) as order_count
 from    orders
-where    o_entry_d >= '2015-01-02 00:00:00.000000'
-    and o_entry_d < '2020-01-02 00:00:00.000000'
-    and exists (select *
+    where exists (select *
             from order_line
             where o_id = ol_o_id
             and o_w_id = ol_w_id
@@ -94,16 +90,13 @@ where     c_id = o_c_id
      and su_nationkey = n_nationkey
      and n_regionkey = r_regionkey
      and r_name = 'Europe'
-     and o_entry_d >= '2015-01-02 00:00:00.000000'
 group by n_name
 order by revenue desc LIMIT 10;
 """,
 """
 select    sum(ol_amount) as revenue
 from order_line
-where ol_delivery_d >= '1999-01-01 00:00:00.000000'
-    and ol_delivery_d < '2020-01-01 00:00:00.000000'
-    and ol_quantity between 1 and 100000 LIMIT 10;
+where ol_quantity between 1 and 100000 LIMIT 10;
 """,
 """
 select     su_nationkey as supp_nation,
@@ -127,7 +120,6 @@ where     ol_supply_w_id = s_w_id
          or
         (n1.n_name = 'Cambodia' and n2.n_name = 'Germany')
          )
-     and ol_delivery_d between '2015-01-02 00:00:00.000000' and '2020-01-02 00:00:00.000000'
 group by su_nationkey, substr(c_state,1,1), extract(year from o_entry_d)
 order by su_nationkey, cust_nation, l_year LIMIT 10;
 """,
@@ -150,7 +142,6 @@ where     i_id = s_i_id
      and ol_i_id < 1000
      and r_name = 'Europe'
      and su_nationkey = n2.n_nationkey
-     and o_entry_d between '2015-01-02 00:00:00.000000' and '2020-01-02 00:00:00.000000'
      and i_data like '%b'
      and i_id = ol_i_id
 group by extract(year from o_entry_d)
@@ -180,7 +171,6 @@ where     c_id = o_c_id
      and ol_w_id = o_w_id
      and ol_d_id = o_d_id
      and ol_o_id = o_id
-     and o_entry_d >= '2015-01-02 00:00:00.000000'
      and o_entry_d <= ol_delivery_d
      and n_nationkey = ascii(substr(c_state,1,1))
 group by c_id, c_last, c_city, c_phone, n_name
@@ -210,7 +200,6 @@ where     ol_w_id = o_w_id
      and ol_d_id = o_d_id
      and ol_o_id = o_id
      and o_entry_d <= ol_delivery_d
-     and ol_delivery_d < '2020-01-01 00:00:00.000000'
 group by o_ol_cnt
 order by o_ol_cnt LIMIT 10;
 """,
@@ -229,8 +218,8 @@ order by custdist desc, c_count desc LIMIT 10;
 """
 select    100.00 * sum(case when i_data like 'PR%' then ol_amount else 0 end) / (1+sum(ol_amount)) as promo_revenue
 from order_line, item
-where ol_i_id = i_id and ol_delivery_d >= '2015-01-02 00:00:00.000000'
-    and ol_delivery_d < '2020-01-02 00:00:00.000000' LIMIT 10;
+where ol_i_id = i_id 
+    LIMIT 10;
 """,
 """
 with     revenue (supplier_no, total_revenue) as (
@@ -238,7 +227,6 @@ with     revenue (supplier_no, total_revenue) as (
         sum(ol_amount) as total_revenue
      from order_line, stock
         where ol_i_id = s_i_id and ol_supply_w_id = s_w_id
-        and ol_delivery_d >= '2015-01-02 00:00:00.000000'
      group by mod((s_w_id * s_i_id),10000))
 select     su_suppkey, su_name, su_address, su_phone, total_revenue
 from     supplier, revenue
@@ -321,7 +309,6 @@ where    su_suppkey in
                  from item
                  where i_data like 'co%')
              and ol_i_id=s_i_id
-             and ol_delivery_d > '2010-05-23 12:00:00'
         group by s_i_id, s_w_id, s_quantity
         having   2*s_quantity > sum(ol_quantity))
      and su_nationkey = n_nationkey

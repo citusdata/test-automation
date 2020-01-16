@@ -22,7 +22,7 @@ diset tpcc pg_count_ware 1000
 diset tpcc pg_total_iterations 1000000
 diset tpcc pg_driver timed
 diset tpcc pg_rampup 3
-diset tpcc pg_duration 20
+diset tpcc pg_duration 120
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false

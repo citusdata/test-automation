@@ -60,3 +60,5 @@ if [ $is_ch = true ] ; then
     kill ${ch_pid}
     sleep 30
 fi
+
+psql -h ${coordinator_ip_address} -f tables-total-size.sql >> ./results/table_total_size.out

@@ -144,18 +144,9 @@ export RESOURCE_GROUP_NAME=give_your_name_citus_test_automation_r_g
 cd azure
 
 # open and modify the instance types/discs as you wish
-#
-# Note: For valgrind tests, setting `numberOfWorkers` to a value is useless as it will be overwritten 
-# by create-resource-group.sh as we only need a single machine cluster.
-# This is because we will already be using our regression test structure and it creates a local cluster 
-# itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
-# PostgreSQL as we require `valgrind` on workers too and get error even if we do not need them :).
 less azuredeploy.parameters.json
 
 # Quickly start a cluster of with defaults. This will create a resource group and use it for the cluster.
-# 
-# Note: If you want to set up a cluster for valgrind tests, set environment variable "VALGRIND_TEST" to 1
-# before executing below script
 ./create-cluster.sh
 
 # connect to the coordinator
@@ -511,20 +502,30 @@ fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO
 ```
 
 ## <a name="valgrind"></a> Running Valgrind Tests
+
+To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
+
+```bash
+export VALGRIND_TEST=1
+```
+
+, which makes `numberOfWorkers` setting useless.
+This is because we will already be using our regression test structure and it creates a local cluster 
+itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
+PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
+
 On the coordinator node:
 
 ```bash
 # example usage:
 # Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
 fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+
 # Note: In ci, call run.valgrind task with 'in_tmux' parameter not to wait the tests to complete
-<<<<<<< HEAD
-# Example usage on ci
+# example usage on ci:
 fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux run.valgrind_put_success
-=======
 # example usage on ci:
 fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux
->>>>>>> fe6c2e0... f
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

@@ -29,7 +29,7 @@ read DEV __ <<< ${DEVS}
 mkfs.ext4 -F ${DEV}
 mv /home/${TARGET_USER}/ /tmp/home_copy
 mkdir -p /home/${TARGET_USER}
-mount ${DEV} /home/${TARGET_USER}/
+mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
 rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 # add the username to sudoers so that sudo command does not prompt password.

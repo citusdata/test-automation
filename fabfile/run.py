@@ -209,7 +209,7 @@ def filter_put_citus_valgrind_outputs(repo_path):
     # cd to directory that we performed valgrind(regression) tests
     os.chdir(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH))
 
-    # ship regression.diffs (if exists) to result file in order to push to github
+    # ship regression.diffs (if exists) to result folder in order to push to github
     if os.path.isfile(config.REGRESSION_DIFFS_FILE):
         run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, config.RESULTS_DIRECTORY))
 
@@ -263,6 +263,12 @@ def valgrind(*args):
         with settings(warn_only=True):
             valgrind_test_command = 'make check-multi-vg valgrind-log-file=$VALGRIND_LOGS_FILE'
             
+            # wrap the command with tee to log stdout & stderr to a file in results directory as well
+            # this is done to ensure that valgrind test is actually finished
+            valgrind_test_out_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_TEST_OUT_FILE)
+            
+            valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
+                        
             # wrap it with tmux
             if config.settings[config.IN_TMUX]:
                 valgrind_test_command = "tmux new -d '{}'".format(valgrind_test_command)

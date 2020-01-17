@@ -20,6 +20,7 @@ BUILD_CITUS_FUNC = 'build_citus_func'
 IN_TMUX = 'in_tmux'
 
 # valgrind test variables
+VALGRIND_TEST_OUT_FILE = 'valgrind_test_out.txt'
 VALGRIND_LOGS_FILE = 'valgrind_test_log.txt'
 REGRESSION_DIFFS_FILE = 'regression.diffs'
 CITUS_RELATED_VALGRIND_LOG_FILE = 'valgrind_test_log_citus.txt'

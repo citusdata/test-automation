@@ -57,7 +57,7 @@ else
 fi
 
 if [ $is_ch = true ] ; then
-    kill -9 ${ch_pid}
+    kill ${ch_pid}
     sleep 30
 fi
 

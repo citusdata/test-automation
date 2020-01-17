@@ -13,6 +13,8 @@ branch_name=$3
 is_tpcc=$4
 is_ch=$5
 
+
+echo "\pset pager off" >> ~/.psqlrc
 ${HOME}/test-automation/hammerdb/setup.sh ${coordinator_private_ip} ${branch_name}
 for config_file in "${HOME}/test-automation/fabfile/hammerdb_confs"/*
 do

@@ -15,7 +15,7 @@ def start():
 
     with cd(config.PG_LATEST):
         # "set -m" spawns postgres in a new process group so it runs in the background
-        run('set -m; bin/pg_ctl -D data -l logfile start')
+        run('set -m; bin/pg_ctl --timeout=1000 -D data -l logfile start')
 
 
 @task

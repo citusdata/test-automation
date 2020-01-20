@@ -10,6 +10,7 @@ set -x
 
 coordinator_ip_address=$1
 rg_name=$2
+username=$3
 
 driverdir="${0%/*}"
 cd ${driverdir}
@@ -18,6 +19,7 @@ hammerdb_dir=${HOME}/HammerDB-3.3
 
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" build.tcl
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" run.tcl
+sed -i "s/replace_with_username/${username}/g" sql/ch-benchmark-tables.sql
 
 cp build.tcl ${hammerdb_dir}/
 cp run.tcl ${hammerdb_dir}/

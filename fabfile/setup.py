@@ -91,6 +91,7 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
     execute(set_hammerdb_config, config_parser, driver_ip)
 
 @task
+@parallel
 def set_hammerdb_config(config_parser, driver_ip):
     total_mem_in_gb = total_memory_in_gb()
     mem_mib = total_mem_in_gb * 1024

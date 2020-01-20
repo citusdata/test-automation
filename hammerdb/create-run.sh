@@ -9,6 +9,7 @@ set -x
 
 is_tpcc=true # set to true if you want tpcc to be run, otherwise set to false
 is_ch=false # set to true if you want ch benchmark to be run, otherwise set to false
+username=pguser # username of the database
 
 function cleanup {
     cd ${topdir}/azure
@@ -84,5 +85,5 @@ chmod 600 ~/.ssh/known_hosts
 ssh_execute ${driver_ip} "/home/pguser/test-automation/hammerdb/send_pubkey.sh ${coordinator_private_ip}" 
 
 set +e
-ssh_execute ${driver_ip} "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch}"
+ssh_execute ${driver_ip} "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username}"
 set -e

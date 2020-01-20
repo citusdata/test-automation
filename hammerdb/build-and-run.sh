@@ -11,10 +11,16 @@ coordinator_ip_address=$1
 file_name=$2
 is_tpcc=$3
 is_ch=$4
+username=$5
 
 CH_THREAD_COUNT=1
 RAMPUP_TIME=3
 DEFAULT_CH_RUNTIME_IN_SECS=1800
+
+
+
+export PGUSER=${username}
+export PGDATABASE=${username}
 
 cd ${HOME}/HammerDB-3.3
 

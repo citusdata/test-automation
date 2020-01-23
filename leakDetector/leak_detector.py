@@ -15,7 +15,7 @@ def get_memory_usage_of_process(pid):
     return total_memory
 
 def monitor_memory_usage_of_process(pid, time_in_secs):
-    f = open('memory_usage_{}'.format(pid), 'a')
+    f = open('memory_usage_{}.out'.format(pid), 'a')
 
     start_in_secs = get_curtime_in_seconds()
     passed_time_in_secs  = 0 

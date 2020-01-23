@@ -7,6 +7,7 @@ import os
 from threading import Thread
 
 MONITOR_INTERVAL_IN_SECS = 20
+MONITOR_TIME_IN_SECS = 200
 
 def get_memory_usage_of_process(pid):
     ps = subprocess.Popen(('pmap', str(pid)), stdout=subprocess.PIPE)
@@ -64,16 +65,15 @@ def pgbench(port, file, thread_count, time):
 if __name__ == '__main__':
 
     coordinator_port = sys.argv[1]
-    init_file = sys.argv[2]
-    query_file = sys.argv[3]
-    time_in_secs = 200
-
+    worker_port = sys.argv[2]
+    init_file = sys.argv[3]
+    query_file = sys.argv[4]
 
 
     psql(coordinator_port, init_file)
-    psql_pid = psql_background(coordinator_port, query_file)
+    psql_pid = psql_background(worker_port, query_file)
 
-    monitor_thread = Thread(target= monitor_memory_usage_of_process, args= (psql_pid, time_in_secs ))
+    monitor_thread = Thread(target= monitor_memory_usage_of_process, args= (psql_pid, MONITOR_TIME_IN_SECS ))
     monitor_thread.start()
 
     # pgbench(coordinator_port, query_file, 1, time_in_secs)

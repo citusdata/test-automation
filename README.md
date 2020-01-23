@@ -517,15 +517,23 @@ PostgreSQL as we require `valgrind` on workers and get error even if we do not n
 On the coordinator node:
 
 ```bash
-# example usage:
-# Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
+# an example usage: Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
 fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+```
 
-# Note: In ci, call run.valgrind task with 'in_tmux' parameter not to wait the tests to complete
-# example usage on ci:
-fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux run.valgrind_put_success
-# example usage on ci:
-fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux
+However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
+```bash
+sudo yum install tmux
+tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
+```
+
+After the tests are finished (takes up to 12 hours with default coordinator size), re-connect to the coordinator.
+Result can be found under `$HOME/results` directory.
+
+To push the results to `release_test_results` repository, run the below command in coordinator node:
+
+```bash
+sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
 ```
 
 ## <a name="fab-examples"></a> Example fab Commands

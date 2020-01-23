@@ -28,7 +28,8 @@ def citus(*args):
     config.settings[config.REPO_PATH] = config.CITUS_REPO
     config.settings[config.BUILD_CITUS_FUNC] = setup.build_citus
 
-    path = config.CITUS_REPO
+    # check if we can clone citus successfully, then remove it
+    path = "/tmp/tmp_citus"
     local('rm -rf {} || true'.format(path))
     local('git clone -q https://github.com/citusdata/citus.git {}'.format(path))
     with lcd(path):
@@ -53,7 +54,8 @@ def enterprise(*args):
     config.settings[config.REPO_PATH] = config.ENTERPRISE_REPO
     config.settings[config.BUILD_CITUS_FUNC] = setup.build_enterprise
 
-    path = config.ENTERPRISE_REPO
+    # check if we can clone citus successfully, then remove it
+    path = "/tmp/tmp_citus"
     local('rm -rf {} || true'.format(path))
     local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
     with lcd(path):

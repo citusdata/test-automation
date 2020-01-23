@@ -51,6 +51,7 @@ jobs:
   valgrind-test:
     docker:
       - image: buildpack-deps:trusty
+
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install
@@ -67,6 +68,7 @@ jobs:
   finalize-valgrind-test:
     docker:
       - image: buildpack-deps:trusty
+
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install
@@ -74,7 +76,7 @@ jobs:
       - checkout
       - run:
           command: |
-            cd ../results
+            cd ./azure
             ./add-sshkey.sh
             ./finalize-valgrind-test.sh
           name: install dependencies and run valgrind tests
@@ -119,11 +121,11 @@ workflows:
     jobs:
       - valgrind-test
 
-  # push valgrind test results and terminate the machine 16 hours after valgrind test (every monday at 17:00)
+  # push valgrind test results and terminate the machine 13 hours after valgrind test (every monday at 14:00)
   weekly-valgrind-finalize:
     triggers:
       - schedule:
-          cron: "0 17 * * 1"
+          cron: "0 14 * * 1"
           filters:
             branches:
               only:

@@ -24,13 +24,19 @@ fi
 
 # If running valgrind tests, do not run cleanup function
 # This is because, as valgrind tests requires too much time to run,
-# we start valgrind tests in a tmux session in ci. Hence ssh session 
+# we start valgrind tests via nohup in ci. Hence ssh session 
 # will immediately be closed just after the fabric command is run
 #
 # We have a seperate job to terminate the machine and push the results
 if [ "$rg_name" = "citusbot_valgrind_test_resource_group" ]; then
-    fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:in_tmux
-    exit 0
-fi 
+    nohup fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind > /dev/null 2>&1 &
 
-sh "${HOME}"/test-automation/azure/push-results.sh "$1"
+    # wait for cloning to end
+    while ! test -d "$HOME/citus-enterprise";
+    do
+        echo "Wait until citus is cloned completely ...";
+        sleep 60; 
+    done
+else
+    sh "${HOME}"/test-automation/azure/push-results.sh "$1";
+fi 

@@ -14,14 +14,18 @@ function cleanup {
 rg=$1
 export RESOURCE_GROUP_NAME=${rg}
 
-# If running valgrind tests, do not run cleanup function
-# This is because, as valgrind tests requires too much time to run,
-# we start valgrind tests in a tmux session in ci. Hence ssh session 
-# will immediately be closed just after the fabric command is run
-#
-# We have a seperate job to terminate the machine and push the results
 if [ "$rg" != "citusbot_valgrind_test_resource_group" ]; then
+    # If running valgrind tests, do not run cleanup function
+    # This is because, as valgrind tests requires too much time to run,
+    # we start valgrind tests via nohup in ci. Hence ssh session 
+    # will immediately be closed just after the fabric command is run
+    #
+    # We have a seperate job to terminate the machine and push the results
     trap cleanup EXIT
+else
+    # If running valgrind tests, export VALGRIND_TEST to be 1 to ensure
+    # only coordinator instance is created in create-cluster script
+    export VALGRIND_TEST=1
 fi 
 
 ./create-cluster.sh
@@ -37,7 +41,8 @@ sh ./delete-security-rule.sh
 
 echo "adding public ip to known hosts in remote"
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"
-echo "running tests in remote"
-# ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
-ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "source ~/.bash_profile;/home/pguser/test-automation/azure/run-all-tests.sh ${rg}"
 
+echo "running tests in remote"
+
+# ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
+ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} "source ~/.bash_profile;/home/pguser/test-automation/azure/run-all-tests.sh ${rg};"

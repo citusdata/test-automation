@@ -43,10 +43,6 @@ def tpch():
 
 @task
 def valgrind():
-    # install tmux as well if specified
-    if config.settings[config.IN_TMUX]:
-        config.VALGRIND_REQUIRED_PACKAGES.append('tmux')
-
     # prepare yum install command
     install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
 
@@ -55,6 +51,7 @@ def valgrind():
 
     # create results directory to put resulting log files there
     # (for pushing them to results repository)
+    utils.rmdir(config.RESULTS_DIRECTORY, force=True)
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
     # set build citus function

@@ -6,10 +6,13 @@ import random
 
 TABLE_PREFIX = "table"
 SYNC_METADA_SQL = "select start_metadata_sync_to_node(nodename, nodeport) from pg_dist_node;"
+# This is the table definition in init.sql
 CREATE_TABLE = "CREATE TABLE {}(a int, b int);"
+# This is how the tables will be distributed
 DISTRIBUTE_TABLE = "SELECT create_distributed_table('{}', 'a');"
 INSERT_INTO_TABLE = "INSERT INTO {} SELECT *,* FROM generate_series(1, {});"
 
+# settings that will be written to the beginning of init.sql
 SETTINGS = [
     "citus.replication_model TO 'streaming'",
     "citus.shard_count TO 128"
@@ -17,11 +20,15 @@ SETTINGS = [
 SETTING_STRING = "set {};"
 
 MAX_QUERY_PER_PROCEDURE = 300
+# Maximum procedure call amount in the generated query.sql
 MAX_CALL_AMOUNT = 100000
-MIN_TABLE_SIZE = 1000
-MAX_TABLE_SIZE = 1000000
+MIN_TABLE_ROWS = 1000
+MAX_TABLE_ROWS = 1000000
+# REPEAT_AMOUNT is how many times a call is repeated consequtively
 REPEAT_AMOUNT = 7
+# number of procedures
 PROCEDURE_COUNT = 5
+# number of tables
 TABLE_COUNT = 5
 
 PROCEDURE_PREFIX = "CREATE OR REPLACE PROCEDURE p_{}(id int) LANGUAGE plpgsql AS $fn$ \nBEGIN"
@@ -33,6 +40,7 @@ $fn$;
 PROCEDURE_CALL_SQL = "CALL p_{}({});"
 CREATE_FUNCTION = "select create_distributed_function('p_{}(INTEGER)', 'id');"
 
+# Queries that are used to generate procedures, each procedure line is chosen ramdomly from this list.
 QUERIES = [
     "PERFORM count(*) FROM {} WHERE a = id;",
     "PERFORM count(*) FROM {} WHERE a = id AND false;",
@@ -66,7 +74,7 @@ def generate_tables(table_count, file):
     write_to_newline(file, "")
 
     for table_name in table_names:
-        table_size = random.randint(MIN_TABLE_SIZE, MAX_TABLE_SIZE)
+        table_size = random.randint(MIN_TABLE_ROWS, MAX_TABLE_ROWS)
         insert_sql = INSERT_INTO_TABLE.format(table_name, table_size)
         write_to_newline(file, insert_sql)
         #psql(coordinator_port, insert_sql)    

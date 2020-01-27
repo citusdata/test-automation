@@ -105,7 +105,7 @@ You can find more information about every step below in other categories. This l
     # List your subscriptions
     az account list
     # Pick the correct one from the list and run
-    az account --set subscription {uuid-of-correct-subscription}
+    az account set --subscription {uuid-of-correct-subscription}
     ```
 
 4. You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.

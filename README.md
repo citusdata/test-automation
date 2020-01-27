@@ -68,7 +68,7 @@ You can find your test results in https://github.com/citusdata/release-test-resu
 By default the tests will be run against `enterprise-master` and the latest released version. If you want to test on a custom branch you should change the config files of relevant tests with your custom branch name in:
 
 ```text
-postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.1')]
+postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.2')]
 ```
 
 You can change all the settings in these files, the config files for tests are located at:

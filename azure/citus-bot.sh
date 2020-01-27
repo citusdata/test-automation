@@ -7,6 +7,9 @@ set -e
 # echo commands
 set -x
 
+# ssh_execute tries to send the given command over the given connection multiple times.
+# Before sending the command it deletes the security rule on azure. Sometimes the rule
+# comes back too quick, so we get a timeout, that is why we try multiple times.
 ssh_execute() {
    ip=$1
    shift;

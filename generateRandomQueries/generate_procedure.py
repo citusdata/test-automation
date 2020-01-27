@@ -102,7 +102,7 @@ def generate_procedures(procedure_count, table_names, file):
 def generate_procedure_calls(procedure_count, file):
     call_amount = random.randint(1, MAX_CALL_AMOUNT)
     for i in range (0, call_amount):
-        value = random.randint(1, 100)
+        value = random.randint(0, MAX_TABLE_ROWS-1)
         procedure_index = random.randint(0, procedure_count-1)
         current_call = PROCEDURE_CALL_SQL.format(procedure_index, value)
         for i in range(0, REPEAT_AMOUNT):

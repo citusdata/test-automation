@@ -127,7 +127,8 @@
         "subnetPrefix": "10.192.0.0/24",
         "publicIPAddressType": "Static",
         "publicIPAddressName": "citusPublicIP",
-        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]"
+        "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]",
+        "ppgName": "citusPPG"
     },
     "resources": [
         {
@@ -156,6 +157,15 @@
                     },
                     "keySource": "Microsoft.Storage"
                 }
+            }
+        },
+        {
+            "apiVersion": "2019-03-01",
+            "type": "Microsoft.Compute/proximityPlacementGroups",
+            "name": "[variables('ppgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                
             }
         },
         {
@@ -288,17 +298,21 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2018-06-01",
             "name": "[concat(parameters('clusterName'), 'vm', copyIndex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "nicLoop",
+                "[concat('Microsoft.Compute/proximityPlacementGroups/', variables('ppgName'))]",
                 "[resourceId('Microsoft.Compute/disks/', concat(parameters('clusterName'), 'datadisk', copyIndex()))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[if(equals(copyindex(),0), parameters('coordinatorVmSize'), parameters('workerVmSize'))]"
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppgName'))]"
                 },
                 "osProfile": {
                     "computerName": "[concat(parameters('clusterName'), 'vm', copyIndex())]",

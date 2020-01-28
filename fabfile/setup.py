@@ -56,6 +56,7 @@ def valgrind():
     execute(add_workers)
 
 @task
+@roles('master')
 def enterprise():
     'Installs the enterprise version of Citus'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)

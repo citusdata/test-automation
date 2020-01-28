@@ -20,18 +20,20 @@ public class JDBCReleaseTest {
 		}
 
 		prep_test(args[0]);
+		test_no_1(args[0]);
 		test_no_2(args[0]);
 		test_no_3(args[0]);
 		test_no_4(args[0]);
 		test_no_6(args[0]);
-		test_no_7(args[0]);
+		//test_no_7(args[0]);
+		test_no_1(args[0]);
 		test_no_2(args[0]);
 		test_no_3(args[0]);
 		test_no_4(args[0]);
 		test_no_6(args[0]);
-		test_no_7(args[0]);
+		//test_no_7(args[0]);
 		simplePreparedTest1(args[0]);
-		simplePreparedTest2(args[0]);
+		simplePreparedTest2(args[0], args[1]);
 		simplePreparedTest3(args[0]);
 		simplePreparedTest4(args[0]);
 	}
@@ -111,8 +113,6 @@ public class JDBCReleaseTest {
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");
 
 		System.out.println("For real now");
-
-
 
 		large_table_shard_count = "20";
 		task_executor_type = "real-time";
@@ -255,7 +255,7 @@ public class JDBCReleaseTest {
 	}
 
 
-	static void simplePreparedTest2(String task_executor_type) throws SQLException
+	static void simplePreparedTest2(String task_executor_type, String distribution_type) throws SQLException
 	{
 		Connection db = DriverManager.getConnection(url, "pdube", "");
 		Statement stmt = db.createStatement();
@@ -263,7 +263,11 @@ public class JDBCReleaseTest {
 		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
-		PreparedStatement st = db.prepareStatement("insert into orders values ('')");
+		if (distribution_type.equals("append"))
+		{
+			stmt.executeUpdate("copy orders from program 'echo 1, 1,''a'', 1.0, ''2019-01-01'', ''a'', ''a'', 1, ''a''' with csv");
+		}
+		PreparedStatement st = db.prepareStatement("insert into orders values (1, 1, 'a', 1.0, '2019-01-01', 'a', 'a', 1, 'a')");
 		PreparedStatement st2 = db.prepareStatement("SELECT sum(o_totalprice) from orders where o_orderkey::text like '%88'");
 
 		for (int i = 0; i < 3; ++i)

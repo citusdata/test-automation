@@ -21,6 +21,6 @@ do psql -d postgres -p 9700 -c "\COPY ${tbl%.tbl.*} FROM '$tbl' WITH DELIMITER '
 done
 popd
 
-CLASSPATH=jdbc/postgresql-42.2.6.jar:jdbc java JDBCReleaseTest $executor > ${type}_${executor}
+CLASSPATH=jdbc/postgresql-42.2.6.jar:jdbc java JDBCReleaseTest $executor $type > ${type}_${executor}
 done
 done

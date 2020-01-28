@@ -43,7 +43,7 @@ def enterprise(*args):
 
     path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))
-    local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
+    local('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(path))
     with lcd(path):
         local('git checkout {}'.format(git_ref))
     local('rm -rf {} || true'.format(path))

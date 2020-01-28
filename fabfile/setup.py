@@ -215,7 +215,7 @@ def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.ENTERPRISE_REPO
     utils.rmdir(repo, force=True)
-    run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
+    run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
         run('git checkout {}'.format(git_ref))

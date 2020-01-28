@@ -109,26 +109,26 @@ workflows:
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
 
-  # perform weekly valgrind test on azure every monday at 01:00
+  # perform weekly valgrind test on azure every monday
   weekly-valgrind:
     triggers:
       - schedule:
-          cron: "0 1 * * 1"
+          cron: "0 11 * * 1"
           filters:
             branches:
               only:
-                - master
+                - valgrind-test
     jobs:
       - valgrind-test
 
-  # push valgrind test results and terminate the machine 13 hours after valgrind test (every monday at 14:00)
+  # push valgrind test results and terminate the machine 13 hours after valgrind test
   weekly-valgrind-finalize:
     triggers:
       - schedule:
-          cron: "0 14 * * 1"
+          cron: "0 0 * * 2"
           filters:
             branches:
               only:
-                - master
+                - valgrind-test
     jobs:
       - finalize-valgrind-test

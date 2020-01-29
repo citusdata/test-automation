@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "numberOfWorkers": {
-            "value": 2
+            "value": 15
         },
         "diskType": {
             "value": "Premium_LRS"
@@ -13,6 +13,9 @@
         },
         "workerVmSize": {
             "value": "Standard_E16s_v3"
+        },
+        "driverVmSize": {
+            "value": "Standard_D64s_v3"
         },
         "coordinatorDiskSizeGB": {
             "value": 2512

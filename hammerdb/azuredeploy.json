@@ -85,6 +85,31 @@
                 "description": "The instance type to use for coordinator"
             }
         },
+        "driverVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D64s_v3",
+            "allowedValues": [
+                "Standard_D2s_v3",
+                "Standard_D4s_v3",
+                "Standard_D8s_v3",
+                "Standard_D16s_v3",
+                "Standard_D32s_v3",
+                "Standard_D48s_v3",
+                "Standard_D64s_v3",
+                "Standard_E2s_v3",
+                "Standard_E4s_v3",
+                "Standard_E8s_v3",
+                "Standard_E16s_v3",
+                "Standard_E20s_v3",
+                "Standard_E32s_v3",
+                "Standard_E48s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
+            ],
+            "metadata": {
+                "description": "The instance type to use for coordinator"
+            }
+        },
         "coordinatorDiskSizeGB": {
             "defaultValue": 512,
             "minValue": 10,
@@ -320,7 +345,7 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[if(equals(copyindex(),0), parameters('coordinatorVmSize'), parameters('workerVmSize'))]"
+                    "vmSize": "[if(equals(copyindex(),0), parameters('coordinatorVmSize'), if(equals(copyindex(), variables('driverNodeIndex') ), parameters('driverVmSize'), parameters('workerVmSize')) )]"
                 },
                 "proximityPlacementGroup": {
                     "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppgName'))]"

@@ -284,7 +284,7 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2017-06-01",
             "name": "[concat(parameters('clusterName'),'nic', copyindex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -293,6 +293,7 @@
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
             ],
             "properties": {
+                "enableAcceleratedNetworking": true,
                 "ipConfigurations": [
                     {
                         "name": "[concat(parameters('clusterName'),'ip', copyindex())]",

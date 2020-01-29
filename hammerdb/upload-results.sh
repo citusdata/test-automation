@@ -15,6 +15,8 @@ cd ${hammerdb_dir}
 cp build.tcl ./results
 cp run.tcl ./results
 
+cp -r ${HOME}/test-automation/hammerdb ./results/hammerdb
+
 cd $HOME
 
 # add github to known hosts

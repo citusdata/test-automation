@@ -503,6 +503,45 @@ fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO
 
 ## <a name="valgrind"></a> Running Valgrind Tests
 
+TL;DR
+
+```bash
+# 1 # start valgrind test
+
+# create valgrind instance to run
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+export VALGRIND_TEST=1
+cd azure
+./create-cluster.sh
+
+# connect to coordinator
+./connect.sh
+
+# run fab command in coordinator in a detachable session
+sudo yum install tmux
+tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
+
+# simply exit from coordinator after detaching
+
+# 2 # finalize valgrind test
+
+# reconnect to coordinator after 13 hours (if you preferred default coordinator configuration)
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+./connect.sh
+
+# run push results script
+cd test-automation/azure
+./push-results.sh <branch name you prefer to push results>
+
+# simply exit from coordinator after pushing the results
+
+# delete resource group finally
+cd azure
+./delete-resource-group.sh
+```
+
+DETAILS:
+
 To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
 
 ```bash
@@ -535,6 +574,8 @@ To push the results to `release_test_results` repository, run the below command 
 ```bash
 sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
 ```
+
+Finally, delete your resource group.
 
 ## <a name="fab-examples"></a> Example fab Commands
 

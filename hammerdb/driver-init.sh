@@ -51,9 +51,6 @@ echo 'if test "$SSH_AUTH_SOCK" ; then' >> ${HOME}/.ssh/rc
 echo 'ln -sf $SSH_AUTH_SOCK ${HOME}/.ssh/ssh_auth_sock' >> ${HOME}/.ssh/rc
 echo 'fi' >> ${HOME}/.ssh/rc
 
-wget "https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux.tar.gz"
-tar -zxvf HammerDB-3.3-Linux.tar.gz
-
 # generate public key and add it to authorized keys so that sshing localhost does not ask password
 echo | ssh-keygen -P "" -t rsa
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys

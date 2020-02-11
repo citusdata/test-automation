@@ -435,7 +435,7 @@ if __name__ == "__main__":
 
     thread_count = int(sys.argv[1])
     coord_ip = sys.argv[2]
-    initial_sleep_in_mins=int(sys.argv[3])
+    initial_sleep_in_mins=int(sys.argv[3]) * 60000
     
     save_pid_to_file()
     jobs = []

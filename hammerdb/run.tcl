@@ -31,7 +31,7 @@ vuset logtotemp 1
 vuset showoutput 0
 vuset unique 1
 vuset delay 100
-vuset repeat 0
+vuset repeat 1
 vurun
 wait_to_complete
 vwait forever

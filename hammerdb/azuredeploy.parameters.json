@@ -18,7 +18,7 @@
             "value": "Standard_D64s_v3"
         },
         "coordinatorDiskSizeGB": {
-            "value": 4500
+            "value": 250
         },
         "workerDiskSizeGB": {
             "value": 2512

@@ -53,7 +53,7 @@ psql -v "ON_ERROR_STOP=1" "${connection_string}" -f vacuum-tpcc.sql
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f do-checkpoint.sql
 
 if [ $is_ch = true ] ; then
-    ./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} >> results/ch_benchmarks.log &
+    ./ch_benchmark.py ${CH_THREAD_COUNT} ${coordinator_ip_address} ${RAMPUP_TIME} ${file_name} >> results/ch_benchmarks.log &
     ch_pid=$!
     echo ${ch_pid}
 fi

@@ -470,8 +470,9 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     all_start_indexes = [i for i in range(0, len(ch_queries))]
-    start_indexes = random.choices(all_start_indexes, k = thread_count) 
-
+    random.shuffle(all_start_indexes) 
+    start_indexes = all_start_indexes[:thread_count]
+    
     save_pid_to_file()
     jobs = []
     for i in range(0, thread_count):

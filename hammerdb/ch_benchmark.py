@@ -383,6 +383,8 @@ sent_query_amount = 0
 is_terminated = False
 file_suffix="0"
 
+RANDOM_SEED = 123 
+
 
 def save_pid_to_file():
     my_pid = str(os.getpid())
@@ -393,15 +395,14 @@ def save_pid_to_file():
     f_pid.write(my_pid)
     f_pid.close()
 
-def start_ch_thread():
+def start_ch_thread(start_index):
     global sent_query_amount
     global ch_queries
     global is_terminated
 
     size = len(ch_queries)
 
-#     cur_index = random.randint(0, size-1)
-    cur_index = 0
+    cur_index = start_index
     while not is_terminated:
         return_code = send_query(ch_queries[cur_index],cur_index)
         # if there was an error, we will retry the same query
@@ -466,10 +467,15 @@ if __name__ == "__main__":
     initial_sleep_in_mins=int(sys.argv[3])
     file_suffix=sys.argv[4]
     
+    random.seed(RANDOM_SEED)
+
+    all_start_indexes = [i for i in range(0, len(ch_queries))]
+    start_indexes = random.choices(all_start_indexes, k = thread_count) 
+
     save_pid_to_file()
     jobs = []
     for i in range(0, thread_count):
-        thread = Thread(target = start_ch_thread)
+        thread = Thread(target = start_ch_thread, args=(start_indexes[i], ))
         jobs.append(thread)
 
     sleep(initial_sleep_in_mins * 60)

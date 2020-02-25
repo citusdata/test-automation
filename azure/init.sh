@@ -29,7 +29,7 @@ read DEV __ <<< ${DEVS}
 mkfs.ext4 -F ${DEV}
 mv /home/${TARGET_USER}/ /tmp/home_copy
 mkdir -p /home/${TARGET_USER}
-mount ${DEV} /home/${TARGET_USER}/
+mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
 rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 
@@ -62,6 +62,13 @@ su --login ${TARGET_USER} <<'EOSU'
   echo | ssh-keygen -P "" -t rsa
   cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
   chmod 600 ~/.ssh/authorized_keys
+
+  # https://gist.github.com/martijnvermaat/8070533
+  echo "setenv SSH_AUTH_SOCK ${HOME}/.ssh/ssh_auth_sock" > ${HOME}/.screenrc
+  echo 'if test "$SSH_AUTH_SOCK" ; then' >> ${HOME}/.ssh/rc
+  echo 'ln -sf $SSH_AUTH_SOCK ${HOME}/.ssh/ssh_auth_sock' >> ${HOME}/.ssh/rc
+  echo 'fi' >> ${HOME}/.ssh/rc
+
 EOSU
 
 find_private_ips() {
@@ -89,6 +96,7 @@ find_private_ips() {
   export AZURE_STORAGE_ACCOUNT=$3
   export AZURE_STORAGE_KEY=$4
 
+
   if [ $NODE_ID -eq 0 ]; then
     echo configuring coordinator >>$LOGS
   else
@@ -104,6 +112,7 @@ find_private_ips() {
   az storage container create --name $CONTAINER_NAME
   az storage blob upload --container-name $CONTAINER_NAME --file /home/log/logs.txt --name logs.txt
   az storage blob upload --container-name $CONTAINER_NAME --file /home/log/ip_address --name ip_address
+  az storage blob upload --container-name $CONTAINER_NAME --file /home/${TARGET_USER}/.ssh/id_rsa.pub --name public_key
 
   az storage blob list --container-name $CONTAINER_NAME >/home/log/list.txt
 
@@ -119,6 +128,24 @@ find_private_ips() {
       echo found >>$LOGS
       az storage blob download --container-name node-$i --name ip_address --file /home/log/node-$i-ip-address
       cat /home/log/node-$i-ip-address >>/home/${TARGET_USER}/test-automation/worker-instances
+      i=$(expr $i + 1)
+    else
+      echo sleeping 5 seconds >>$LOGS
+      sleep 5
+    fi
+
+  done
+
+  # collect all node's public keys
+  i=0
+  while [ $i -lt $NODE_COUNT ]; do
+    echo checking if node-$i is up >>$LOGS
+    exists=$(az storage blob exists --container-name node-$i --name public_key -o tsv)
+    echo check result = $exists >>$LOGS
+    if [ "$exists" = True ]; then
+      echo found >>$LOGS
+      az storage blob download --container-name node-$i --name public_key --file /home/log/node-$i-public_key
+      cat /home/log/node-$i-public_key >>/home/${TARGET_USER}/.ssh/authorized_keys
       i=$(expr $i + 1)
     else
       echo sleeping 5 seconds >>$LOGS

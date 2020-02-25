@@ -5,6 +5,8 @@ Ideally you can run `fab setup.tpch`, for example, and immdiately start running 
 queries.
 '''
 import os.path
+import os
+import math
 
 from fabric.api import (
     env, cd, hide, roles, task, parallel, execute, run,
@@ -15,11 +17,13 @@ from fabric.contrib.files import exists
 
 import utils
 import config
+import ConfigParser
 import pg
 import add
+import use
 import prefix
 
-__all__ = ["basic_testing", "tpch", "valgrind", "enterprise"]
+__all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
 @task
 @roles('master')
@@ -53,7 +57,7 @@ def valgrind():
     config.PG_CONFIGURE_FLAGS.append('--enable-debug')
 
     execute(common_setup, build_citus)
-    execute(add_workers)
+    execute(add_workers)    
 
 @task
 @roles('master')
@@ -64,6 +68,60 @@ def enterprise():
     execute(common_setup, build_enterprise)
     execute(add_workers)
 
+@task
+@roles('master')
+def hammerdb(config_file='hammerdb.ini', driver_ip=''):
+
+    config_parser = ConfigParser.ConfigParser()
+
+    config_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/hammerdb_confs", config_file)
+    config_parser.read(config_path)
+
+    use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
+    pg_version, citus_version = eval(config_parser.get('DEFAULT', 'postgres_citus_version'))
+    # create database for the given citus and pg versions
+    if use_enterprise == 'on':
+        execute(use.postgres, pg_version)
+        execute(use.enterprise, citus_version)
+        enterprise()
+    else:
+        execute(use.postgres, pg_version)
+        execute(use.citus, citus_version)
+        basic_testing()
+
+    execute(set_hammerdb_config, config_parser, driver_ip)
+
+@task
+@parallel
+def set_hammerdb_config(config_parser, driver_ip):
+    total_mem_in_gb = total_memory_in_gb()
+    mem_mib = total_mem_in_gb * 1024
+
+    shared_buffers_mib = int(0.25 * mem_mib)
+    effective_cache_size_mib = int(mem_mib - shared_buffers_mib)
+    maintenance_work_mem_mib = int(82.5 * math.log(total_mem_in_gb, 10) + 40)
+    work_mem_mib = int(30 * math.log(total_mem_in_gb, 10) + 10)
+
+    pg.set_config_str("shared_buffers = '{}MB'".format(shared_buffers_mib))
+    pg.set_config_str("effective_cache_size = '{}MB'".format(effective_cache_size_mib))
+    pg.set_config_str("maintenance_work_mem = '{}MB'".format(maintenance_work_mem_mib))
+    pg.set_config_str("work_mem = '{}MB'".format(work_mem_mib))
+
+    postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
+    for postgresql_conf in postgresql_conf_list:
+        pg.set_config_str(postgresql_conf)
+
+    pg_latest = config.PG_LATEST
+    with cd('{}/data'.format(pg_latest)):
+        run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
+
+    pg.restart()
+
+def total_memory_in_gb():
+    mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
+    mem_gib = mem_bytes/(1024.**3)
+    return mem_gib
+
 @parallel
 def common_setup(build_citus_func):
     with hide('stdout'):
@@ -71,7 +129,7 @@ def common_setup(build_citus_func):
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
-    run('rm -r {}/* || true'.format(config.PG_LATEST))
+    run('rm -rf {}/* || true'.format(config.PG_LATEST))
 
     redhat_install_packages()
     build_postgres()
@@ -158,7 +216,7 @@ def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.ENTERPRISE_REPO
     utils.rmdir(repo, force=True)
-    run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
+    run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
         run('git checkout {}'.format(git_ref))

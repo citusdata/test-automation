@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "numberOfWorkers": {
+            "value": 10
+        },
+        "diskType": {
+            "value": "Premium_LRS"
+        },
+        "coordinatorVmSize": {
+            "value": "Standard_D64s_v3"
+        },
+        "workerVmSize": {
+            "value": "Standard_E16s_v3"
+        },
+        "driverVmSize": {
+            "value": "Standard_D64s_v3"
+        },
+        "coordinatorDiskSizeGB": {
+            "value": 2512
+        },
+        "workerDiskSizeGB": {
+            "value": 2512
+        }
+    }
+}

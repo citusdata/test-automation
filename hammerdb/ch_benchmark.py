@@ -403,6 +403,7 @@ def start_ch_thread(start_index):
     size = len(ch_queries)
 
     cur_index = start_index
+    cur_index = 0
     while not is_terminated:
         return_code = send_query(ch_queries[cur_index],cur_index)
         # if there was an error, we will retry the same query

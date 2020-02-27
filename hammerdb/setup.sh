@@ -12,10 +12,21 @@ coordinator_ip_address=$1
 rg_name=$2
 username=$3
 
+
+
 driverdir="${0%/*}"
-cd ${driverdir}
+
+cd ${HOME}
 
 hammerdb_dir=${HOME}/HammerDB-3.3
+
+wget "https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux.tar.gz"
+tar -zxvf HammerDB-3.3-Linux.tar.gz
+
+git clone --branch citus https://github.com/SaitTalhaNisanci/HammerDB.git
+mv HammerDB/src/postgresql/pgoltp.tcl ${hammerdb_dir}/src/postgresql/pgoltp.tcl
+
+cd ${driverdir}
 
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" build.tcl
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" run.tcl
@@ -26,14 +37,6 @@ cp run.tcl ${hammerdb_dir}/
 cp ch_benchmark.py ${hammerdb_dir}/
 
 cp -v ./sql/* $hammerdb_dir/
-
-cd ${HOME}
-
-wget "https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux.tar.gz"
-tar -zxvf HammerDB-3.3-Linux.tar.gz
-
-git clone --branch citus https://github.com/SaitTalhaNisanci/HammerDB.git
-mv HammerDB/src/postgresql/pgoltp.tcl ${hammerdb_dir}/src/postgresql/pgoltp.tcl
 
 # cd ${hammerdb_dir}/src/postgresql
 # comment out create database and user as citus cannot do that

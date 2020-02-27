@@ -19,13 +19,13 @@ diset tpcc pg_defaultdbase pguser
 diset tpcc pg_storedprocs true
 diset tpcc pg_driver timed
 diset tpcc pg_rampup 3
-diset tpcc pg_duration 200
+diset tpcc pg_duration 180
 diset tpcc pg_timeprofile false
-diset tpcc pg_allwarehouse true
+diset tpcc pg_allwarehouse false
 diset tpcc pg_keyandthink false
 loadscript
 print dict
-vuset vu 250
+vuset vu 320
 vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0

@@ -25,7 +25,7 @@ diset tpcc pg_allwarehouse false
 diset tpcc pg_keyandthink false
 loadscript
 print dict
-vuset vu 320
+vuset vu 500
 vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0

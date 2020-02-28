@@ -133,6 +133,7 @@ def common_setup(build_citus_func):
     redhat_install_packages()
     build_postgres()
     build_citus_func()
+    build_hll()
     create_database()
     pg.start()
 
@@ -201,6 +202,10 @@ def build_hll():
     run('git clone -q https://github.com/citusdata/postgresql-hll.git {}'.format(repo))
     with cd(repo):
 
+        
+        pg_latest = config.PG_LATEST
+        with hide('stdout'):
+            run('PG_CONFIG={}/bin/pg_config make'.format(pg_latest))
         with hide('stdout', 'running'):
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 

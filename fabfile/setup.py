@@ -145,6 +145,7 @@ def common_setup(build_citus_func):
 
     with hide('stdout'):
         utils.psql('CREATE EXTENSION citus;')
+        utils.psql('CREATE EXTENSION hll;')   
 
 @roles('master')
 def add_workers():
@@ -192,6 +193,20 @@ def build_postgres():
 
             with cd('contrib'), hide('stdout'):
                 run('make -s install')
+
+def build_hll():
+    
+    repo = os.path.join(config.HOME_DIR, "postgresql-hll")
+    utils.rmdir(repo, force=True) # force because git write-protects files
+    run('git clone -q https://github.com/citusdata/postgresql-hll.git {}'.format(repo))
+    with cd(repo):
+
+        with hide('stdout', 'running'):
+            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+
+        with hide('stdout'):
+            run('make -s -j{} install'.format(core_count))
+
 
 def build_citus():
     repo = config.CITUS_REPO

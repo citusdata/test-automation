@@ -15,7 +15,18 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
 # install git to clone the repository
-yum install -y git screen cmake
+yum install -y git screen
+
+# install epel release
+rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+#install python3
+yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+yum -y install python36u
+
+#install cmake3
+yum install cmake3 -y
+ln -s `which cmake3` /usr/bin/cmake
 
 # this is the username in our instances
 TARGET_USER=pguser

@@ -105,9 +105,9 @@ In order to run hammerdb benchmark:
 ```bash
 eval `ssh-agent -s`
 ssh-add
-EXPORT RESOURCE_GROUP_NAME=<your resource group name>
-EXPORT GIT_USERNAME=<Your github username>
-EXPORT GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens. 
+export RESOURCE_GROUP_NAME=<your resource group name>
+export GIT_USERNAME=<Your github username>
+export GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens. 
 cd hammerdb
 ./create-run.sh # you should be in the branch that has the changes
 # you will be given a command to connect to the driver node and what

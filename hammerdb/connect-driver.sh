@@ -12,11 +12,13 @@ set -x
 ## pattern from the end of the string. Here, it will remove the
 ## script's name,. leaving only the directory. 
 dir="${0%/*}"
-cd ${dir}
+cd "${dir}"
 
-public_ip=$(az group deployment show -g ${RESOURCE_GROUP_NAME} -n azuredeploy --query properties.outputs.driverPublicIP.value)
+# get the public ip of driver from the cluster outputs.
+public_ip=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.driverPublicIP.value)
 # remove the quotes 
-public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
-sh ../azure/delete-security-rule.sh
+public_ip=$(echo "${public_ip}" | cut -d "\"" -f 2)
 
-ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip}
+# delete the security rule and connect to the driver node.
+sh ../azure/delete-security-rule.sh
+ssh -o "StrictHostKeyChecking no" -A pguser@"${public_ip}"

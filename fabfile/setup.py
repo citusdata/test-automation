@@ -96,6 +96,7 @@ def set_hammerdb_config(config_parser, driver_ip):
     total_mem_in_gb = total_memory_in_gb()
     mem_mib = total_mem_in_gb * 1024
 
+    # these are the settings we use in hyperscale.
     shared_buffers_mib = int(0.25 * mem_mib)
     effective_cache_size_mib = int(mem_mib - shared_buffers_mib)
     maintenance_work_mem_mib = int(82.5 * math.log(total_mem_in_gb, 10) + 40)

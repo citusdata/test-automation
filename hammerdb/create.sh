@@ -10,22 +10,24 @@ set -e
 ## pattern from the end of the string. Here, it will remove the
 ## script's name,. leaving only the directory. 
 driverdir="${0%/*}"
-cd ${driverdir}
+cd "${driverdir}"
 
 regions=(eastus southcentralus westus2)
 
 size=${#regions[@]}
-index=$(($RANDOM % $size))
+index=$((RANDOM % size))
 random_region=${regions[$index]}
 
-rg=${RESOURCE_GROUP_NAME}
+rg="${RESOURCE_GROUP_NAME}"
+# if region is provided, use that. If not use the random region.
 region=${AZURE_REGION:=$random_region}
-echo ${region}
-az group create -l ${region} -n ${rg}
+echo "${region}"
+az group create -l "${region}" -n "${rg}"
 
+# get our public key programmatically so that users don't have to enter it manually.
 public_key=$(cat ~/.ssh/id_rsa.pub)
 
-start_time=`date +%s`
+start_time=$(date +%s)
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
 
 # https://stackoverflow.com/questions/1593051/how-to-programmatically-determine-the-current-checked-out-git-branch
@@ -39,7 +41,7 @@ branch_name=${branch_name:-HEAD}
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=$branch_name}
 
-az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
+az group deployment create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
 
-end_time=`date +%s`
-echo execution time was `expr $end_time - $start_time` s.
+end_time=$(date +%s)
+echo execution time was $((end_time - start_time)) s.

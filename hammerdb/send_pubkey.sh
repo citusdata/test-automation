@@ -9,4 +9,4 @@ set -x
 
 coordinator_private_ip=$1
 export pub_key=$(cat ~/.ssh/id_rsa.pub)
-ssh -o "StrictHostKeyChecking no" -A ${coordinator_private_ip} "echo ${pub_key} >> ~/.ssh/authorized_keys"
+ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "echo ${pub_key} >> ~/.ssh/authorized_keys"

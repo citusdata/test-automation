@@ -9,7 +9,7 @@
 -- SELECT create_distributed_function('public.ostat ( integer, integer, integer, integer, character varying)', '$1', colocate_with := 'warehouse');
 
 
--- THESE SHOULD BE COMMENTED IF STORED PRODECURES ARE FALSE IN CONFIGS
+-- THESE SHOULD BE COMMENTED IF STORED PRODECURES IS FALSE IN CONFIGS
 
 SELECT create_distributed_function('public.payment(integer,  integer,  integer,  integer,  integer,  numeric,  character,  character varying,  numeric,  character varying,  character varying,  character varying,  character, character, character varying,  character varying,  character varying,  character,  character, character varying,  character,  character varying,  character varying,  character varying,  character, character,  character,  timestamp without time zone,  numeric,  numeric,  numeric, character varying, timestamp without time zone)', '$1', colocate_with:='warehouse');
 SELECT create_distributed_function('public.neword( integer, integer,  integer,  integer, integer,  numeric,  character varying,  character varying,  numeric,  numeric,  integer, timestamp without time zone)', '$1', colocate_with:='warehouse');

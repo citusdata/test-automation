@@ -13,6 +13,10 @@ branch_name=$3
 is_tpcc=$4
 is_ch=$5
 username=$6
+hammerdb_version=$7
+
+# store hammerdb version in a file so that we can get it in other scripts
+echo "${hammerdb_version}" > ~/HAMMERDB_VERSION
 
 # turn pager off, because queries might return results that are bigger than the page size
 # in that case the more process will be created, and the script will hang.
@@ -31,5 +35,5 @@ do
   "${HOME}"/test-automation/hammerdb/build-and-run.sh "${coordinator_private_ip}" "${config_file}" "${is_tpcc}" "${is_ch}" "${username}"
 done
 
-cp -r "${HOME}"/test-automation/fabfile/hammerdb_confs "${HOME}"/HammerDB-3.3/results
+cp -r "${HOME}"/test-automation/fabfile/hammerdb_confs "${HOME}"/HammerDB-"${hammerdb_version}"/results
 "${HOME}"/test-automation/hammerdb/upload-results.sh "${branch_name}"

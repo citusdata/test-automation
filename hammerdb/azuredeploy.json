@@ -423,10 +423,10 @@
                 "settings": {
                     "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb_test/hammerdb/entry.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb_test/hammerdb/driver-init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb_test/azure/init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/hammerdb_test/hammerdb/cache_git_creds.sh"
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/entry.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/driver-init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/cache_git_creds.sh"
                     ]
                 }
             },

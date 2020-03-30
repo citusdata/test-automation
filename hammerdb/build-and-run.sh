@@ -22,7 +22,7 @@ password=""
 port=5432
 
 # CH_THREAD_COUNT is how many analytical threads will be used.
-CH_THREAD_COUNT=2
+CH_THREAD_COUNT=1
 # tpcc doesn't start recording results while doing a rampup. So we should sleep for that long
 # in the analytical script as well so that they start recording around the same time.
 RAMPUP_TIME=3
@@ -36,7 +36,9 @@ connection_string=postgres://${username}:${password}@${coordinator_ip_address}:$
 export PGUSER=${username}
 export PGDATABASE=${username}
 
-cd "${HOME}"/HammerDB-3.3
+hammerdb_version=$(cat ~/HAMMERDB_VERSION)
+
+cd "${HOME}"/HammerDB-"${hammerdb_version}"
 
 # drop tables if they exist since we might be running hammerdb multiple times with different configs
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f drop-tables.sql

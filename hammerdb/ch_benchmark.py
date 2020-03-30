@@ -422,6 +422,7 @@ def send_query(query,cur_index):
     end_time = int(round(time.time() * 1000))
 
     f = open("results/ch_queries_{}.txt".format(file_suffix), "a")
+    # we print cur_index + 1 to be human readable (e.g: 1th query will be 1)
     f.write("{} finished in {} milliseconds\n".format(cur_index+1, end_time - start_time))
     f.close()
 

@@ -6,8 +6,6 @@ required for testing citus.
 
 ## Table of Contents
 
-* [Running Automated Tests](#running-automated-tests)
-* [Running Automated Hammerdb](#running-automated-hammerdb)
 * [Azure](#azure)
   * [Getting Started](#azure-getting-started)
     * [Setup steps for each test](#azure-setup-steps)
@@ -21,6 +19,8 @@ required for testing citus.
     * [Starting a Cluster](#start-a-cluster)
     * [Connecting to the Master](#connect-to-master)
 * [Running Rests](#running-tests)
+  * [Running Automated Tests](#running-automated-tests)
+  * [Running Automated Hammerdb Benchmark](#running-automated-hammerdb-benchmark)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
@@ -36,134 +36,6 @@ required for testing citus.
   * [`run`, Run pgbench and tpch Rests Automatically](#run)
 * [Advanced fab Usage](#advanced-fab)
   * [Using Multiple Citus Installations](#multiple-installs)
-
-## <a name="running-automated-tests"></a>Running Automated Tests
-
-**Depending of the tests you trigger here, you can block at most 3 jobs slots in circleci for around 3 hours. Choose wisely the time you want to run the tests to not block development**
-
-If you want, you can run trigger a job which can run pgbench, scale and tpch tests. What the job does is:
-
-* It creates a cluster with the test resource group name
-* It connects to the coordinator
-* It runs the corresponding test for the job
-* It deletes the cluster.
-
-There is a separate job for each test and you can run any combinations of them. To trigger a job, you should create a branch which has specific prefixes.
-
-* If the branch has a prefix `pgbench/`, then pgbench job will be triggered.
-* If the branch has a prefix `scale/`, then scale job will be triggered.
-* If the branch has a prefix `tpch/`, then tpch job will be triggered.
-* If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
-
-You should push your branch to Github so that the circleci job will be triggerred.
-
-Each job uses a specific resource group name so that there will be at most 3 resource groups for these jobs. If there is already a resource group, then you should make sure that:
-
-* Someone else is currently not running the same test as you
-
-If not, then you can delete the resource group name from portal, you can find it by search the prefix `citusbot`. Under normal circumstances the resource group will already be deleted at the end of the test
-even if it fails.
-
-You can find your test results in https://github.com/citusdata/release-test-results under `periodic_job_results` folder. Test results will be pushed to a branch which is in the format ${rg_name}/${month_day_year_uniqueID}.
-
-By default the tests will be run against `enterprise-master` and the latest released version. If you want to test on a custom branch you should change the config files of relevant tests with your custom branch name in:
-
-```text
-postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.2')]
-```
-
-You can change all the settings in these files, the config files for tests are located at:
-
-* pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
-* scale: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
-* tpch: https://github.com/citusdata/test-automation/tree/master/fabfile/tpch_confs
-
-By default, the following tests will be run for each test:
-
-* pgbench: `pgbench_default.ini` and `pgbench_default_without_transaction.ini`
-* scale: `scale_test.ini`
-* tpch: `tpch_default.ini`
-
-If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
-
-If you want to change how long each test will be run, you can change the times with the `-T` parameter. https://github.com/citusdata/test-automation/blob/master/fabfile/pgbench_confs/pgbench_default.ini#L33 
-
-```
-pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
-```
-
-## <a name="running-automated-hammerdb"></a>Running Automated Hammerdb
-
-Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
-You can customize the hammerdb cluster in the `hammerdb` folder using `azuredeploy.parameters.json`.
-
-**You should create a new branch and change the settings in the new branch and push the branch so that
-when the tool clones the repository it can download your branch.**
-
-In order to run hammerdb benchmark:
-
-```bash
-eval `ssh-agent -s`
-ssh-add
-export RESOURCE_GROUP_NAME=<your resource group name>
-export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens. 
-cd hammerdb
-./create-run.sh # you should be in the branch that has the changes
-# you will be given a command to connect to the driver node and what
-# to run afterwards.
-```
-
-**After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
-
-In order to see the process of the tests, from the driver node:
-
-```bash
-./connect-driver.sh
-screen -r
-```
-
-You can see the screen logs in `~/screenlog.0`.
-
-You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
-What files are pushed to github:
-
-* build.tcl (This is the configuration file used for building hammerdb tables)
-* run.tcl (This is the configuration file used for running hammerdb tpcc benchmark)
-* build_<config_file_name>.log (These are the outputs of building the hammerdb tables for the 'config_file_name')
-* run_<config_file_name>.log (These are the outputs of running hammerdb tpcc benchmark for the 'config_file_name')
-* ch_benchmarks.log (This is the log file that is generated from ch-benCHmark script)
-* ch_results.txt (This is the file that contains the results of ch benchmark, each config file's result is saved in a new line)
-* <config_file_name>.NOPM.log (These are the files that contains the NOPM for the given config file name.)
-
-In `fabfile/hammerdb_confs` you can:
-
-* change postgres version
-* use enterprise or community
-* use a custom branch
-* change/add postgres/citus settings
-
-You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
-run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
-So if you want to compare two branches, you can create two identical config files with two different branches.
-The result logs will contain the config file so that it is easy to know which config was used for a run.
-
-After adding the configs `fabfile/hammerdb_confs` could look like:
-
-* ./hammerdb.ini
-* ./hammerdb2.ini
-* ./hammerdb3.ini
-
-`hammerdb/build.tcl` creates and fills hammerdb tpcc tables. You should have at least 1:5 ratio for vuuser:warehouse_count otherwise the build.tcl might get stuck.
-
-`hammerdb/run.tcl` runs tpcc benchmark. You can configure things such as test duration here.
-
-Note that running a benchmark with a single config file with a vuuser of 150 and 1M iterations could
-take around 3-4 hours. (the whole process)
-
-If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false`. When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 1800 seconds.
-
-You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
 
 ## <a name="azure"></a>Azure
 
@@ -489,6 +361,139 @@ be lifted in the future.
 </details>
 
 # <a name="running-tests"></a> Running Tests
+## <a name="running-automated-tests"></a>Running Automated Tests
+
+**Depending of the tests you trigger here, you can block at most 3 jobs slots in circleci for around 3 hours. Choose wisely the time you want to run the tests to not block development**
+
+If you want, you can run trigger a job which can run pgbench, scale and tpch tests. What the job does is:
+
+* It creates a cluster with the test resource group name
+* It connects to the coordinator
+* It runs the corresponding test for the job
+* It deletes the cluster.
+
+There is a separate job for each test and you can run any combinations of them. To trigger a job, you should create a branch which has specific prefixes.
+
+* If the branch has a prefix `pgbench/`, then pgbench job will be triggered.
+* If the branch has a prefix `scale/`, then scale job will be triggered.
+* If the branch has a prefix `tpch/`, then tpch job will be triggered.
+* If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
+
+You should push your branch to Github so that the circleci job will be triggerred.
+
+Each job uses a specific resource group name so that there will be at most 3 resource groups for these jobs. If there is already a resource group, then you should make sure that:
+
+* Someone else is currently not running the same test as you
+
+If not, then you can delete the resource group name from portal, you can find it by search the prefix `citusbot`. Under normal circumstances the resource group will already be deleted at the end of the test
+even if it fails.
+
+You can find your test results in https://github.com/citusdata/release-test-results under `periodic_job_results` folder. Test results will be pushed to a branch which is in the format ${rg_name}/${month_day_year_uniqueID}.
+
+By default the tests will be run against `enterprise-master` and the latest released version. If you want to test on a custom branch you should change the config files of relevant tests with your custom branch name in:
+
+```text
+postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.1')]
+```
+
+You can change all the settings in these files, the config files for tests are located at:
+
+* pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
+* scale: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
+* tpch: https://github.com/citusdata/test-automation/tree/master/fabfile/tpch_confs
+
+By default, the following tests will be run for each test:
+
+* pgbench: `pgbench_default.ini` and `pgbench_default_without_transaction.ini`
+* scale: `scale_test.ini`
+* tpch: `tpch_default.ini`
+
+If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
+
+If you want to change how long each test will be run, you can change the times with the `-T` parameter. https://github.com/citusdata/test-automation/blob/master/fabfile/pgbench_confs/pgbench_default.ini#L33 
+
+```
+pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
+```
+
+## <a name="running-automated-hammerdb-benchmark"></a>Running Automated Hammerdb Benchmark
+
+Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
+You can customize the hammerdb cluster in the `hammerdb` folder using `azuredeploy.parameters.json`.
+
+**You should create a new branch and change the settings in the new branch and push the branch so that
+when the tool clones the repository it can download your branch.**
+
+In order to run hammerdb benchmark:
+
+```bash
+eval `ssh-agent -s`
+ssh-add
+export RESOURCE_GROUP_NAME=<your resource group name>
+export GIT_USERNAME=<Your github username>
+export GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens.
+cd hammerdb
+# YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS IN THE NEW BRANCH
+# AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY
+# IT CAN DOWNLOAD YOUR BRANCH.
+./create-run.sh
+# you will be given a command to connect to the driver node and what
+# to run afterwards.
+```
+
+**After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
+
+**You are responsible for deleting the cluster yourself(You can do that with azure/delete-resource-group.sh or from the portal).**
+
+In order to see the process of the tests, from the driver node:
+
+```bash
+./connect-driver.sh
+screen -r
+```
+
+You can see the screen logs in `~/screenlog.0`.
+
+You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
+What files are pushed to github:
+
+* build.tcl (This is the configuration file used for building hammerdb tables)
+* run.tcl (This is the configuration file used for running hammerdb tpcc benchmark)
+* build_<config_file_name>.log (These are the outputs of building the hammerdb tables for the 'config_file_name')
+* run_<config_file_name>.log (These are the outputs of running hammerdb tpcc benchmark for the 'config_file_name')
+* ch_benchmarks.log (This is the log file that is generated from ch-benCHmark script)
+* ch_results.txt (This is the file that contains the results of ch benchmark, each config file's result is saved in a new line)
+* <config_file_name>.NOPM.log (These are the files that contains the NOPM for the given config file name.)
+
+In `fabfile/hammerdb_confs` you can:
+
+* change postgres version
+* use enterprise or community
+* use a custom branch
+* change/add postgres/citus settings
+
+You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
+run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
+So if you want to compare two branches, you can create two identical config files with two different branches.
+The result logs will contain the config file so that it is easy to know which config was used for a run.
+
+After adding the configs `fabfile/hammerdb_confs` could look like:
+
+* ./hammerdb.ini
+* ./hammerdb2.ini
+* ./hammerdb3.ini
+
+`hammerdb/build.tcl` creates and fills hammerdb tpcc tables. You should have at least 1:5 ratio for vuuser:warehouse_count otherwise the build.tcl might get stuck.
+
+`hammerdb/run.tcl` runs tpcc benchmark. You can configure things such as test duration here.
+
+Note that running a benchmark with a single config file with a vuuser of 150 and 1M iterations could
+take around 3-4 hours. (the whole process)
+
+If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false`. When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 1800 seconds.
+
+You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
+
 ## <a name="basic-cluster-setup"></a> Basic Cluster Setup
 
 On the coordinator node:

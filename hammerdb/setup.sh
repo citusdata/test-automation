@@ -13,7 +13,9 @@ username=$2
 driverdir="${0%/*}"
 cd "${driverdir}"
 
-hammerdb_dir="${HOME}"/HammerDB-3.3
+hammerdb_version=$(cat ~/HAMMERDB_VERSION)
+
+hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" build.tcl
 sed -i "s/replace_with_ip_address/${coordinator_ip_address}/g" run.tcl
@@ -27,12 +29,12 @@ cp -v ./sql/* "$hammerdb_dir"/
 
 cd "${HOME}"
 
-wget "https://github.com/TPC-Council/HammerDB/releases/download/v3.3/HammerDB-3.3-Linux.tar.gz"
-tar -zxvf HammerDB-3.3-Linux.tar.gz
+wget "https://github.com/TPC-Council/HammerDB/releases/download/v${hammerdb_version}/HammerDB-${hammerdb_version}-Linux.tar.gz"
+tar -zxvf HammerDB-"${hammerdb_version}"-Linux.tar.gz
 
 # here we use our fork, because it distributed tables at the beginning, which speeds up the process
 # since we can create indexes in parallel etc.
-git clone --branch citus https://github.com/SaitTalhaNisanci/HammerDB.git
+git clone --branch citus https://github.com/citusdata/HammerDB.git
 mv HammerDB/src/postgresql/pgoltp.tcl "${hammerdb_dir}"/src/postgresql/pgoltp.tcl
 
 # cd ${hammerdb_dir}/src/postgresql

@@ -35,11 +35,10 @@ branch_name=$(git symbolic-ref -q HEAD)
 branch_name=${branch_name##refs/heads/}
 branch_name=${branch_name:-HEAD}
 
-# if this is run on a job, use the branch for the job, otherwise use the local(running in local or remote without a job)
 # store the branch name in a file so that target user can read it. Target user cannot see the envionment variables because
 # we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
-export BRANCH=${CIRCLE_BRANCH:=$branch_name}
+export BRANCH=${branch_name}
 
 az group deployment create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
 

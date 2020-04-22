@@ -43,7 +43,10 @@ def enterprise(*args):
 
     path = config.ENTERPRISE_REPO
     local('rm -rf {} || true'.format(path))
-    local('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(path))
+    if config.settings[config.IS_SSH_KEYS_USED]:
+        local('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(path))
+    else:
+        local('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(path))
     with lcd(path):
         local('git checkout {}'.format(git_ref))
     local('rm -rf {} || true'.format(path))
@@ -61,6 +64,11 @@ def postgres(*args):
 
     config.PG_VERSION = version
     utils.download_pg() # Check that this doesn't 404
+
+@task
+def hammerdb(*args):
+    # we use git tokens for authentication in hammerdb
+    config.settings[config.IS_SSH_KEYS_USED] = False
 
 @task
 def asserts(*args):

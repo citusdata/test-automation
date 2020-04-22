@@ -127,7 +127,7 @@ def total_memory_in_gb():
 @parallel
 def common_setup(build_citus_func):
     with hide('stdout'):
-        run('pkill postgres || true')
+        run('pkill -9 postgres || true')
 
     prefix.check_for_pg_latest()
     # empty it but don't delete the link

@@ -113,7 +113,7 @@ workflows:
   weekly-valgrind:
     triggers:
       - schedule:
-          cron: "0 11 * * 1"
+          cron: "0 15 * * 3"
           filters:
             branches:
               only:
@@ -125,7 +125,7 @@ workflows:
   weekly-valgrind-finalize:
     triggers:
       - schedule:
-          cron: "0 0 * * 2"
+          cron: "0 4 * * 4"
           filters:
             branches:
               only:

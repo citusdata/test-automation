@@ -1,7 +1,7 @@
 
 # Usage of update_files.sh
 
-If you will test a custom branch, you can update all the config files with `./update_files.sh`. Say that you 
+If you will test a custom branch, you can update all the config files with `./update_files.sh`. Say that you
 will do the release testing for `release-9.2` and `release-9.3`. Assuming that the old config values are `enterpise-master` and `release-9.2`, you can do the following:
 
 ```bash

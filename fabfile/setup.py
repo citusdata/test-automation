@@ -79,6 +79,8 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
 
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
     pg_version, citus_version = eval(config_parser.get('DEFAULT', 'postgres_citus_version'))
+    # this should be run before any setup so that it sets the necessary fields.
+    execute(use.hammerdb)
     # create database for the given citus and pg versions
     if use_enterprise == 'on':
         execute(use.postgres, pg_version)
@@ -88,7 +90,6 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
         execute(use.postgres, pg_version)
         execute(use.citus, citus_version)
         basic_testing()
-
     execute(set_hammerdb_config, config_parser, driver_ip)
 
 @task
@@ -198,6 +199,7 @@ def build_postgres():
 def build_citus():
     repo = config.CITUS_REPO
     utils.rmdir(repo, force=True) # force because git write-protects files
+
     run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'master')
@@ -217,7 +219,10 @@ def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
     repo = config.ENTERPRISE_REPO
     utils.rmdir(repo, force=True)
-    run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
+    if config.settings[config.IS_SSH_KEYS_USED]:
+        run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
+    else:
+        run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
     with cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
         run('git checkout {}'.format(git_ref))

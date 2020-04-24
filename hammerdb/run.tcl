@@ -23,6 +23,7 @@ diset tpcc pg_duration 200
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
+diset tpcc pg_tspace pg_default
 loadscript
 print dict
 vuset vu 250

@@ -494,6 +494,8 @@ If you want to run only the tpcc benchmark or the analytical queries, you should
 
 You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
 
+If you want to run hammerdb4.0 change `hammerdb_branch` to `hammerdb_4.0_citus` in `create-run.sh`.
+
 ## <a name="basic-cluster-setup"></a> Basic Cluster Setup
 
 On the coordinator node:

@@ -22,7 +22,7 @@ tar -zxvf HammerDB-"${hammerdb_version}"-Linux.tar.gz
 
 # here we use our fork, because it distributed tables at the beginning, which speeds up the process
 # since we can create indexes in parallel etc.
-git clone --branch citus https://github.com/citusdata/HammerDB.git
+git clone --branch hammerdb_4.0_citus https://github.com/citusdata/HammerDB.git
 mv HammerDB/src/postgresql/pgoltp.tcl "${hammerdb_dir}"/src/postgresql/pgoltp.tcl
 
 # cd ${hammerdb_dir}/src/postgresql

@@ -19,6 +19,11 @@ ssh_execute() {
    do
       sh ./delete-security-rule.sh
       ssh -o "StrictHostKeyChecking no" -A pguser@${ip} "source ~/.bash_profile;${command}" && break
+      rc=$? # get return code
+      if [ $rc -ne 255 ] ; then
+         # if the error code is not 255 we didn't get a connection error.
+         exit 1
+      fi
       n=$[$n+1]
    done
 

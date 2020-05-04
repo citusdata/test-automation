@@ -82,5 +82,5 @@ ssh_execute "${driver_ip}" "/home/pguser/test-automation/hammerdb/send_pubkey.sh
 
 set +e
 # run hammerdb test, this will be run in a detached session.
-ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version}"
+ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${cluster_rg}"
 set -e

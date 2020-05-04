@@ -46,13 +46,36 @@ jobs:
             ./add-sshkey.sh
             ./citus-bot.sh citusbot_tpch_test_resource_group
           name: install dependencies and run tpch tests
-          no_output_timeout: 10m         
+          no_output_timeout: 10m   
+
+  delete_resource_group:
+    docker:
+      - image: buildpack-deps:buster
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./delete-resource-group-job.sh
+          name: delete the given resource group
+          no_output_timeout: 10m             
 
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
 
 workflows:
   version: 2
+
+  cleanup:
+    jobs:
+      - delete_resource_group:
+          filters:
+            branches:
+              only:
+                - /delete_resource_group\/.*/ # match with delete_resource_group/ prefix
 
   performance-tests:
     jobs:

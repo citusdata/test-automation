@@ -6,6 +6,8 @@ set -u
 set -e
 # fail in a pipeline if any of the commands fails
 set -o pipefail
+# echo commands
+set -x
 
 # in redhat we need to enable default port for postgres
 firewall-cmd --add-port=5432/tcp

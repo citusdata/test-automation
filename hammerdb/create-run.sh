@@ -11,7 +11,7 @@ is_tpcc=true # set to true if you want tpcc to be run, otherwise set to false
 is_ch=true # set to true if you want ch benchmark to be run, otherwise set to false
 username=pguser # username of the database
 hammerdb_version=3.3
-hammerdb_branch=hammerdb_4.0_citus # for hammerdb 3.3 use citus, for hammerdb 4.0 use hammerdb_4.0_citus
+hammerdb_branch=hammerdb33 # for hammerdb 3.3 use hammerdb33, for hammerdb 4.0 use hammerdb40
 
 # ssh_execute is used to run a command multiple times on ssh, this is because we sometimes get timeouts 
 # while trying to ssh, and it shouldn't make the script fail. If a command actually fails, it will always

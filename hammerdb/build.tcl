@@ -22,7 +22,6 @@ diset tpcc pg_count_ware 1000
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
-diset tpcc pg_tspace pg_default
 loadscript
 print dict
 buildschema

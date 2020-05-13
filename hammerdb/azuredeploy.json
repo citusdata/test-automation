@@ -266,6 +266,9 @@
                         "[variables('addressPrefix')]"
                     ]
                 },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppgName'))]"
+                },
                 "subnets": [
                     {
                         "name": "[variables('subnetName')]",
@@ -337,12 +340,16 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "nicLoop",
+                "[concat('Microsoft.Compute/proximityPlacementGroups/', variables('ppgName'))]",
                 "[resourceId('Microsoft.Compute/disks/', concat(parameters('clusterName'), 'datadisk', copyIndex()))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAcctName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[if(equals(copyindex(),0), parameters('coordinatorVmSize'), if(equals(copyindex(), variables('driverNodeIndex') ), parameters('driverVmSize'), parameters('workerVmSize')) )]"
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppgName'))]"
                 },
                 "osProfile": {
                     "computerName": "[concat(parameters('clusterName'), 'vm', copyIndex())]",

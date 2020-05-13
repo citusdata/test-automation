@@ -15,6 +15,7 @@ is_ch=$5
 username=$6
 hammerdb_version=$7
 hammerdb_branch=$8
+cluster_rg=$9
 
 # store hammerdb version in a file so that we can get it in other scripts
 echo "${hammerdb_version}" > ~/HAMMERDB_VERSION
@@ -38,3 +39,4 @@ done
 
 cp -r "${HOME}"/test-automation/fabfile/hammerdb_confs "${HOME}"/HammerDB-"${hammerdb_version}"/results
 "${HOME}"/test-automation/hammerdb/upload-results.sh "${branch_name}"
+"${HOME}"/test-automation/hammerdb/delete-resource-group.sh "${cluster_rg}"

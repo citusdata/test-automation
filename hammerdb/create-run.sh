@@ -7,8 +7,8 @@ set -e
 # echo commands
 set -x
 
-is_tpcc=true # set to true if you want tpcc to be run, otherwise set to false
-is_ch=true # set to true if you want ch benchmark to be run, otherwise set to false
+is_tpcc=${IS_TPCC:=true} # set to true if you want tpcc to be run, otherwise set to false
+is_ch=${IS_CH:=true} # set to true if you want ch benchmark to be run, otherwise set to false
 username=pguser # username of the database
 hammerdb_version=3.3
 hammerdb_branch=hammerdb33 # for hammerdb 3.3 use hammerdb33, for hammerdb 4.0 use hammerdb40
@@ -83,5 +83,5 @@ ssh_execute "${driver_ip}" "/home/pguser/test-automation/hammerdb/send_pubkey.sh
 
 set +e
 # run hammerdb test, this will be run in a detached session.
-ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${hammerdb_branch}"
+ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${hammerdb_branch} ${cluster_rg}"
 set -e

@@ -1,6 +1,7 @@
 from os.path import expanduser
 import os
 
+IS_SSH_KEYS_USED ='is_ssh_keys_used'
 HOME_DIR = expanduser("~")
 
 CODE_DIRECTORY = os.path.join(HOME_DIR, 'code')
@@ -17,5 +18,5 @@ PG_VERSION = '9.6.1'
 PG_CONFIGURE_FLAGS = ['--with-openssl']
 
 settings = {
-
+    IS_SSH_KEYS_USED: True
 }

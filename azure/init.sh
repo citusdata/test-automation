@@ -4,11 +4,17 @@
 set -u
 # exit immediately if a command fails
 set -e
+# echo commands
+set -x
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
 # in redhat we need to enable default port for postgres
 firewall-cmd --add-port=5432/tcp
+
+# update certificates
+curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-97.noarch.rpm
+rpm -U azureclient.rpm
 
 # install pip since we will use it to install dependencies
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py

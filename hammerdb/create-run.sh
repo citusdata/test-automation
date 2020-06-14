@@ -85,3 +85,5 @@ set +e
 # run hammerdb test, this will be run in a detached session.
 ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${hammerdb_branch} ${cluster_rg}"
 set -e
+
+echo "Successfully started the benchmark(There can still be runtime errors)!"

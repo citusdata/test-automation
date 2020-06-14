@@ -418,54 +418,14 @@ pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 
 ## <a name="running-automated-hammerdb-benchmark"></a>Running Automated Hammerdb Benchmark
 
-Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
-You can customize the hammerdb cluster in the `hammerdb` folder using `azuredeploy.parameters.json`.
-
 **You should create a new branch and change the settings in the new branch and push the branch so that
 when the tool clones the repository it can download your branch.**
 
-In order to run hammerdb benchmark:
+Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
+You can customize the hammerdb cluster in the `hammerdb` folder using `hammerdb/azuredeploy.parameters.json`.
+Note that this is the configuration for the cluster, which is separate than benchmark configurations(`fabfile/hammerdb_confs/`)
 
-```bash
-eval `ssh-agent -s`
-ssh-add
-export RESOURCE_GROUP_NAME=<your resource group name>
-export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with at least write and read access> # You can create a github token from https://github.com/settings/tokens.
-cd hammerdb
-# YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS IN THE NEW BRANCH
-# AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY
-# IT CAN DOWNLOAD YOUR BRANCH.
-./create-run.sh
-# you will be given a command to connect to the driver node and what
-# to run afterwards.
-```
-
-**After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
-
-**You are responsible for deleting the cluster yourself(You can do that with azure/delete-resource-group.sh or from the portal).**
-
-In order to see the process of the tests, from the driver node:
-
-```bash
-./connect-driver.sh
-screen -r
-```
-
-You can see the screen logs in `~/screenlog.0`.
-
-You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
-What files are pushed to github:
-
-* build.tcl (This is the configuration file used for building hammerdb tables)
-* run.tcl (This is the configuration file used for running hammerdb tpcc benchmark)
-* build_<config_file_name>.log (These are the outputs of building the hammerdb tables for the 'config_file_name')
-* run_<config_file_name>.log (These are the outputs of running hammerdb tpcc benchmark for the 'config_file_name')
-* ch_benchmarks.log (This is the log file that is generated from ch-benCHmark script)
-* ch_results.txt (This is the file that contains the results of ch benchmark, each config file's result is saved in a new line)
-* <config_file_name>.NOPM.log (These are the files that contains the NOPM for the given config file name.)
-
-In `fabfile/hammerdb_confs` you can:
+In `fabfile/hammerdb_confs` you can(and you should probably add at least one more config to this folder):
 
 * change postgres version
 * use enterprise or community
@@ -479,22 +439,71 @@ The result logs will contain the config file so that it is easy to know which co
 
 After adding the configs `fabfile/hammerdb_confs` could look like:
 
-* ./hammerdb.ini
-* ./hammerdb2.ini
-* ./hammerdb3.ini
+* ./master.ini
+* ./some_branch.ini
+* ./some_other_branch.ini
+
+In order to run hammerdb benchmark:
+
+```bash
+eval `ssh-agent -s`
+ssh-add
+export RESOURCE_GROUP_NAME=<your resource group name>
+export GIT_USERNAME=<Your github username>
+export GIT_TOKEN=<Your github token with write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
+cd hammerdb
+# YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS/CONFIGURATIONS IN THE NEW BRANCH
+# AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY
+# IT CAN DOWNLOAD YOUR BRANCH.
+vim fabfile/hammerdb_confs/<branch_name>.ini # verify that your custom config file is correct
+./create-run.sh
+# you will be given a command to connect to the driver node and what
+# to run afterwards.
+```
+
+**After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
+
+**You are responsible for deleting the cluster yourself(You can do that with azure/delete-resource-group.sh or from the portal).**
+
+Sometimes you might get random/temporary errors while provisining the cluster. In that case, simply
+delete the previous resource group, and try again. If it is persistent, try after a while, and if it is still
+persistent open an issue on test-automation.
+
+In order to see the process of the tests, from the driver node:
+
+```bash
+./connect-driver.sh
+screen -r
+```
+
+You can see the screen logs in `~/screenlog.0`.
+
+You will see the results in a branch `hammerdb_date_id` in https://github.com/citusdata/release-test-results.
+You won't get any notifications for the results, so you will need to manually check it.
+What files are pushed to github:
+
+* build.tcl (This is the configuration file used for building hammerdb tables)
+* run.tcl (This is the configuration file used for running hammerdb tpcc benchmark)
+* build_<config_file_name>.log (These are the outputs of building the hammerdb tables for the 'config_file_name')
+* run_<config_file_name>.log (These are the outputs of running hammerdb tpcc benchmark for the 'config_file_name')
+* ch_benchmarks.log (This is the log file that is generated from ch-benCHmark script)
+* ch_results.txt (This is the file that contains the results of ch benchmark, each config file's result is saved in a new line)
+* <config_file_name>.NOPM.log (These are the files that contains the NOPM for the given config file name.)
 
 `hammerdb/build.tcl` creates and fills hammerdb tpcc tables. You should have at least 1:5 ratio for vuuser:warehouse_count otherwise the build.tcl might get stuck.
 
 `hammerdb/run.tcl` runs tpcc benchmark. You can configure things such as test duration here.
 
-Note that running a benchmark with a single config file with a vuuser of 150 and 1M iterations could
-take around 3-4 hours. (the whole process)
+Note that running a benchmark with a single config file with a vuuser of 250 and 1000 warehouses could
+take around 2-3 hours. (the whole process)
 
 If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false` (Alternatively you can see `IS_CH` and `IS_TPCC` environment variables). When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 1800 seconds.
 
 You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
 
 If you want to run hammerdb4.0 change `hammerdb_branch` to `hammerdb40` in `create-run.sh`.
+
+By default a random region will be used, if you want you can specify the region with `AZURE_REGION` environment variable prior to running `create-run.sh` such as `export AZURE_REGION=westus2`.
 
 ## <a name="basic-cluster-setup"></a> Basic Cluster Setup
 

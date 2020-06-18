@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "numberOfWorkers": {
-            "value": 6
+            "value": 8
         },
         "diskType": {
             "value": "Premium_LRS"

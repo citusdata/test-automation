@@ -18,14 +18,14 @@ diset tpcc pg_defaultdbase pguser
 # if you change this, make sure to change tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
 diset tpcc pg_driver timed
-diset tpcc pg_rampup 3
-diset tpcc pg_duration 60
+diset tpcc pg_rampup 1
+diset tpcc pg_duration 5
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
 loadscript
 print dict
-vuset vu 250
+vuset vu 50
 vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0

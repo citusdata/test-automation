@@ -430,12 +430,12 @@ In `fabfile/hammerdb_confs` you can(and you should probably add at least one mor
 
 * change postgres version
 * use enterprise or community
-* use a custom branch
+* use a custom branch (You can also use git refs instead of branch names)
 * change/add postgres/citus settings
 
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
 run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
-So if you want to compare two branches, you can create two identical config files with two different branches.
+So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
 The result logs will contain the config file so that it is easy to know which config was used for a run.
 
 After adding the configs `fabfile/hammerdb_confs` could look like:

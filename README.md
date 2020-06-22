@@ -451,7 +451,7 @@ eval `ssh-agent -s`
 ssh-add
 export RESOURCE_GROUP_NAME=<your resource group name>
 export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
+export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
 cd hammerdb
 # YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS/CONFIGURATIONS IN THE NEW BRANCH
 # AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY

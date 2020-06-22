@@ -36,6 +36,7 @@ required for testing citus.
   * [`run`, Run pgbench and tpch Rests Automatically](#run)
 * [Advanced fab Usage](#advanced-fab)
   * [Using Multiple Citus Installations](#multiple-installs)
+* [TroubleShooting](#TroubleShooting-test-automation)  
 
 ## <a name="azure"></a>Azure
 
@@ -749,3 +750,19 @@ fab pg.start  # start the new instance
 # the above can be abbreviated by writing the following:
 fab pg.stop set_pg_latest:$HOME/pg-960-citus-600 pg.start
 ```
+
+## <a name="TroubleShooting-test-automation"></a> TroubleShooting
+
+Currently test automation has a lot of dependencies such as fabfile, azure and more. In general failures are temporary, which may be as long as a few days(If the problem is on azure service). In that case there is nothing we can do, but sometimes there are other problems that we can fix, and it is useful to try some of the following steps in that case:
+
+- Even if a creation of a cluster fails, you can still see the logs and what caused the problem:
+
+  * Find the public ip address of any instance (connect scripts might not be available if the cluster is in an incorrect state)
+  * Connect to the machine `ssh pguser@<public_ip>`
+  * switch to the root user(since `pguser` doesn't have the access to the logs) `sudo su root`
+  * cd into the log directory `/var/lib/waagent/custom-script/download/0`
+  * Now you can look at the `stderr` or `stdout` to see what went unexpected.
+
+- If you find a problem, and you need to update one of the scripts that are used in our cluster initialization in the `fileUris` part of `azuredeploy.json`, make sure that you change the branch name as well to see if the fix works, because by default those scripts are taken from `master` branch and if you don't update it, your change won't be used.
+  * Note that https://github.com/citusdata/test-automation/blob/master/hammerdb/azuredeploy.json is used for hammerdb
+  * https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.json is used for everything else but hammerdb

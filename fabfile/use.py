@@ -77,5 +77,10 @@ def asserts(*args):
 
 @task
 def debug_mode(*args):
-    '''ps's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"' '''
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
+    '''
+    pg's configure is passed: '--enable-debug --enable-cassert CFLAGS="-ggdb -g3 -Og -fno-omit-frame-pointer"' 
+    Normally this does not contain --enable-cassert, -Og and
+    -fno-omit-frame-pointer. The rest are default.
+    '''
+    config.PG_CONFIGURE_FLAGS.append('--enable-cassert')
+    config.PG_CFLAGS.append('-Og -fno-omit-frame-pointer')

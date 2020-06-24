@@ -655,7 +655,7 @@ fab use.enterprise:v7.1.1 setup.enterprise
 fab use.debug_mode use.postgres:10.1 use.citus:v7.1.1 setup.basic_testing
 ```
 
-`use.debug_mode` passes the following flags to postges' configure: `--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
+`use.debug_mode` passes the following flags to postges' configure: `--enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
 
 `use.asserts` passes `--enable-cassert`, it's a subset of `use.debug_mode`.
 

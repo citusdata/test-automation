@@ -14,9 +14,10 @@ firewall-cmd --add-port=5432/tcp
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 # install screen so that we can run commands in a detached session
-yum install -y git screen tmux
+yum install -y git screen tmux htop
 
 # this is the username in our instances
 TARGET_USER=pguser

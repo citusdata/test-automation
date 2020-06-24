@@ -36,4 +36,4 @@ cd "${HOME}"/release-test-results
 git checkout -b "${rg_name}"/"${now}"
 git add -A 
 git commit -m "add test results for hammerdb tests ${rg_name}"
-git push origin "${rg_name}"/"${now}"
+# git push origin "${rg_name}"/"${now}"

@@ -69,6 +69,7 @@ def postgres(*args):
 def hammerdb(*args):
     # we use git tokens for authentication in hammerdb
     config.settings[config.IS_SSH_KEYS_USED] = False
+    config.PG_CONFIGURE_FLAGS.append('--enable-debug CFLAGS="-ggdb -g3 -fno-omit-frame-pointer"')
 
 @task
 def asserts(*args):

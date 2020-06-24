@@ -19,7 +19,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
 # install git to clone the repository
-yum install -y git screen
+yum install -y git screen tmux
 
 # this is the username in our instances
 TARGET_USER=pguser

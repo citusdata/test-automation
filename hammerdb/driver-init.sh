@@ -16,7 +16,7 @@ python get-pip.py
 
 # install git to clone the repository
 # install screen so that we can run commands in a detached session
-yum install -y git screen
+yum install -y git screen tmux
 
 # this is the username in our instances
 TARGET_USER=pguser

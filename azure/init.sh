@@ -18,8 +18,9 @@ rpm -U azureclient.rpm
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
-yum install -y git screen tmux
+yum install -y git screen tmux htop
 
 # this is the username in our instances
 TARGET_USER=pguser

@@ -11,8 +11,8 @@ set -o pipefail
 firewall-cmd --add-port=5432/tcp
 
 # install azure client rpm to have correct certificates
-# curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-97.noarch.rpm
-# rpm -U azureclient.rpm
+curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-97.noarch.rpm
+rpm -U azureclient.rpm
 # yum clean all
 
 # install pip since we will use it to install dependencies

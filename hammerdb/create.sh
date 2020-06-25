@@ -25,7 +25,11 @@ echo "${region}"
 az group create -l "${region}" -n "${rg}"
 
 # get our public key programmatically so that users don't have to enter it manually.
-public_key=$(cat ~/.ssh/id_rsa.pub)
+pub_key=$(ssh-add -L | head -n 1)
+if [ -z "$pub_key" ]; then
+    echo "ERROR: no keys were added to ssh-agent with ssh-add (ssh-add -L returned empty result)"
+    exit 1
+fi
 
 start_time=$(date +%s)
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
@@ -40,7 +44,7 @@ branch_name=${branch_name:-HEAD}
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${branch_name}
 
-az group deployment create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
+az group deployment create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${pub_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}"
 
 end_time=$(date +%s)
 echo execution time was $((end_time - start_time)) s.

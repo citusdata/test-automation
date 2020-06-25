@@ -4,6 +4,7 @@
 set -u
 # exit immediately if a command fails
 set -e
+set -x
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
@@ -11,7 +12,7 @@ set -o pipefail
 firewall-cmd --add-port=5432/tcp
 
 # install azure client rpm to have correct certificates
-curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-97.noarch.rpm
+curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-120.noarch.rpm
 rpm -U azureclient.rpm
 # yum clean all
 
@@ -19,9 +20,14 @@ rpm -U azureclient.rpm
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
-yum install -y git screen tmux htop
+yum install -y git screen tmux
+
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+
+yum install -y azure-cli
 
 # this is the username in our instances
 TARGET_USER=pguser
@@ -78,11 +84,6 @@ su --login ${TARGET_USER} <<'EOSU'
 EOSU
 
 find_private_ips() {
-  rpm --import https://packages.microsoft.com/keys/microsoft.asc
-  sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-
-  yum install -y azure-cli
-
   mkdir /home/log
   chmod og+rwx /home/log
 

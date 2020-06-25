@@ -425,7 +425,7 @@
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/entry.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/driver-init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/test_fix/wrong-htab/azure/init.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/cache_git_creds.sh"
                     ]
                 }

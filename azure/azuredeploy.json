@@ -116,8 +116,8 @@
         }
     },
     "variables": {
-        "imagePublisher": "RedHat",
-        "imageOffer": "RHEL",
+        "imagePublisher": "OpenLogic",
+        "imageOffer": "CentOS",
         "imageSku": "7.2",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",

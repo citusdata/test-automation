@@ -8,16 +8,16 @@ set -e
 set -x
 
 # in redhat we need to enable default port for postgres
-firewall-cmd --add-port=5432/tcp
+# firewall-cmd --add-port=5432/tcp
 
 # install pip since we will use it to install dependencies
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python get-pip.py
 
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 # install screen so that we can run commands in a detached session
-yum install -y git screen tmux htop
+yum install -y git screen tmux
 
 # this is the username in our instances
 TARGET_USER=pguser

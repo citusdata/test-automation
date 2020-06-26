@@ -147,8 +147,8 @@
         }
     },
     "variables": {
-        "imagePublisher": "RedHat",
-        "imageOffer": "RHEL",
+        "imagePublisher": "OpenLogic",
+        "imageOffer": "CentOS",
         "imageSku": "7.2",
         "driverImageSku" : "7.5",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
@@ -424,7 +424,7 @@
                     "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'))]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/entry.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/driver-init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/test_fix/wrong-htab/hammerdb/driver-init.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/test_fix/wrong-htab/azure/init.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/cache_git_creds.sh"
                     ]

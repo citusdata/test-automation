@@ -15,6 +15,10 @@ firewall-cmd --add-port=5432/tcp
 curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel7/Packages/r/rhui-azure-rhel7-2.2-120.noarch.rpm
 rpm -U azureclient.rpm
 
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+
 yum update -y --enablerepo=* rhui-azure-rhel7
 
 # install pip since we will use it to install dependencies
@@ -23,10 +27,6 @@ python get-pip.py
 
 # install git to clone the repository
 yum install -y --enablerepo=* git screen tmux
-
-rpm --import https://packages.microsoft.com/keys/microsoft.asc
-
-sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
 
 yum install -y --enablerepo=* azure-cli
 

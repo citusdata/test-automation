@@ -43,14 +43,14 @@ cd "${HOME}"/HammerDB-"${hammerdb_version}"
 # drop tables if they exist since we might be running hammerdb multiple times with different configs
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f drop-tables.sql
 
+# build hammerdb related tables
+./hammerdbcli auto build.tcl | tee -a ./results/build_"${file_name}".log
+
 # create ch-benchmark tables in cluster
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-tables.sql
 
 # distribute ch-benchmark tables
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-distribute.sql
-
-# build hammerdb related tables
-./hammerdbcli auto build.tcl | tee -a ./results/build_"${file_name}".log
 
 # distribute tpcc tables in cluster
 # psql -h ${coordinator_ip_address} -f tpcc-distribute.sql

@@ -383,7 +383,7 @@ sent_query_amount = 0
 is_terminated = False
 file_suffix="0"
 
-RANDOM_SEED = 123 
+RANDOM_SEED = 200
 
 
 def save_pid_to_file():

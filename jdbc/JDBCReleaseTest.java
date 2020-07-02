@@ -70,9 +70,6 @@ public class JDBCReleaseTest {
 		String large_table_shard_count = "2";
 
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
-
-
-		task_executor_type = "real-time";
 	}
 
 	static void test_no_1() throws SQLException
@@ -81,10 +78,6 @@ public class JDBCReleaseTest {
 		String large_table_shard_count = "2";
 
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
-
-
-		task_executor_type = "real-time";
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 	}
 
 	static void test_no_2() throws SQLException
@@ -92,10 +85,6 @@ public class JDBCReleaseTest {
 		String query = "SELECT count(*) FROM orders, lineitem WHERE	o_orderkey = l_orderkey;";
 		String large_table_shard_count = "2";
 
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
-
-
-		task_executor_type = "real-time";
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 	}
 
@@ -138,12 +127,7 @@ public class JDBCReleaseTest {
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "RUSSIA", "UNITED STATES");
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");
 
-		System.out.println("For real now");
-
-
-
 		large_table_shard_count = "20";
-		task_executor_type = "real-time";
 
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "RUSSIA", "UNITED STATES");
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");

@@ -11,6 +11,7 @@ from os.path import expanduser
 from threading import Thread
 from time import sleep
 import time 
+import datetime
 
 ch_queries = [
     """
@@ -403,6 +404,7 @@ def start_ch_thread(start_index):
     size = len(ch_queries)
 
     cur_index = start_index
+    cur_index = 0
     while not is_terminated:
         return_code = send_query(ch_queries[cur_index],cur_index)
         # if there was an error, we will retry the same query
@@ -417,11 +419,13 @@ def send_query(query,cur_index):
     global coord_ip
     pg = ['psql', '-P', 'pager=off', '-v', 'ON_ERROR_STOP=1', '-h', coord_ip, '-c', query]
 
+    f = open("results/ch_queries_{}.txt".format(file_suffix), "a")
+    f.write("{} started at {}\n".format(cur_index+1, datetime.datetime.now()))
     start_time = int(round(time.time() * 1000))
     return_code = subprocess.call(pg)
     end_time = int(round(time.time() * 1000))
 
-    f = open("results/ch_queries_{}.txt".format(file_suffix), "a")
+
     # we print cur_index + 1 to be human readable (e.g: 1th query will be 1)
     f.write("{} finished in {} milliseconds\n".format(cur_index+1, end_time - start_time))
     f.close()

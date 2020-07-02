@@ -24,5 +24,5 @@ id=$(date +"%s")
 
 cd test-automation
 git checkout -b delete_resource_group/"${id}"_"${cluster_rg}"
-# git push origin delete_resource_group/"${id}"_"${cluster_rg}"
+git push origin delete_resource_group/"${id}"_"${cluster_rg}"
 

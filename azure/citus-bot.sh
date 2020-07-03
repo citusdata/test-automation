@@ -15,7 +15,7 @@ ssh_execute() {
    shift;
    command=$@
    n=0
-   until [ $n -ge 4 ]
+   until [ $n -ge 10 ]
    do
       sh ./delete-security-rule.sh
       ssh -o "StrictHostKeyChecking no" -A pguser@${ip} "source ~/.bash_profile;${command}" && break

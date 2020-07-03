@@ -141,7 +141,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - valgrind-merge
     jobs:
       - valgrind-test
 
@@ -155,6 +155,6 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - valgrind-merge
     jobs:
       - finalize-valgrind-test

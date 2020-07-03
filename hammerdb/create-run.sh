@@ -21,7 +21,7 @@ ssh_execute() {
    shift;
    command=$*
    n=0
-   until [ $n -ge 4 ]
+   until [ $n -ge 10 ]
    do
       # delete the security before each try
       sh "${topdir}"/azure/delete-security-rule.sh
@@ -29,7 +29,7 @@ ssh_execute() {
       n=$((n+1))
    done
 
-   if [ $n == 4 ]; then
+   if [ $n == 10 ]; then
       exit 1
    fi
 }

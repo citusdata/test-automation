@@ -14,3 +14,5 @@ Dependencies:
 * java jdk
 * jdbc driver for PostgreSQL (see https://jdbc.postgresql.org/)
 
+Compare resulting output files from 6 combinations that script executes the tests [(hash, append) x (real-time, task-tracker, adaptive)].
+Resulting counts should all match each other.

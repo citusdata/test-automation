@@ -10,7 +10,7 @@ coordinator_port: Provide an available port for the coordinator instance of the 
 jdbc_driver_path: Provide path to jdbc driver for PostgreSQL, (see https://jdbc.postgresql.org/ to download it).
 
 Dependencies:
-* citus_dev
+* [citus_dev](https://github.com/citusdata/tools/tree/develop/citus_dev)
 * java jdk
 * jdbc driver for PostgreSQL (see https://jdbc.postgresql.org/)
 

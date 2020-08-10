@@ -28,7 +28,7 @@ CH_THREAD_COUNT=1
 RAMPUP_TIME=3
 # DEFAULT_CH_RUNTIME_IN_SECS is used when tpcc part is disabled. If tpcc is disabled, this is 
 # how long we will run the analytical queries in second.
-DEFAULT_CH_RUNTIME_IN_SECS=1800
+DEFAULT_CH_RUNTIME_IN_SECS=3600
 
 connection_string=postgres://${username}:${password}@${coordinator_ip_address}:${port}
 # you can set the connection string here if you already have it.

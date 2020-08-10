@@ -498,7 +498,7 @@ What files are pushed to github:
 Note that running a benchmark with a single config file with a vuuser of 250 and 1000 warehouses could
 take around 2-3 hours. (the whole process)
 
-If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false` (Alternatively you can see `IS_CH` and `IS_TPCC` environment variables). When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 1800 seconds.
+If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false` (Alternatively you can see `IS_CH` and `IS_TPCC` environment variables). When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 3600 seconds.
 
 You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
 

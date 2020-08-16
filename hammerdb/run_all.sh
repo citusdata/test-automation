@@ -34,9 +34,10 @@ do
   config_file=$(basename "$config_file")
 
   ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
-  exit 0
   "${HOME}"/test-automation/hammerdb/build-and-run.sh "${coordinator_private_ip}" "${config_file}" "${is_tpcc}" "${is_ch}" "${username}"
 done
+
+exit 0
 
 cp -r "${HOME}"/test-automation/fabfile/hammerdb_confs "${HOME}"/HammerDB-"${hammerdb_version}"/results
 "${HOME}"/test-automation/hammerdb/upload-results.sh "${branch_name}"

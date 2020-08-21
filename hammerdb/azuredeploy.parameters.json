@@ -15,7 +15,7 @@
             "value": "Standard_E16s_v3"
         },
         "driverVmSize": {
-            "value": "Standard_D64s_v3"
+            "value": "Standard_D32s_v3"
         },
         "coordinatorDiskSizeGB": {
             "value": 2512

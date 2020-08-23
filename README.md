@@ -522,6 +522,17 @@ fab pg.set_config:max_connections,1000
 fab pg.restart
 ```
 
+If you want to add the coordinator to the cluster, you can run:
+
+```bash
+fab add.coordinator_to_metadata
+```
+
+If you want the coordinator to have shards, you can run:
+
+```bash
+fab add.shards_on_coordinator 
+```
 
 ## <a name="pgbench"></a> Running PgBench Tests
 

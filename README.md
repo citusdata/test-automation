@@ -464,7 +464,7 @@ vim fabfile/hammerdb_confs/<branch_name>.ini # verify that your custom config fi
 
 **After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
 
-**You are responsible for deleting the cluster yourself(You can do that with azure/delete-resource-group.sh or from the portal).**
+**The cluster will be deleted if everything goes okay, but you should check if it is deleted to be on the safe side.(If it is not, you can delete that with azure/delete-resource-group.sh or from the portal).**
 
 Sometimes you might get random/temporary errors while provisining the cluster. In that case, simply
 delete the previous resource group, and try again. If it is persistent, try after a while, and if it is still

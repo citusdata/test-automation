@@ -47,7 +47,7 @@ You can find more information about every step below in other categories. This l
 ### Prerequisites
 1. You should have `az cli` in your local to continue. [Install instructions](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 2. Run `az login` to make the CLI log in to your account
-3. Make sure that your default subscription is the right one:
+3. Make sure that your default subscription is the right one(DS Data Magnet Incubations):
     ```bash
     # List your subscriptions
     az account list

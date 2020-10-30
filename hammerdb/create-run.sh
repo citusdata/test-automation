@@ -8,7 +8,7 @@ set -e
 set -x
 
 is_tpcc=${IS_TPCC:=true} # set to true if you want tpcc to be run, otherwise set to false
-is_ch=${IS_CH:=false} # set to true if you want ch benchmark to be run, otherwise set to false
+is_ch=${IS_CH:=true} # set to true if you want ch benchmark to be run, otherwise set to false
 username=pguser # username of the database
 hammerdb_version=3.3
 hammerdb_branch=hammerdb40 # for hammerdb 3.3 use hammerdb33, for hammerdb 4.0 use hammerdb40

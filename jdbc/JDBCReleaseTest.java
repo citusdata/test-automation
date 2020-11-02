@@ -34,7 +34,7 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT count(*) FROM orders;";
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 		
@@ -47,7 +47,7 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT count(*) FROM orders, lineitem WHERE	o_orderkey = l_orderkey;";
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 		
@@ -61,7 +61,7 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT count(*) FROM orders, customer WHERE o_custkey = c_custkey;";
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 	}
@@ -70,7 +70,7 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT count(*) FROM orders, customer, lineitem WHERE o_custkey = c_custkey AND o_orderkey = l_orderkey;";
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQuery(query, large_table_shard_count, task_executor_type);
 	}
@@ -81,7 +81,7 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT	count(*) FROM orders, lineitem WHERE o_orderkey = l_orderkey AND l_suppkey > ?;";
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQueryWithParam(query, large_table_shard_count, task_executor_type, 155);
 		
@@ -94,7 +94,7 @@ public class JDBCReleaseTest {
 		String query = "SELECT supp_nation::text, cust_nation::text, l_year::int, sum(volume)::double precision AS revenue FROM ( SELECT supp_nation, cust_nation, extract(year FROM l_shipdate) AS l_year, l_extendedprice * (1 - l_discount) AS volume FROM supplier, lineitem, orders, customer, ( SELECT n1.n_nationkey AS supp_nation_key, n2.n_nationkey AS cust_nation_key, n1.n_name AS supp_nation, n2.n_name AS cust_nation FROM nation n1, nation n2 WHERE ( (n1.n_name = ? AND n2.n_name = ?) OR (n1.n_name = ? AND n2.n_name = ?) ) ) AS temp WHERE s_suppkey = l_suppkey AND o_orderkey = l_orderkey AND c_custkey = o_custkey AND s_nationkey = supp_nation_key AND c_nationkey = cust_nation_key AND l_shipdate between date '1995-01-01' AND date '1996-12-31' ) AS shipping GROUP BY supp_nation, cust_nation, l_year ORDER BY supp_nation, cust_nation, l_year; ";
 
 		String large_table_shard_count = "2";
-		String task_executor_type = "task-tracker";
+		String task_executor_type = "adaptive";
 		
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "RUSSIA", "UNITED STATES");
 		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");

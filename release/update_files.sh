@@ -9,7 +9,7 @@ set -x
 
 ## VARIABLES ##
 new_branch1=updated_foreach_macros
-new_branch2=release-9.5
+new_branch2=enterprise-master
 new_pg_version=13.0
 ## VARIABLES ##
 

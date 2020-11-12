@@ -1,5 +1,5 @@
 [DEFAULT]
-postgres_citus_version: ('12.3', 'master')
+postgres_citus_version: ('12.3', 'single_node_conn_mngmt_backend_counter')
 postgresql_conf: [
     # the following two are necessary to prevent getting timeouts, do not change them.
     "tcp_keepalives_idle = 120",

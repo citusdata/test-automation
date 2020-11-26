@@ -17,11 +17,11 @@ set -o pipefail
 
 rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 # install git to clone the repository
-yum install -y git screen tmux htop python
+yum install -y git screen tmux htop python38
 
 # install pip since we will use it to install dependencies
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-python get-pip.py
+python3 get-pip.py
 
 # this is the username in our instances
 TARGET_USER=pguser

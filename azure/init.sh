@@ -166,3 +166,6 @@ find_private_ips() {
 }
 
 find_private_ips "$@"
+
+# cache git credentials so that we can clone a private repository with caching enabled
+./cache_git_creds.sh

@@ -13,7 +13,7 @@ set -x
 firewall-cmd --add-port=5432/tcp || true 
 
 # install pip since we will use it to install dependencies
-curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+curl https://bootstrap.pypa.io/2.7/get-pip.py -o get-pip.py
 python get-pip.py
 
 rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm

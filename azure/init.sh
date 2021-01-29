@@ -45,6 +45,8 @@ echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 
 
 BRANCH=$5
+export GIT_USERNAME=$6
+export GIT_TOKEN=$7
 
 echo ${BRANCH} > /tmp/branch_name
 

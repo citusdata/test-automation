@@ -6,6 +6,12 @@
             "defaultValue": "citustestcluster",
             "type": "string"
         },
+        "git_username": {
+            "type": "securestring"
+        },
+        "git_token": {
+            "type": "securestring"
+        },
         "adminUsername": {
             "type": "string",
             "defaultValue": "pguser",
@@ -384,7 +390,7 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'))]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'))]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
                     ]

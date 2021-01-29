@@ -164,7 +164,7 @@ def redhat_install_packages():
 
     with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git')
+            ' openssl-devel pam-devel readline-devel libcurl-devel git libzstd-devel lz4-devel')
 
 def build_postgres():
     'Installs postges'

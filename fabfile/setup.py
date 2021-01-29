@@ -46,15 +46,13 @@ def tpch():
 
 @task
 def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
+    'Just like basic_testing, but installs valgrind'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
     # we do this execute dance so valgrind is installed on every node, not just the master
     def install_valgrind():
         sudo('yum install -q -y valgrind')
     execute(install_valgrind)
-
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug')
 
     execute(common_setup, build_citus)
     execute(add_workers)    
@@ -185,6 +183,7 @@ def build_postgres():
         with cd(final_dir):
             pg_latest = config.PG_LATEST
             flags = ' '.join(config.PG_CONFIGURE_FLAGS)
+            flags += ' CFLAGS="%s"' % ' '.join(config.PG_CFLAGS).replace('"', '\\"')
             with hide('stdout'):
                 run('./configure --prefix={} {}'.format(pg_latest, flags))
 

@@ -16,7 +16,8 @@ CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
 PORT = 5432
 
 PG_VERSION = '9.6.1'
-PG_CONFIGURE_FLAGS = ['--with-openssl']
+PG_CONFIGURE_FLAGS = ['--with-openssl --enable-debug']
+PG_CFLAGS = ['-ggdb -g3']
 
 settings = {
     IS_SSH_KEYS_USED: True

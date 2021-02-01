@@ -611,16 +611,14 @@ TL;DR
 # 1 # start valgrind test
 
 # create valgrind instance to run
-eval `ssh-agent -s`
-ssh-add
-export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
 export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
 export VALGRIND_TEST=1
 cd azure
 ./create-cluster.sh
 
 # connect to coordinator
+eval `ssh-agent -s`
+ssh-add
 ./connect.sh
 
 # run fab command in coordinator in a detachable session

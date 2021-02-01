@@ -22,6 +22,7 @@ import pg
 import add
 import use
 import prefix
+import use
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
@@ -46,18 +47,21 @@ def tpch():
 
 @task
 def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
+    # prepare yum install command
+    install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
+
+    # install libraries required for valgrind test
+    sudo(install_required_packages_command)
+
+    # create results directory to put resulting log files there
+    # (for pushing them to results repository)
+    utils.rmdir(config.RESULTS_DIRECTORY, force=True)
+    utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
+
+    # set build citus function
+    build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
-
-    # we do this execute dance so valgrind is installed on every node, not just the master
-    def install_valgrind():
-        sudo('yum install -q -y valgrind')
-    execute(install_valgrind)
-
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug')
-
-    execute(common_setup, build_citus)
-    execute(add_workers)    
+    execute(common_setup, build_citus_func)
 
 @task
 @roles('master')

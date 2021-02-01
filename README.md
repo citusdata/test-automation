@@ -27,6 +27,7 @@ required for testing citus.
   * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
   * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
+  * [Running Valgrind Tests](#valgrind)
 * [Example fab Commands](#fab-examples)
 * [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
@@ -601,6 +602,88 @@ On the coordinator node:
 # Don't forget to escape `=` at the end of your connection string
 fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
 ```
+
+## <a name="valgrind"></a> Running Valgrind Tests
+
+TL;DR
+
+```bash
+# 1 # start valgrind test
+
+# create valgrind instance to run
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+export VALGRIND_TEST=1
+cd azure
+./create-cluster.sh
+
+# connect to coordinator
+eval `ssh-agent -s`
+ssh-add
+./connect.sh
+
+# run fab command in coordinator in a detachable session
+tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind"
+
+# simply exit from coordinator after detaching
+
+# 2 # finalize valgrind test
+
+# reconnect to coordinator after 9.5 hours (if you preferred default coordinator configuration)
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+./connect.sh
+
+# you can first check if valgrind test is finished by attaching to tmux session
+tmux a
+# then you should detach from the session before moving forward
+Ctrl+b d
+
+# run push results script
+cd test-automation/azure
+./push-results.sh <branch name you prefer to push results>
+
+# simply exit from coordinator after pushing the results
+
+# delete resource group finally
+cd azure
+./delete-resource-group.sh
+```
+
+DETAILS:
+
+To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
+
+```bash
+export VALGRIND_TEST=1
+```
+
+, which makes `numberOfWorkers` setting useless.
+This is because we will already be using our regression test structure and it creates a local cluster 
+itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
+PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
+
+On the coordinator node:
+
+```bash
+# an example usage: Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+```
+
+However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
+```bash
+tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
+```
+
+After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.
+Result can be found under `$HOME/results` directory.
+
+To push the results to `release_test_results` repository, run the below command in coordinator node:
+
+```bash
+sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
+```
+
+Finally, delete your resource group.
+Note that automated (weekly) valgrind test already destroys the resources that it uses.
 
 ## <a name="fab-examples"></a> Example fab Commands
 

@@ -63,6 +63,40 @@ jobs:
           name: delete the given resource group
           no_output_timeout: 10m             
 
+  valgrind-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_valgrind_test_resource_group
+          name: install dependencies and run valgrind tests
+          no_output_timeout: 10m 
+
+  finalize-valgrind-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./finalize-valgrind-test.sh
+          name: install dependencies and run valgrind tests
+          no_output_timeout: 10m
+
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
 
@@ -97,3 +131,30 @@ workflows:
               only: 
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+
+  # perform weekly valgrind test on azure every monday at 00:00
+  weekly-valgrind:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#0_0_*_*_1
+          cron: "0 0 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - valgrind-test
+
+  # Since valgrind tests really take a long time to finish, wait for 9.5 hours.
+  # Then push valgrind test results and terminate the machine.
+  weekly-valgrind-finalize:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#30_9_*_*_1
+          cron: "30 9 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - finalize-valgrind-test

@@ -622,7 +622,6 @@ ssh-add
 ./connect.sh
 
 # run fab command in coordinator in a detachable session
-sudo yum install tmux
 tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind"
 
 # simply exit from coordinator after detaching
@@ -671,7 +670,6 @@ fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
 ```bash
-sudo yum install tmux
 tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
 ```
 

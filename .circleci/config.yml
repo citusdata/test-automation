@@ -133,10 +133,10 @@ workflows:
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
 
   # perform weekly valgrind test on azure every monday at 00:00
-  # https://crontab.guru/#0_0_*_*_1
   weekly-valgrind:
     triggers:
       - schedule:
+          # https://crontab.guru/#0_0_*_*_1
           cron: "0 0 * * 1"
           filters:
             branches:
@@ -147,10 +147,10 @@ workflows:
 
   # Since valgrind tests really take a long time to finish, wait for 9.5 hours.
   # Then push valgrind test results and terminate the machine.
-  # https://crontab.guru/#30_9_*_*_1
   weekly-valgrind-finalize:
     triggers:
       - schedule:
+          # https://crontab.guru/#30_9_*_*_1
           cron: "30 9 * * 1"
           filters:
             branches:

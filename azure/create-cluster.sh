@@ -41,7 +41,7 @@ CREATE_CLUSTER_COMMAND=(az group deployment create -g ${rg} --template-file azur
 is_valgrind_test=${VALGRIND_TEST:=0}
 
 # if we want to run valgrind tests, lets overwrite numberOfWorkers parameter with 0
-if [[ "$is_valgrind_test" == "1" ]]; then
+if [[ "$is_valgrind_test" != "0" ]]; then
     # be on the safe side, add "--parameters" before "numberOfWorkers" as the order
     # of the parameters in CREATE_CLUSTER_COMMAND may change
     CREATE_CLUSTER_COMMAND+=(--parameters)

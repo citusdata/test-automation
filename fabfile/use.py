@@ -12,6 +12,8 @@ import setup
 import config
 import utils
 
+__all__ = ['citus', 'enterprise', 'postgres', 'hammerdb', 'asserts', 'debug_mode', 'valgrind']
+
 @task
 def citus(*args):
     'Choose a citus version. For example: fab use.citus:v6.0.1 setup.basic_testing (defaults to master)'

@@ -49,7 +49,7 @@ fi
 
 ./create-cluster.sh
 
-if [ "$VALGRIND_TEST" == "1" ]; then
+if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     # If running valgrind tests, do not run cleanup function
     # This is because, as valgrind tests requires too much time to run,
     # we start valgrind tests via nohup in ci. Hence ssh session

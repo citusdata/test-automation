@@ -9,7 +9,6 @@ set -x
 
 coordinator_ip_address=$1
 username=$2
-hammerdb_branch=$3
 
 driverdir="${0%/*}"
 
@@ -17,19 +16,10 @@ hammerdb_version=$(cat ~/HAMMERDB_VERSION)
 hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 
 cd "${HOME}"
-
-wget "https://github.com/TPC-Council/HammerDB/releases/download/v${hammerdb_version}/HammerDB-${hammerdb_version}-Linux.tar.gz"
-tar -zxvf HammerDB-"${hammerdb_version}"-Linux.tar.gz
-
-# here we use our fork, because it distributed tables at the beginning, which speeds up the process
-# since we can create indexes in parallel etc.
-git clone --branch "${hammerdb_branch}" https://github.com/citusdata/HammerDB.git
-mv HammerDB/src/postgresql/pgoltp.tcl "${hammerdb_dir}"/src/postgresql/pgoltp.tcl
-mv HammerDB/config/postgresql.xml "${hammerdb_dir}"/config/postgresql.xml
-
-# cd ${hammerdb_dir}/src/postgresql
-# comment out create database and user as citus cannot do that
-# sed -i 's/CreateUserDatabase $lda $db $superuser $user $password/#CreateUserDatabase $lda $db $superuser $user $password/g' pgoltp.tcl
+git clone https://github.com/citusdata/ch-benchmark.git
+cd ch-benchmark
+./generate-hammerdb.sh "$hammerdb_version"
+mv HammerDB-"${hammerdb_version}" ~/
 
 # postgres is necessary for hammerdb, so install that
 sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm

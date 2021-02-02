@@ -32,7 +32,7 @@ do
   # get the file name from absolute path 
   config_file=$(basename "$config_file")
 
-  ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
+  ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab --show=debug setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
   "${HOME}"/test-automation/hammerdb/build-and-run.sh "${coordinator_private_ip}" "${config_file}" "${is_tpcc}" "${is_ch}" "${username}"
 done
 

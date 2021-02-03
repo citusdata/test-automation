@@ -630,6 +630,10 @@ tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind
 
 # reconnect to coordinator after 9.5 hours (if you preferred default coordinator configuration)
 export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+
+eval `ssh-agent -s`
+ssh-add
+cd azure
 ./connect.sh
 
 # you can first check if valgrind test is finished by attaching to tmux session

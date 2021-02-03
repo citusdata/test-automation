@@ -217,7 +217,7 @@ def build_citus():
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
         with hide('stdout'):
-            run('make -s -j{} install'.format(core_count))
+            run('make -s -j{} install-all'.format(core_count))
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -238,7 +238,7 @@ def build_enterprise():
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
         with hide('stdout'):
-            run('make -s -j{} install'.format(core_count))
+            run('make -s -j{} install-all'.format(core_count))
 
 def create_database():
     pg_latest = config.PG_LATEST

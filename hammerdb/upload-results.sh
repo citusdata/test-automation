@@ -7,7 +7,8 @@ set -e
 # echo commands
 set -x
 
-hammerdb_dir="${HOME}"/HammerDB-3.3
+hammerdb_version=$(cat ~/HAMMERDB_VERSION)
+hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 rg_name=$1
 
 cd "${hammerdb_dir}"

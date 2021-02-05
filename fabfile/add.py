@@ -161,12 +161,14 @@ def jdbc():
 @task
 @roles('master')
 def coordinator_to_metadata():
-    local_ip = utils.get_local_ip()
+    # local_ip = utils.get_local_ip()
+    local_ip ='localhost'
     utils.psql("SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
 
 @task
 @roles('master')
 def shards_on_coordinator():
-    local_ip = utils.get_local_ip()
+    # local_ip = utils.get_local_ip()
+    local_ip = 'localhost'
     utils.psql("SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
         .format(local_ip, config.PORT))    

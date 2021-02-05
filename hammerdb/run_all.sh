@@ -16,6 +16,7 @@ username=$6
 hammerdb_version=$7
 hammerdb_branch=$8
 cluster_rg=$9
+is_single_node=${10}
 
 # store hammerdb version in a file so that we can get it in other scripts
 echo "${hammerdb_version}" > ~/HAMMERDB_VERSION
@@ -33,7 +34,12 @@ do
   # get the file name from absolute path 
   config_file=$(basename "$config_file")
 
-  ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
+  if [ "$is_single_node" = true ] ; then
+    ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip},is_single_node=True"
+  else
+    ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
+  fi
+
   "${HOME}"/test-automation/hammerdb/build-and-run.sh "${coordinator_private_ip}" "${config_file}" "${is_tpcc}" "${is_ch}" "${username}"
 done
 

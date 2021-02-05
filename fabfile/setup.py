@@ -74,7 +74,7 @@ def enterprise():
 
 @task
 @roles('master')
-def hammerdb(config_file='hammerdb.ini', driver_ip=''):
+def hammerdb(config_file='hammerdb.ini', driver_ip='', is_single_node=False):
 
     config_parser = ConfigParser.ConfigParser()
 
@@ -94,6 +94,10 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
         execute(use.postgres, pg_version)
         execute(use.citus, citus_version)
         basic_testing()
+    if is_single_node:
+        add.coordinator_to_metadata()
+        add.shards_on_coordinator()    
+
     execute(set_hammerdb_config, config_parser, driver_ip)
 
 @task

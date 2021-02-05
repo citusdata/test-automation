@@ -12,6 +12,7 @@ is_ch=${IS_CH:=true} # set to true if you want ch benchmark to be run, otherwise
 username=pguser # username of the database
 hammerdb_version=3.3
 hammerdb_branch=hammerdb40 # for hammerdb 3.3 use hammerdb33, for hammerdb 4.0 use hammerdb40
+is_single_node=true
 
 # ssh_execute is used to run a command multiple times on ssh, this is because we sometimes get timeouts 
 # while trying to ssh, and it shouldn't make the script fail. If a command actually fails, it will always
@@ -83,7 +84,7 @@ ssh_execute "${driver_ip}" "/home/pguser/test-automation/hammerdb/send_pubkey.sh
 
 set +e
 # run hammerdb test, this will be run in a detached session.
-ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${hammerdb_branch} ${cluster_rg}"
+ssh_execute "${driver_ip}" "screen -d -m -L /home/pguser/test-automation/hammerdb/run_all.sh ${coordinator_private_ip} ${driver_private_ip} ${branch_name} ${is_tpcc} ${is_ch} ${username} ${hammerdb_version} ${hammerdb_branch} ${cluster_rg} ${is_single_node}"
 set -e
 
 echo "Successfully started the benchmark(There can still be runtime errors)!"

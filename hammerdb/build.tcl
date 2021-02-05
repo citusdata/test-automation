@@ -18,7 +18,7 @@ diset tpcc pg_defaultdbase pguser
 # if you change this, make sure to change tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
 diset tpcc pg_num_vu 450
-diset tpcc pg_count_ware 1800
+diset tpcc pg_count_ware 250
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false

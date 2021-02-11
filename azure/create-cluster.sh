@@ -62,5 +62,4 @@ connection_string=$(echo ${connection_string} | cut -d "\"" -f 2)
 
 echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY:"
 
-echo "run './delete-security-rule.sh' to temporarily disable security rule, and connect with:"
 echo ${connection_string}

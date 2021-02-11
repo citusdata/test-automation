@@ -23,9 +23,7 @@ ssh_execute() {
    n=0
    until [ $n -ge 10 ]
    do
-      # delete the security before each try
-      sh "${topdir}"/azure/delete-security-rule.sh
-      ssh -o "StrictHostKeyChecking no" -A pguser@"${ip}" "source ~/.bash_profile;${command}" && break
+      ssh -o "StrictHostKeyChecking no" -A -p 3456 pguser@"${ip}" "source ~/.bash_profile;${command}" && break
       n=$((n+1))
    done
 

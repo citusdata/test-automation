@@ -40,6 +40,18 @@ rsync -aXS /tmp/home_copy/. /home/"${TARGET_USER}"/.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 
+# we will use port 3456 to not hit security rule 103
+echo 'Port 3456' >> /etc/ssh/sshd_config
+echo 'Port 22' >> /etc/ssh/sshd_config
+
+# necessary for semanage, VMs have secure linux
+yum install -y policycoreutils-python
+# we need to enable the new port from semanage
+semanage port -a -t ssh_port_t -p tcp 3456
+
+# restart ssh service to be able to use the new port
+systemctl restart sshd
+
 BRANCH=$1
 
 echo "${BRANCH}" > /tmp/branch_name

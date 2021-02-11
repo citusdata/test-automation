@@ -422,7 +422,7 @@
         },
         "customSshPort": {
             "value": "[variables('customSshPort')]",
-            "type": "string"
+            "type": "int"
         }
     }
 }

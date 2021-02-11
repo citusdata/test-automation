@@ -17,8 +17,7 @@ ssh_execute() {
    n=0
    until [ $n -ge 10 ]
    do
-      sh ./delete-security-rule.sh
-      ssh -o "StrictHostKeyChecking no" -A pguser@${ip} "source ~/.bash_profile;${command}" && break
+      ssh -o "StrictHostKeyChecking no" -A -p 3456 pguser@${ip} "source ~/.bash_profile;${command}" && break
       rc=$? # get return code
       if [ $rc -ne 255 ] ; then
          # if the error code is not 255 we didn't get a connection error.
@@ -63,8 +62,6 @@ public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}
 ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
-
-sh ./delete-security-rule.sh
 
 echo "adding public ip to known hosts in remote"
 ssh_execute ${public_ip} "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"

@@ -161,7 +161,8 @@
         "publicIPAddressName": "citusPublicIP",
         "numberOfInstances":"[add(parameters('numberOfWorkers'), 2)]",
         "driverNodeIndex" : "[add(parameters('numberOfWorkers'), 1)]",
-        "ppgName": "citusPPG"
+        "ppgName": "citusPPG",
+        "customSshPort": 3456
     },
     "resources": [
         {
@@ -246,6 +247,20 @@
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "customSshPort",
+                        "properties": {
+                            "description": "custom ssh port",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "[variables('customSshPort')]",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
                             "direction": "Inbound"
                         }
                     }
@@ -424,8 +439,8 @@
                     "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'))]",
                     "fileUris": [
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/entry.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/driver-init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/multiple_ports_on_ssh/hammerdb/driver-init.sh",
+                        "https://raw.githubusercontent.com/citusdata/test-automation/multiple_ports_on_ssh/azure/init.sh",
                         "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/cache_git_creds.sh"
                     ]
                 }
@@ -438,7 +453,7 @@
     ],
     "outputs": {
         "ssh": {
-            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "value": "[concat('ssh -A -p ', variables('customSshPort'), ' ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
             "type": "string"
         },
         "publicIP": {
@@ -456,6 +471,10 @@
         "driverPrivateIP": {
             "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', variables('driverNodeIndex')))).ipConfigurations[0].properties.privateIPAddress]",
             "type": "string" 
+        },
+        "customSshPort": {
+            "value": "[variables('customSshPort')]",
+            "type": "int"
         }
     }
 }

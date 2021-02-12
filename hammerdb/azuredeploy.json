@@ -253,7 +253,7 @@
                     {
                         "name": "customSshPort",
                         "properties": {
-                            "description": "custom ssh port",
+                            "description": "allow accessing to custom ssh port from all ip's",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "[variables('customSshPort')]",

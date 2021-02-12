@@ -60,6 +60,6 @@ connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query pro
 # remove the quotes 
 connection_string=$(echo ${connection_string} | cut -d "\"" -f 2)
 
-echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY:"
+echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY RUN THE FOLLOWING:"
 
 echo ${connection_string}

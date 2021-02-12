@@ -16,7 +16,7 @@ ssh_execute() {
    n=0
    until [ $n -ge 10 ]
    do
-      ssh -o "StrictHostKeyChecking no" -A -p 3456 pguser@${ip} "source ~/.bash_profile;${command}" && break
+      ssh -o "StrictHostKeyChecking no" -A -p "${ssh_port}" pguser@${ip} "source ~/.bash_profile;${command}" && break
       rc=$? # get return code
       if [ $rc -ne 255 ] ; then
          # if the error code is not 255 we didn't get a connection error.
@@ -54,6 +54,10 @@ if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     # will immediately be closed just after the fabric command is run
     trap - EXIT
 fi
+
+ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+# remove the quotes 
+ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
 
 public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 

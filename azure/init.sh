@@ -11,6 +11,8 @@ set -x
 # We don't exit on this command because if we are on centos, the firewall
 # might not be active, but this also enables switching to redhat easily.
 firewall-cmd --add-port=5432/tcp || true 
+firewall-cmd --add-port=3456/tcp || true 
+
 
 # fail in a pipeline if any of the commands fails
 set -o pipefail

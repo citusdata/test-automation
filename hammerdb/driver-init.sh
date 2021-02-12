@@ -11,6 +11,7 @@ set -x
 # We don't exit on this command because if we are on centos, the firewall
 # might not be active, but this also enables switching to redhat easily.
 firewall-cmd --add-port=5432/tcp || true 
+firewall-cmd --add-port=3456/tcp || true 
 
 # install pip since we will use it to install dependencies
 curl https://bootstrap.pypa.io/2.7/get-pip.py -o get-pip.py

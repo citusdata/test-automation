@@ -75,6 +75,8 @@ The data will be stored on the attached disk, size of which can be configured in
 
 If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformly from different regions.
 
+**Port 3456 is used for ssh, you can connect to any node via Port 3456, if you don't use this node, you will hit the security rules.**
+
 ## <a name="azure-setup-steps"></a> Setup Steps For Each Test
 
 You will need to follow these steps to create a cluster and connect to it, on your local machine:
@@ -98,14 +100,6 @@ less azuredeploy.parameters.json
 
 # connect to the coordinator
 ./connect.sh
-
-# ALTERNATIVATELY instead of ./connect.sh you can do the following
-
-# Delete security rule 103 to be able to connect
-./delete-security-rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
 ```
 
 ## <a name="azure-delete-cluster"></a> Steps to delete a cluster
@@ -140,9 +134,9 @@ The first virtual machine with index 0 is treated as a coordinator. When all the
 
 The initialization script also finds the private ip addresses of workers and puts them to the coordinator. The way this is done is with a storage account resource. This storage account resource is created within the template itself and all the vms upload their private ip addresses to the storage. After all are uploaded the coordinator downloads all the private ip addresses from the storage account and puts it to `worker-instances` file, which is then used when creating a citus cluster.
 
-We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete-security-rule.sh`, which deletes that rule for you.
+We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group.
 
-You can use `connect.sh` which will delete the security rule and connect to the coordinator for you.
+You can use `connect.sh` which will connect to the coordinator for you on a custom ssh port (at the time of writing 3456).
 
 Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
 
@@ -170,13 +164,6 @@ then you should run:
 
 ```bash
 ./connect.sh
-```
-
-or
-
-```bash
-./delete-security-rule.sh
-ssh -A pguser@<public ip of coordinator>
 ```
 
 After you are done with testing, you can delete the resource group with:

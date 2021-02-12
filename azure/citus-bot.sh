@@ -8,8 +8,7 @@ set -e
 set -x
 
 # ssh_execute tries to send the given command over the given connection multiple times.
-# Before sending the command it deletes the security rule on azure. Sometimes the rule
-# comes back too quick, so we get a timeout, that is why we try multiple times.
+# It uses the custom ssh port 3456.
 ssh_execute() {
    ip=$1
    shift;
@@ -17,8 +16,7 @@ ssh_execute() {
    n=0
    until [ $n -ge 10 ]
    do
-      sh ./delete-security-rule.sh
-      ssh -o "StrictHostKeyChecking no" -A pguser@${ip} "source ~/.bash_profile;${command}" && break
+      ssh -o "StrictHostKeyChecking no" -A -p "${ssh_port}" pguser@${ip} "source ~/.bash_profile;${command}" && break
       rc=$? # get return code
       if [ $rc -ne 255 ] ; then
          # if the error code is not 255 we didn't get a connection error.
@@ -57,14 +55,16 @@ if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     trap - EXIT
 fi
 
+ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+# remove the quotes 
+ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
+
 public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}
 ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
-
-sh ./delete-security-rule.sh
 
 echo "adding public ip to known hosts in remote"
 ssh_execute ${public_ip} "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"

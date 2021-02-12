@@ -23,9 +23,7 @@ ssh_execute() {
    n=0
    until [ $n -ge 10 ]
    do
-      # delete the security before each try
-      sh "${topdir}"/azure/delete-security-rule.sh
-      ssh -o "StrictHostKeyChecking no" -A pguser@"${ip}" "source ~/.bash_profile;${command}" && break
+      ssh -o "StrictHostKeyChecking no" -A -p "$ssh_port" pguser@"${ip}" "source ~/.bash_profile;${command}" && break
       n=$((n+1))
    done
 
@@ -49,6 +47,9 @@ cd "${topdir}"/hammerdb
 # create the cluster with driver node
 ./create.sh
 
+ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+# remove the quotes 
+ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
 
 cluster_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 

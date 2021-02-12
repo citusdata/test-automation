@@ -161,7 +161,8 @@
         "publicIPAddressName": "citusPublicIP",
         "numberOfInstances":"[add(parameters('numberOfWorkers'), 2)]",
         "driverNodeIndex" : "[add(parameters('numberOfWorkers'), 1)]",
-        "ppgName": "citusPPG"
+        "ppgName": "citusPPG",
+        "customSshPort": 3456
     },
     "resources": [
         {
@@ -246,6 +247,20 @@
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "customSshPort",
+                        "properties": {
+                            "description": "allow accessing to custom ssh port from all ip's",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "[variables('customSshPort')]",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
                             "direction": "Inbound"
                         }
                     }
@@ -438,7 +453,7 @@
     ],
     "outputs": {
         "ssh": {
-            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "value": "[concat('ssh -A -p ', variables('customSshPort'), ' ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
             "type": "string"
         },
         "publicIP": {
@@ -456,6 +471,10 @@
         "driverPrivateIP": {
             "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', variables('driverNodeIndex')))).ipConfigurations[0].properties.privateIPAddress]",
             "type": "string" 
+        },
+        "customSshPort": {
+            "value": "[variables('customSshPort')]",
+            "type": "int"
         }
     }
 }

@@ -24,8 +24,8 @@ tar -zxvf HammerDB-"${hammerdb_version}"-Linux.tar.gz
 # here we use our fork, because it distributed tables at the beginning, which speeds up the process
 # since we can create indexes in parallel etc.
 git clone --branch "${hammerdb_branch}" https://github.com/citusdata/HammerDB.git
-mv HammerDB/src/postgresql/pgoltp.tcl "${hammerdb_dir}"/src/postgresql/pgoltp.tcl
-mv HammerDB/config/postgresql.xml "${hammerdb_dir}"/config/postgresql.xml
+#mv HammerDB/src/postgresql/pgoltp.tcl "${hammerdb_dir}"/src/postgresql/pgoltp.tcl
+#mv HammerDB/config/postgresql.xml "${hammerdb_dir}"/config/postgresql.xml
 
 # cd ${hammerdb_dir}/src/postgresql
 # comment out create database and user as citus cannot do that

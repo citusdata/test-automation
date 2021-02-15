@@ -39,4 +39,4 @@ done
 
 cp -r "${HOME}"/test-automation/fabfile/hammerdb_confs "${HOME}"/HammerDB-"${hammerdb_version}"/results
 "${HOME}"/test-automation/hammerdb/upload-results.sh "${branch_name}"
-"${HOME}"/test-automation/hammerdb/delete-resource-group.sh "${cluster_rg}"
+#"${HOME}"/test-automation/hammerdb/delete-resource-group.sh "${cluster_rg}"

@@ -21,7 +21,6 @@ public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 
 echo ${public_ip}
 
-ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
 
 ./add-local-ip.sh

@@ -72,9 +72,6 @@ driver_private_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy -
 driver_private_ip=$(echo "${driver_private_ip}" | cut -d "\"" -f 2)
 echo "${driver_private_ip}"
 
-# add the cluster and driver ip to our known host so that they don't prompt any verification.
-ssh-keyscan -H "${cluster_ip}" >> ~/.ssh/known_hosts
-ssh-keyscan -H "${driver_ip}" >> ~/.ssh/known_hosts
 # just to be sure, the permission of known_hosts should be 600, otherwise it is ignored.
 chmod 600 ~/.ssh/known_hosts
 

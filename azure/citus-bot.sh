@@ -63,7 +63,6 @@ public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.
 # remove the quotes 
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}
-ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
 
 echo "adding public ip to known hosts in remote"

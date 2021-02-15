@@ -31,6 +31,6 @@ echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
 # put an empty success file for valgrind tests under results dir if there are error logs
 # push the files under results dir
-ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} \
+ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} -p 3456 \
 "source ~/.bash_profile;" \
 "sh /home/pguser/test-automation/azure/push-results.sh ${RESOURCE_GROUP_NAME}";

@@ -29,5 +29,5 @@ find . -type f -name "*.ini" |
 # replace all .ini config files (except master.ini which requires use_enterprise to be off):
 # use_enterprise: <use_enterprise>
 # use_enterprise: <new_use_enterprise>
-find . -type f -name "*.ini" ! -name "master.ini" | 
+find . -type f -name "*.ini" | 
     xargs sed -i "s@use_enterprise: [^,;]\+@use_enterprise: ${new_use_enterprise}@g"

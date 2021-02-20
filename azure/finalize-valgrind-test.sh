@@ -24,6 +24,8 @@ echo ${public_ip}
 ssh-keyscan -H ${public_ip} >> ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
 
+./add-local-ip.sh
+
 echo "adding public ip to known hosts in remote"
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} -p 3456 "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"
 echo "running tests in remote"

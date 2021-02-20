@@ -19,6 +19,12 @@
                 "description": "Configure the linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
             }
         },
+        "localPublicIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Local server's public ip"
+            }
+        },
         "branchName": {
             "type": "string",
             "metadata": {
@@ -220,11 +226,11 @@
                         {
                         "name": "customSshPort",
                         "properties": {
-                            "description": "allow accessing to custom ssh port from all ip's",
+                            "description": "allow accessing to custom ssh port from local ip",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "[variables('customSshPort')]",
-                            "sourceAddressPrefix": "*",
+                            "sourceAddressPrefix": "[parameters('localPublicIp')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 102,

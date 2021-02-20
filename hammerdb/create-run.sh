@@ -72,9 +72,6 @@ driver_private_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy -
 driver_private_ip=$(echo "${driver_private_ip}" | cut -d "\"" -f 2)
 echo "${driver_private_ip}"
 
-# just to be sure, the permission of known_hosts should be 600, otherwise it is ignored.
-chmod 600 ~/.ssh/known_hosts
-
 # add the public key of coordinator to the driver node so that driver can connect to the coordinator 
 # without getting permission error.
 ssh_execute "${driver_ip}" "/home/pguser/test-automation/hammerdb/send_pubkey.sh ${coordinator_private_ip}" 

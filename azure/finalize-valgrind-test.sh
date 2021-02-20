@@ -21,8 +21,6 @@ public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 
 echo ${public_ip}
 
-chmod 600 ~/.ssh/known_hosts
-
 ./add-local-ip.sh
 
 echo "adding public ip to known hosts in remote"

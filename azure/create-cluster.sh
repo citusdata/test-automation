@@ -34,8 +34,12 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=master}
 
+# get local public ip 
+local_public_ip=$(curl https://ipinfo.io/ip)
+
 # below is the default create cluster command
-CREATE_CLUSTER_COMMAND=(az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH")
+CREATE_CLUSTER_COMMAND=(az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
+ --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
 
 # if VALGRIND_TEST variable is not exported, set it to 0
 is_valgrind_test=${VALGRIND_TEST:=0}

@@ -31,6 +31,13 @@
                 "description": "The branch that will be cloned from test automation"
             }
         },
+        "localPublicIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Local server's public ip"
+            }
+        },
+
         "diskType": {
             "type": "string",
             "defaultValue": "Premium_LRS",
@@ -253,11 +260,11 @@
                     {
                         "name": "customSshPort",
                         "properties": {
-                            "description": "allow accessing to custom ssh port from all ip's",
+                            "description": "allow accessing to custom ssh port from local ip",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "[variables('customSshPort')]",
-                            "sourceAddressPrefix": "*",
+                            "sourceAddressPrefix": "[parameters('localPublicIp')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 102,

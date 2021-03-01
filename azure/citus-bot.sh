@@ -55,11 +55,11 @@ if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     trap - EXIT
 fi
 
-ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+ssh_port=$(az deployment group show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
 # remove the quotes 
 ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
 
-public_ip=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
+public_ip=$(az deployment group show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}

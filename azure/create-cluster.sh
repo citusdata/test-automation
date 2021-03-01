@@ -38,7 +38,7 @@ export BRANCH=${CIRCLE_BRANCH:=master}
 local_public_ip=$(curl https://ipinfo.io/ip)
 
 # below is the default create cluster command
-CREATE_CLUSTER_COMMAND=(az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
+CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
  --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
 
 # if VALGRIND_TEST variable is not exported, set it to 0
@@ -59,7 +59,7 @@ end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.
 
 
-connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
+connection_string=$(az deployment group show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
 
 # remove the quotes 
 connection_string=$(echo ${connection_string} | cut -d "\"" -f 2)

@@ -15,8 +15,8 @@ dir="${0%/*}"
 cd "${dir}"
 
 # get the public ip of driver from the cluster outputs.
-public_ip=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.driverPublicIP.value)
-ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+public_ip=$(az deployment group show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.driverPublicIP.value)
+ssh_port=$(az deployment group show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
 # remove the quotes 
 public_ip=$(echo "${public_ip}" | cut -d "\"" -f 2)
 ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)

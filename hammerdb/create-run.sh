@@ -46,27 +46,27 @@ cd "${topdir}"/hammerdb
 # create the cluster with driver node
 ./create.sh
 
-ssh_port=$(az group deployment show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
+ssh_port=$(az deployment group show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
 # remove the quotes 
 ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
 
-cluster_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.publicIP.value)
+cluster_ip=$(az deployment group show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 
 cluster_ip=$(echo "${cluster_ip}" | cut -d "\"" -f 2)
 echo "${cluster_ip}"
 
-coordinator_private_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.coordinatorPrivateIP.value)
+coordinator_private_ip=$(az deployment group show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.coordinatorPrivateIP.value)
 # remove the quotes 
 coordinator_private_ip=$(echo "${coordinator_private_ip}" | cut -d "\"" -f 2)
 echo "${coordinator_private_ip}"
 
 
-driver_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.driverPublicIP.value)
+driver_ip=$(az deployment group show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.driverPublicIP.value)
 # remove the quotes 
 driver_ip=$(echo "${driver_ip}" | cut -d "\"" -f 2)
 echo "${driver_ip}"
 
-driver_private_ip=$(az group deployment show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.driverPrivateIP.value)
+driver_private_ip=$(az deployment group show -g "${cluster_rg}" -n azuredeploy --query properties.outputs.driverPrivateIP.value)
 # remove the quotes 
 driver_private_ip=$(echo "${driver_private_ip}" | cut -d "\"" -f 2)
 echo "${driver_private_ip}"

@@ -15,7 +15,7 @@ export RESOURCE_GROUP_NAME="citusbot_valgrind_test_resource_group"
 
 trap cleanup EXIT
 
-public_ip=$(az group deployment show -g ${RESOURCE_GROUP_NAME} -n azuredeploy --query properties.outputs.publicIP.value)
+public_ip=$(az deployment group show -g ${RESOURCE_GROUP_NAME} -n azuredeploy --query properties.outputs.publicIP.value)
 # remove the quotes 
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 

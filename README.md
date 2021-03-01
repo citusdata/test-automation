@@ -48,13 +48,15 @@ You can find more information about every step below in other categories. This l
 ### Prerequisites
 1. You should have `az cli` in your local to continue. [Install instructions](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 2. Run `az login` to make the CLI log in to your account
-3. Make sure that your default subscription is the right one(DS Data Magnet Incubations):
+3. Make sure that your default subscription is the right one(Azure SQL DB Project Orcas - CitusData):
     ```bash
     # List your subscriptions
     az account list
     # Pick the correct one from the list and run
     az account set --subscription {uuid-of-correct-subscription}
     ```
+
+If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusData`, to add it, contact someone who is authorized.
 
 4. You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
     ```bash

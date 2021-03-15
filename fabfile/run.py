@@ -49,9 +49,9 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     path = os.path.join(config.RESULTS_DIRECTORY, 'pgbench_results_{}_{}.csv'.format(current_time_mark, config_file))
     results_file = open(path, 'w')
 
-    use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
-
     if connectionURI == '':
+        use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
+
         results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
                            "TPS Including Connections, TPS Excluding Connections\n")
 

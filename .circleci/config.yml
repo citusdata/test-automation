@@ -145,13 +145,13 @@ workflows:
     jobs:
       - valgrind-test
 
-  # Since valgrind tests really take a long time to finish, wait for 9.5 hours.
+  # Since valgrind tests really take a long time to finish, wait for 12 hours.
   # Then push valgrind test results and terminate the machine.
   weekly-valgrind-finalize:
     triggers:
       - schedule:
-          # https://crontab.guru/#30_9_*_*_1
-          cron: "30 9 * * 1"
+          # https://crontab.guru/#00_12_*_*_1
+          cron: "00 12 * * 1"
           filters:
             branches:
               only:

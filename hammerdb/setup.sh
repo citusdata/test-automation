@@ -16,7 +16,7 @@ hammerdb_version=$(cat ~/HAMMERDB_VERSION)
 hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 
 cd "${HOME}"
-git clone https://github.com/citusdata/ch-benchmark.git
+git clone -b test-automation https://github.com/citusdata/ch-benchmark.git
 cd ch-benchmark
 ./generate-hammerdb.sh "$hammerdb_version"
 mv HammerDB-"${hammerdb_version}" ~/

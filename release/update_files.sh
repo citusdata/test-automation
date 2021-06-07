@@ -8,9 +8,9 @@ set -e
 set -x
 
 ## VARIABLES ##
-new_branch1=release-9.3
-new_branch2=release-9.2
-new_pg_version=12.2
+new_branch1=enterprise-master
+new_branch2=release-10.0
+new_pg_version=13.3
 new_use_enterprise=on
 ## VARIABLES ##
 

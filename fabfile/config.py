@@ -22,7 +22,7 @@ BUILD_CITUS_FUNC = 'build_citus_func'
 
 # valgrind test variables
 VALGRIND_TEST_OUT_FILE = 'valgrind_test_out.txt'
-VALGRIND_LOGS_FILE = 'valgrind_test_log.txt'
+VALGRIND_LOGS_FILE = 'citus_valgrind_test_log.txt'
 REGRESSION_DIFFS_FILE = 'regression.diffs'
 CITUS_RELATED_VALGRIND_LOG_FILE = 'valgrind_test_log_citus.txt'
 VALGRIND_REQUIRED_PACKAGES = ['valgrind', 'valgrind-devel.x86_64', 'openssl-devel.x86_64', 'libicu-devel.x86_64']

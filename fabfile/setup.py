@@ -241,8 +241,8 @@ def build_enterprise():
 def install_citus(core_count):
     with hide('stdout'):
         # fall back to "make install" if "make install-all" is not available
-        run('make -s -j{} install-all || make -s -j{} install'.
-            format(core_count, core_count))
+        run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
+            format(core_count=core_count))
 
 def create_database():
     pg_latest = config.PG_LATEST

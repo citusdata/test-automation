@@ -1,5 +1,13 @@
 -- Sccsid:     @(#)dss.ddl	2.1.8.1
 
+-- this function is dropped in Citus10, added here for tests
+CREATE OR REPLACE FUNCTION pg_catalog.master_create_distributed_table(table_name regclass,
+                                                                      distribution_column text,
+                                                                      distribution_method citus.distribution_type)
+    RETURNS void
+    LANGUAGE C STRICT
+    AS 'citus', $$master_create_distributed_table$$;
+
 CREATE TABLE nation
 (
     n_nationkey  INTEGER not null,

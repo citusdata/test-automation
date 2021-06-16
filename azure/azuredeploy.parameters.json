@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "numberOfWorkers": {
-            "value": 1
+            "value": 4
         },
         "diskType": {
             "value": "Premium_LRS"
@@ -15,10 +15,10 @@
             "value": "Standard_E16s_v3"
         },
         "coordinatorDiskSizeGB": {
-            "value": 512
+            "value": 128
         },
         "workerDiskSizeGB": {
-            "value": 512
+            "value": 128
         }
     }
 }

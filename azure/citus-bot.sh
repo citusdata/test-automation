@@ -35,10 +35,10 @@ function cleanup {
 }
 
 trap cleanup EXIT
-
 rg=$1
 export RESOURCE_GROUP_NAME=${rg}
 
+exit 0
 if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     # If running valgrind tests, export VALGRIND_TEST to be 1 to ensure
     # only coordinator instance is created in create-cluster script

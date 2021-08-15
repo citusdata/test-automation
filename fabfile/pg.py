@@ -1,4 +1,4 @@
-from fabric.api import task, run, cd
+from fabric.api import task, run, cd, parallel
 
 import config
 import prefix
@@ -9,6 +9,7 @@ __all__ = ['start', 'stop', 'restart', 'read_config', 'set_config', 'set_config_
 
 
 @task
+@parallel
 def start():
     'Start the database in pg-latest'
     prefix.check_for_pg_latest()
@@ -19,6 +20,7 @@ def start():
 
 
 @task
+@parallel
 def stop():
     'Stop the database in pg-latest'
     prefix.check_for_pg_latest()
@@ -28,6 +30,7 @@ def stop():
 
 
 @task
+@parallel
 def restart():
     'Restart the database in pg-latest'
     prefix.check_for_pg_latest()
@@ -39,6 +42,7 @@ def restart():
 
 
 @task
+@parallel
 def read_config(key):
     'Returns the present value of the requested key e.x `fab pg.read_config:max_connections`'
     prefix.check_for_pg_latest()
@@ -47,6 +51,7 @@ def read_config(key):
 
 
 @task
+@parallel
 def set_config(key, value):
     'Changes the postgres configuration: e.g. `fab pg.set_config:max_connections,200`'
     prefix.check_for_pg_latest()
@@ -55,6 +60,7 @@ def set_config(key, value):
 
 
 @task
+@parallel
 def set_config_str(config):
     prefix.check_for_pg_latest()
 

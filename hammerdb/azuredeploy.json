@@ -230,20 +230,6 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "cituscluster",
-                        "properties": {
-                            "description": "Allow ssh to localhost",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
                         "name": "citusclusterpgport",
                         "properties": {
                             "description": "Expose default pg port",

@@ -53,7 +53,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
         use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
 
         results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
-                           "TPS Including Connections, TPS Excluding Connections\n")
+                           "TPS Excluding Connections, TPS Including Connections\n")
 
         pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
         for pg_version, citus_version in pg_citus_tuples:
@@ -96,14 +96,24 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
                                 else:
                                     latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
-                                    tps_including_connections = \
-                                        re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
-                                    tps_excluding_connections = \
-                                        re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
-
                                     results_file.write(", " + latency_average)
-                                    results_file.write(", " + tps_including_connections)
-                                    results_file.write(", " + tps_excluding_connections)
+
+                                    if re.search('tps = (.+?) \(including connections establishing\)', out_val) != None:
+                                        # With PG14, the output is slightly different so we handle that.
+                                        tps_including_connections = \
+                                            re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                        tps_excluding_connections = \
+                                            re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+                                        results_file.write(", " + tps_excluding_connections)     
+                                        results_file.write(", " + tps_including_connections)
+                                           
+                                    else:
+                                        tps_excluding_connections = \
+                                            re.search('tps = (.+?) \(without initial connection time\)', out_val).group(1)
+                                        results_file.write(", " + tps_excluding_connections)
+                                        results_file.write(", N\A")    
+
+
                                     results_file.write('\n')
 
                         elif option == 'distribute_table_command':

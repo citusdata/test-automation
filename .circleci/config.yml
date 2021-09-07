@@ -72,7 +72,7 @@ jobs:
           name: delete the given resource group
           no_output_timeout: 10m             
 
-  valgrind-test:
+  valgrind-multi-test:
     docker:
       - image: buildpack-deps:trusty
 
@@ -88,11 +88,11 @@ jobs:
           command: |
             cd ./azure
             ./add-sshkey.sh
-            ./citus-bot.sh citusbot_valgrind_test_resource_group
-          name: install dependencies and run valgrind tests
+            ./citus-bot.sh citusbot_valgrind_multi_test_resource_group
+          name: install dependencies and run valgrind tests (check-multi-vg)
           no_output_timeout: 10m 
 
-  finalize-valgrind-test:
+  finalize-valgrind-multi-test:
     docker:
       - image: buildpack-deps:trusty
 
@@ -108,8 +108,88 @@ jobs:
           command: |
             cd ./azure
             ./add-sshkey.sh
-            ./finalize-valgrind-test.sh
-          name: install dependencies and run valgrind tests
+            ./finalize-valgrind-test.sh "citusbot_valgrind_multi_test_resource_group"
+          name: finalize valgrind tests (check-multi-vg)
+          no_output_timeout: 10m
+
+  valgrind-multi-1-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"      
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_valgrind_multi_1_test_resource_group
+          name: install dependencies and run valgrind tests (check-multi-1-vg)
+          no_output_timeout: 10m       
+
+  finalize-valgrind-multi-1-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"      
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./finalize-valgrind-test.sh citusbot_valgrind_multi_1_test_resource_group
+          name: finalize valgrind tests (check-multi-1-vg)
+          no_output_timeout: 10m
+
+  valgrind-columnar-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"      
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./citus-bot.sh citusbot_valgrind_columnar_test_resource_group
+          name: install dependencies and run valgrind tests (check-columnar-vg)
+          no_output_timeout: 10m
+          
+  finalize-valgrind-columnar-test:
+    docker:
+      - image: buildpack-deps:trusty
+
+    working_directory: /home/circleci/project  
+    steps:
+      - azure-cli/install
+      - azure-cli/login-with-service-principal
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"      
+      - run:
+          command: |
+            cd ./azure
+            ./add-sshkey.sh
+            ./finalize-valgrind-test.sh citusbot_valgrind_columnar_test_resource_group
+          name: finalize valgrind tests (check-columnar-vg)
           no_output_timeout: 10m
 
 orbs:
@@ -147,8 +227,7 @@ workflows:
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
 
-  # perform weekly valgrind test on azure every monday at 00:00
-  weekly-valgrind:
+  weekly-valgrind-multi:
     triggers:
       - schedule:
           # https://crontab.guru/#0_0_*_*_1
@@ -158,11 +237,33 @@ workflows:
               only:
                 - master
     jobs:
-      - valgrind-test
+      - valgrind-multi-test
 
-  # Since valgrind tests really take a long time to finish, wait for 12 hours.
-  # Then push valgrind test results and terminate the machine.
-  weekly-valgrind-finalize:
+  weekly-valgrind-multi-finalize:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#00_6_*_*_1
+          cron: "00 6 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - finalize-valgrind-multi-test
+
+  weekly-valgrind-multi-1:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#0_0_*_*_1
+          cron: "0 0 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - valgrind-multi-1-test
+
+  weekly-valgrind-multi-1-finalize:
     triggers:
       - schedule:
           # https://crontab.guru/#00_12_*_*_1
@@ -172,7 +273,31 @@ workflows:
               only:
                 - master
     jobs:
-      - finalize-valgrind-test
+      - finalize-valgrind-multi-1-test
+      
+  weekly-valgrind-columnar:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#0_0_*_*_1
+          cron: "0 0 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - valgrind-columnar-test
+
+  weekly-valgrind-columnar-finalize:
+    triggers:
+      - schedule:
+          # https://crontab.guru/#00_2_*_*_1
+          cron: "00 2 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - finalize-valgrind-columnar-test
 
   # the below workflows can be used during maintenance operations on the tests in this repo
   # simply uncomment the workflow you made changes to and push to a branch.

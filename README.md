@@ -611,7 +611,13 @@ ssh-add
 ./connect.sh
 
 # run fab command in coordinator in a detachable session
-tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind"
+#
+# Note that in addition to run.valgrind:check-multi-vg, run.valgrind:check-multi-1-vg and
+# run.valgrind:check-columnar-vg are also available, where:
+#   run.valgrind:check-multi-vg runs "make check-multi-vg"
+#   run.valgrind:check-multi-1-vg runs "make check-multi-1-vg"
+#   run.valgrind:check-columnar-vg runs "make check-columnar-vg"
+tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind:check-multi-vg"
 
 # simply exit from coordinator after detaching
 
@@ -663,7 +669,12 @@ fab use.postgres:14.2 use.enterprise:enterprise-master run.valgrind
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
 ```bash
-tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
+# As mentioned above, run.valgrind:check-multi-1-vg and run.valgrind:check-columnar-vg are
+# also available, where:
+#   run.valgrind:check-multi-vg runs "make check-multi-vg"
+#   run.valgrind:check-multi-1-vg runs "make check-multi-1-vg"
+#   run.valgrind:check-columnar-vg runs "make check-columnar-vg"
+tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:check-multi-vg"
 ```
 
 After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.

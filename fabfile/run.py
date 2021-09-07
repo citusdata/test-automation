@@ -260,9 +260,7 @@ def valgrind_filter_put_results():
     if not os.path.exists(citus_valgrind_logs_path):    
         run('touch {}'.format(success_file_path))
 
-@task
-@roles('master')
-def valgrind(*args): 
+def valgrind_internal(valgrind_target):
     'Runs valgrind tests'
 
     # set citus path variable
@@ -281,9 +279,22 @@ def valgrind(*args):
 
             # wrap the command with tee to log stdout & stderr to a file in results directory as well
             # this is done to ensure that valgrind test is actually finished
-            valgrind_test_command = 'make check-multi-vg valgrind-log-file={}'.format(valgrind_logs_path)
+            valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} make {}'.format(valgrind_logs_path, valgrind_target)
             valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
 
             run(valgrind_test_command)
 
             valgrind_filter_put_results()
+
+@task
+@roles('master')
+def valgrind(*args):
+    'Choose a valgrind target. For example: fab ... run.valgrind:check-multi-1-vg ...'
+
+    available_valgrind_targets = ('check-multi-vg', 'check-multi-1-vg', 'check-columnar-vg')
+    if len(args) != 1 or args[0] not in available_valgrind_targets:
+        abort('Only a single argument for run.valgrind is available: {}'.
+              format(', '.join(available_valgrind_targets)))
+    
+    valgrind_target = args[0]
+    valgrind_internal(valgrind_target)

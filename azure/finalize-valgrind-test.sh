@@ -11,7 +11,7 @@ function cleanup {
     sh ./delete-resource-group.sh
 }
 
-export RESOURCE_GROUP_NAME="citusbot_valgrind_test_resource_group"
+export RESOURCE_GROUP_NAME="$1"
 
 trap cleanup EXIT
 

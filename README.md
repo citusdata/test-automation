@@ -853,3 +853,5 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 - If you find a problem, and you need to update one of the scripts that are used in our cluster initialization in the `fileUris` part of `azuredeploy.json`, make sure that you change the branch name as well to see if the fix works, because by default those scripts are taken from `master` branch and if you don't update it, your change won't be used.
   * Note that https://github.com/citusdata/test-automation/blob/master/hammerdb/azuredeploy.json is used for hammerdb
   * https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.json is used for everything else but hammerdb
+
+- Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.

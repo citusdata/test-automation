@@ -855,3 +855,5 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
   * https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.json is used for everything else but hammerdb
 
 - Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.
+
+- If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.

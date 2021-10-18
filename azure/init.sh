@@ -25,6 +25,10 @@ rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 yum install -y git screen tmux htop
 
+# install & update ca certificates
+yum install -y ca-certificates
+update-ca-trust -f
+
 # this is the username in our instances
 TARGET_USER=pguser
 

@@ -72,6 +72,9 @@ jobs:
       - azure-cli/install
       - azure-cli/login-with-service-principal
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "06:b9:7d:db:59:54:db:6d:76:7b:f5:28:20:fe:d2:7d"
       - run:
           command: |
             cd ./azure
@@ -89,6 +92,9 @@ jobs:
       - azure-cli/install
       - azure-cli/login-with-service-principal
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "06:b9:7d:db:59:54:db:6d:76:7b:f5:28:20:fe:d2:7d"
       - run:
           command: |
             cd ./azure

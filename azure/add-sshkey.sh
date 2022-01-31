@@ -6,6 +6,6 @@ set -u
 set -e
 
 eval `ssh-agent -s`
-ssh-add
+ssh-add ~/.ssh/id_rsa_06b97ddb5954db6d767bf52820fed27d
 
-ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+ssh-keygen -y -f ~/.ssh/id_rsa_06b97ddb5954db6d767bf52820fed27d > ~/.ssh/id_rsa_06b97ddb5954db6d767bf52820fed27d.pub

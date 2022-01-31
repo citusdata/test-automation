@@ -11,6 +11,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "fa:b8:cf:a7:cd:0f:3d:19:3f:85:52:48:e6:e7:a3:39"
       - run:
           command: |
             cd ./azure
@@ -30,6 +31,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "fa:b8:cf:a7:cd:0f:3d:19:3f:85:52:48:e6:e7:a3:39"
       - run:
           command: |
             cd ./azure
@@ -49,6 +51,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "fa:b8:cf:a7:cd:0f:3d:19:3f:85:52:48:e6:e7:a3:39"
       - run:
           command: |
             cd ./azure
@@ -84,6 +87,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "fa:b8:cf:a7:cd:0f:3d:19:3f:85:52:48:e6:e7:a3:39"
       - run:
           command: |
             cd ./azure
@@ -104,6 +108,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "fa:b8:cf:a7:cd:0f:3d:19:3f:85:52:48:e6:e7:a3:39"
       - run:
           command: |
             cd ./azure

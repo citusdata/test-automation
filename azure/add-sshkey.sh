@@ -7,5 +7,3 @@ set -e
 
 eval `ssh-agent -s`
 ssh-add ~/.ssh/id_rsa_*
-
-ssh-keygen -y -f ~/.ssh/id_rsa_555bdb88e2e40087bc55c2115267d90d > ~/.ssh/id_rsa.pub

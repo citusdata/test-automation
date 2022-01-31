@@ -23,7 +23,7 @@ region=${AZURE_REGION:=$random_region}
 echo ${region}
 az group create -l ${region} -n ${rg}
 
-public_key=$(cat ~/.ssh/id_rsa.pub)
+public_key=$(ssh-add -L | head -n1 )
 
 start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
@@ -52,6 +52,7 @@ if [[ "$is_valgrind_test" != "0" ]]; then
     CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
 fi
 
+echo "DEBUG:" ${CREATE_CLUSTER_COMMAND[@]}
 # run CREATE_CLUSTER_COMMAND
 "${CREATE_CLUSTER_COMMAND[@]}"
 

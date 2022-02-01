@@ -174,9 +174,13 @@ workflows:
     jobs:
       - finalize-valgrind-test
 
+  # the below workflows can be used during maintenance operations on the tests in this repo
+  # simply uncomment the workflow you made changes to and push to a branch.
+  # Don't leave these workflows uncommented when merging to main
+  
   # onpush-valgrind:
   #   jobs:
   #     - valgrind-test
-  onpush-finalize-valgrind:
-    jobs:
-      - finalize-valgrind-test
+  # onpush-finalize-valgrind:
+  #   jobs:
+  #     - finalize-valgrind-test

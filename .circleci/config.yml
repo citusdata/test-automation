@@ -174,9 +174,9 @@ workflows:
     jobs:
       - finalize-valgrind-test
 
-  onpush-valgrind:
-    jobs:
-      - valgrind-test
-  # onpush-finalize-valgrind:
+  # onpush-valgrind:
   #   jobs:
-  #     - finalize-valgrind-test
+  #     - valgrind-test
+  onpush-finalize-valgrind:
+    jobs:
+      - finalize-valgrind-test

@@ -8,7 +8,7 @@ set -e
 set -x
 
 function cleanup {
-    sh ./delete-resource-group.sh
+    echo sh ./delete-resource-group.sh
 }
 
 export RESOURCE_GROUP_NAME="citusbot_valgrind_test_resource_group"

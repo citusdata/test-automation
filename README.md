@@ -657,8 +657,8 @@ PostgreSQL as we require `valgrind` on workers and get error even if we do not n
 On the coordinator node:
 
 ```bash
-# an example usage: Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
-fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+# an example usage: Use PostgreSQL 14.2 and run valgrind test on enterprise/enterprise-master
+fab use.postgres:14.2 use.enterprise:enterprise-master run.valgrind
 ```
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:

@@ -70,7 +70,7 @@ su --login ${TARGET_USER} <<'EOSU'
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
 
   branch=$(</tmp/branch_name)
-  cd ${HOME} && git clone --branch ${branch} https://github.com/citusdata/test-automation.git
+  cd ${HOME} && git clone --branch add-another-vg https://github.com/citusdata/test-automation.git
 
   # create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile

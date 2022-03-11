@@ -7,11 +7,14 @@ set -e
 # echo commands
 set -x
 
+source commons.sh
+
 # ssh_execute tries to send the given command over the given connection multiple times.
 # It uses the custom ssh port 3456.
 ssh_execute() {
    ip=$1
-   shift;
+   ssh_port=$2
+   shift 2;
    command=$@
    n=0
    until [ $n -ge 10 ]
@@ -36,10 +39,9 @@ function cleanup {
 
 trap cleanup EXIT
 
-rg=$1
-export RESOURCE_GROUP_NAME=${rg}
+export RESOURCE_GROUP_NAME="$1"
 
-if [[ $rg =~ citusbot_valgrind_.+_test_resource_group ]]; then
+if [[ $RESOURCE_GROUP_NAME =~ citusbot_valgrind_.+_test_resource_group ]]; then
     # If running valgrind tests, export VALGRIND_TEST to be 1 to ensure
     # only coordinator instance is created in create-cluster script
     export VALGRIND_TEST=1
@@ -47,7 +49,7 @@ fi
 
 ./create-cluster.sh
 
-if [[ $rg =~ citusbot_valgrind_.+_test_resource_group ]]; then
+if [[ $RESOURCE_GROUP_NAME =~ citusbot_valgrind_.+_test_resource_group ]]; then
     # If running valgrind tests, do not run cleanup function
     # This is because, as valgrind tests requires too much time to run,
     # we start valgrind tests via nohup in ci. Hence ssh session
@@ -55,18 +57,14 @@ if [[ $rg =~ citusbot_valgrind_.+_test_resource_group ]]; then
     trap - EXIT
 fi
 
-ssh_port=$(az deployment group show -g "${RESOURCE_GROUP_NAME}" -n azuredeploy --query properties.outputs.customSshPort.value)
-# remove the quotes 
-ssh_port=$(echo "${ssh_port}" | cut -d "\"" -f 2)
+ssh_port=$(rg_get_ssh_port ${RESOURCE_GROUP_NAME})
+public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})
 
-public_ip=$(az deployment group show -g ${rg} -n azuredeploy --query properties.outputs.publicIP.value)
-# remove the quotes 
-public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 echo ${public_ip}
 
-echo "adding public ip to known hosts in remote"
-ssh_execute ${public_ip} "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"
+vm_add_public_ip_to_known_hosts ${public_ip} ${ssh_port}
+
 echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.
-ssh_execute ${public_ip} "source ~/.bash_profile;/home/pguser/test-automation/azure/run-all-tests.sh ${rg}"
+ssh_execute ${public_ip} ${ssh_port} "source ~/.bash_profile;/home/pguser/test-automation/azure/run-all-tests.sh ${RESOURCE_GROUP_NAME}"
 

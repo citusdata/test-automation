@@ -22,6 +22,8 @@ diset tpcc pg_count_ware 1000
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
+# this flag is only available in hammerdb 4.4+
+diset tpcc pg_cituscompat true
 loadscript
 print dict
 buildschema

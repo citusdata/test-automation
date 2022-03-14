@@ -18,7 +18,7 @@ hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 cd "${HOME}"
 git clone -b test-automation https://github.com/citusdata/ch-benchmark.git
 cd ch-benchmark
-./generate-hammerdb.sh "$hammerdb_version"
+./download-hammerdb.sh "$hammerdb_version"
 mv HammerDB-"${hammerdb_version}" ~/
 
 # postgres is necessary for hammerdb, so install that

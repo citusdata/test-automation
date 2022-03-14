@@ -857,3 +857,5 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 - Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.
 
 - If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.
+
+-  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`.

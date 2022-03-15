@@ -52,9 +52,11 @@ psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-tables.sql
 # distribute ch-benchmark tables
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-distribute.sql
 
+# RUN IF pg_cituscompat IS FALSE IN build.tcl
 # distribute tpcc tables in cluster
 # psql -h ${coordinator_ip_address} -f tpcc-distribute.sql
 
+# RUN IF pg_storedprocs IS FALSE IN build.tcl
 # distribute functions in cluster 
 # psql -v "ON_ERROR_STOP=1" "${connection_string}" -f tpcc-distribute-funcs.sql
 

@@ -239,7 +239,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 101,
+                            "priority": 102,
                             "direction": "Inbound"
                         }
                     },
@@ -253,7 +253,7 @@
                             "sourceAddressPrefix": "[parameters('localPublicIp')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 102,
+                            "priority": 104,
                             "direction": "Inbound"
                         }
                     }

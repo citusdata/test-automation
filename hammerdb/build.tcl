@@ -24,7 +24,7 @@ diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
 # this flag is only available in hammerdb 4.4+
 # if you change this, make sure to run tpcc-distribute
-diset tpcc pg_cituscompat true
+# diset tpcc pg_cituscompat true
 loadscript
 print dict
 buildschema

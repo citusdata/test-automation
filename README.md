@@ -69,7 +69,8 @@ If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusDa
 
 5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of lastest consists of:
 * Open your VPN.
-* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help).
+* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires 
+`python` to be installed to run.
 
 ### General info
 In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).

@@ -390,6 +390,10 @@ By default the tests will be run against `enterprise-master` and the latest rele
 postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.1')]
 ```
 
+*Note*: While you can run multiple tests by adding more elements to the array above, the results of the tests after the first might 
+be inflated due to cache hits (this depends on the tests being run and the type of disks being used by the VM-s). For the fairest 
+possible comparisons, consider running the tests seperately.
+
 You can change all the settings in these files, the config files for tests are located at:
 
 * pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs

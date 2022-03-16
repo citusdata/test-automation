@@ -441,7 +441,7 @@ eval `ssh-agent -s`
 ssh-add
 export RESOURCE_GROUP_NAME=<your resource group name>
 export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
+export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens
 cd hammerdb
 # YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS/CONFIGURATIONS IN THE NEW BRANCH
 # AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY
@@ -857,3 +857,5 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 - Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.
 
 - If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.
+
+-  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`.

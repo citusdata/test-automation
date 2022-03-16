@@ -67,6 +67,9 @@ If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusDa
     ssh-add
     ```
 
+5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of lastest consists of:
+* Open your VPN.
+* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help).
 
 ### General info
 In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
@@ -424,8 +427,10 @@ In `fabfile/hammerdb_confs` you can(and you should probably add at least one mor
 * change/add postgres/citus settings
 
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
-run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
-So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
+run the benchmark for each config. So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
+Even though the script will clean all the tables in each iteration to get more accurate results, the disk
+cache is likely to inflate the results of the tests running after the first file so for the most unbiased results test the setups 
+seperately (repeat this produre twice). 
 The result logs will contain the config file so that it is easy to know which config was used for a run.
 
 After adding the configs `fabfile/hammerdb_confs` could look like:
@@ -858,4 +863,7 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 
 - If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.
 
--  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`.
+-  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`. This error will likely occur due to connection policy issues. As of latest, setting up your VPN properly should fix this issue.
+
+- While running on Azure VM-s there might be deployment errors (go to your resource group overview in the portal). This might be caused due to changing
+network security policies in Azure. The error message of the deployment failure should show the conflicting policies. You can then go to the `azuredeploy.json` file for your test and try to change the priority of the custom policies (search priority in the file) until there are no conflicts.

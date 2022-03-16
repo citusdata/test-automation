@@ -15,10 +15,7 @@ driverdir="${0%/*}"
 hammerdb_version=$(cat ~/HAMMERDB_VERSION)
 hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 
-cd "${HOME}"
-git clone -b test-automation https://github.com/citusdata/ch-benchmark.git
-cd ch-benchmark
-./download-hammerdb.sh "$hammerdb_version"
+"${HOME}"/test-automation/hammerdb/download-hammerdb.sh "$hammerdb_version"
 mv HammerDB-"${hammerdb_version}" ~/
 
 # postgres is necessary for hammerdb, so install that

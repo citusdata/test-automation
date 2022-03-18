@@ -67,7 +67,7 @@ If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusDa
     ssh-add
     ```
 
-5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of lastest consists of:
+5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of latest consists of:
 * Open your VPN.
 * Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires 
 `python` to be installed to run.

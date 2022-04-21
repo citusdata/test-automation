@@ -14,3 +14,4 @@ eval `ssh-agent -s`
 ls ~/.ssh/
 
 ssh-add
+ssh-add ~/.ssh/id_rsa_*

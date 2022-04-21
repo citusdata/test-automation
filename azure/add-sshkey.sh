@@ -11,7 +11,10 @@ eval `ssh-agent -s`
 # add to the job. The keys are added like id_rsa_FINGERPRINT
 # this line loads them all to the ssh-agent for later use
 
-ls ~/.ssh/
+echo "HERE"
+ssh-add -l
 
-ssh-add
 ssh-add ~/.ssh/id_rsa_*
+
+echo "HERE"
+ssh-add -l

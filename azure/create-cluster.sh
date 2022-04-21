@@ -28,8 +28,10 @@ az group create -l ${region} -n ${rg}
 # we create in azure.
 # jobs that run in multiple stages should have the same set of keys
 # added to their invocations.
-public_key=$(ssh-add -L | head -n1 )
-ssh-add -L
+ls ~/.ssh/
+public_key=$(ssh-add -L | head -n1)
+ssh-add -l 
+echo "-----------------------------------------------------------------"
 echo $public_key
 
 start_time=`date +%s`

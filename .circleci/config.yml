@@ -10,13 +10,12 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "41:51:b5:d3:39:94:ca:6a:d1:a6:c2:b1:83:58:58:45"
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
-            ./citus-bot.sh citusbot_pgbench_test_resource_group
-          name: install dependencies and run pgbench tests
+            az group delete -n citusbot_pgbench_test_resource_group --yes
+          name: delete leftover rg
           no_output_timeout: 10m  
           
   scale:
@@ -29,7 +28,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "41:51:b5:d3:39:94:ca:6a:d1:a6:c2:b1:83:58:58:45"
       - run:
           command: |
             cd ./azure
@@ -48,7 +47,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "41:51:b5:d3:39:94:ca:6a:d1:a6:c2:b1:83:58:58:45"
       - run:
           command: |
             cd ./azure
@@ -83,7 +82,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "41:51:b5:d3:39:94:ca:6a:d1:a6:c2:b1:83:58:58:45"
       - run:
           command: |
             cd ./azure
@@ -103,7 +102,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "41:51:b5:d3:39:94:ca:6a:d1:a6:c2:b1:83:58:58:45"
       - run:
           command: |
             cd ./azure

@@ -29,6 +29,7 @@ az group create -l ${region} -n ${rg}
 # jobs that run in multiple stages should have the same set of keys
 # added to their invocations.
 public_key=$(ssh-add -L | head -n1 )
+echo $public_key
 
 start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"

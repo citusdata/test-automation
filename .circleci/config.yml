@@ -10,7 +10,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+            - "a0:43:fd:dd:1a:30:df:75:2e:ff:d7:3f:cd:b9:53:fd"
       - run:
           command: |
             cd ./azure

@@ -74,7 +74,7 @@ jobs:
 
   valgrind-test:
     docker:
-      - image: buildpack-deps:trusty
+      - image: buildpack-deps:focal
 
     working_directory: /home/circleci/project  
     steps:

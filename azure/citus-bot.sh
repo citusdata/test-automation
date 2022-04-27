@@ -7,6 +7,11 @@ set -e
 # echo commands
 set -x
 
+source add-sshkey.sh
+
+echo "Post key add"
+ssh-add -l
+
 # ssh_execute tries to send the given command over the given connection multiple times.
 # It uses the custom ssh port 3456.
 ssh_execute() {
@@ -30,11 +35,17 @@ ssh_execute() {
    fi
 }
 
+echo "Post execute"
+ssh-add -l
+
 function cleanup {
     sh ./delete-resource-group.sh
 }
 
-trap cleanup EXIT
+# trap cleanup EXIT
+
+echo "post cleanup def"
+ssh-add -l
 
 rg=$1
 export RESOURCE_GROUP_NAME=${rg}
@@ -45,6 +56,8 @@ if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then
     export VALGRIND_TEST=1
 fi
 
+echo "Post Valgrind If"
+ssh-add -l
 ./create-cluster.sh
 
 if [ "$rg" == "citusbot_valgrind_test_resource_group" ]; then

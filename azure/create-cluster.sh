@@ -21,16 +21,16 @@ random_region=${regions[$index]}
 rg=${RESOURCE_GROUP_NAME}
 region=${AZURE_REGION:=$random_region}
 echo ${region}
-az group create -l ${region} -n ${rg}
+# az group create -l ${region} -n ${rg}
 
 # given we might have more then one ssh key loaded we simply take the
 # first one according to ssh-add as the public key to use for the vm
 # we create in azure.
 # jobs that run in multiple stages should have the same set of keys
 # added to their invocations.
-ls ~/.ssh/
+echo "In create-cluster"
+ssh-add -l
 public_key=$(ssh-add -L | head -n1)
-ssh-add -l 
 echo "-----------------------------------------------------------------"
 echo $public_key
 
@@ -62,7 +62,7 @@ if [[ "$is_valgrind_test" != "0" ]]; then
 fi
 
 # run CREATE_CLUSTER_COMMAND
-"${CREATE_CLUSTER_COMMAND[@]}"
+# "${CREATE_CLUSTER_COMMAND[@]}"
 
 end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.

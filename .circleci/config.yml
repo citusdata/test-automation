@@ -14,8 +14,8 @@ jobs:
       - run:
           command: |
             cd ./azure
-            az group delete -n citusbot_pgbench_test_resource_group --yes
-          name: delete leftover rg
+            ./citus-bot.sh citusbot_pgbench_test_resource_group
+          name: install dependencies and run pgbench tests
           no_output_timeout: 10m  
           
   scale:

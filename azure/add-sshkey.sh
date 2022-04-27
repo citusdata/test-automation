@@ -13,5 +13,3 @@ eval `ssh-agent -s`
 
 ssh-add ~/.ssh/id_rsa_*
 
-echo "Post add in add script"
-ssh-add -l

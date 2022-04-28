@@ -14,7 +14,6 @@ jobs:
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
             ./citus-bot.sh citusbot_pgbench_test_resource_group
           name: install dependencies and run pgbench tests
           no_output_timeout: 10m  
@@ -33,7 +32,6 @@ jobs:
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
             ./citus-bot.sh citusbot_scale_test_resource_group
           name: install dependencies and run scale tests
           no_output_timeout: 10m
@@ -52,7 +50,6 @@ jobs:
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
             ./citus-bot.sh citusbot_tpch_test_resource_group
           name: install dependencies and run tpch tests
           no_output_timeout: 10m   
@@ -87,14 +84,13 @@ jobs:
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
             ./citus-bot.sh citusbot_valgrind_test_resource_group
           name: install dependencies and run valgrind tests
           no_output_timeout: 10m 
 
   finalize-valgrind-test:
     docker:
-      - image: buildpack-deps:trusty
+      - image: buildpack-deps:focal
 
     working_directory: /home/circleci/project  
     steps:
@@ -107,7 +103,6 @@ jobs:
       - run:
           command: |
             cd ./azure
-            ./add-sshkey.sh
             ./finalize-valgrind-test.sh
           name: install dependencies and run valgrind tests
           no_output_timeout: 10m

@@ -8,6 +8,9 @@ set -e
 set -x
 
 source commons.sh
+# source instead of just calling to override the ssh-agent created
+# by CircleCI
+source ./add-sshkey.sh
 
 function cleanup {
     sh ./delete-resource-group.sh

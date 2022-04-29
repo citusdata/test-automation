@@ -8,6 +8,9 @@ set -e
 set -x
 
 source commons.sh
+# source instead of just calling to override the ssh-agent created
+# by CircleCI
+source ./add-sshkey.sh
 
 # ssh_execute tries to send the given command over the given connection multiple times.
 # It uses the custom ssh port 3456.

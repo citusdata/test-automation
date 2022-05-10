@@ -858,4 +858,39 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 
 - If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.
 
--  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`.
+- If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`.
+
+- If you're having problems on `az login` as below
+  `AADSTS7000222: The provided client secret keys for app '********************' are expired....`
+  Then there is a  problem related to service principal that is being used in CircleCI azure-cli orb 
+  
+  There are three CircleCI environment variables being used by azure-cli plugin to login
+  - AZURE_SP
+  - AZURE_SP_PASSWORD
+  - AZURE_SP_TENANT
+  
+  These three variables are defined by the service principal parameters app_id, client secret and tenant_id respectively.
+  You can see the definition of the service principal we are using is defined in the link below
+  https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/893fa104-40fd-468b-9a9f-1d4ea33987b9/isMSAApp/
+  
+  If you get the error above, you need to add a new certificate using Certificates & Secrets blade 
+  and change the value of the  AZURE_SP_PASSWORD value with the new secret value.
+  
+  In some cases you may not access the Service Principal since owners could be removed by admins.
+  In that case you need to add another service principal using the command below after logged in using your credentials
+  
+  `az ad sp create-for-rbac --name <new_service_provider_name> --role contributor --scope /subscriptions/88abe223-c630-4f2c-8782-00bb5be874f6`
+  
+  If you have permission to create service principle, you will get a json string as below
+  
+     `"appId": "<app_id>",
+      "displayName": "<new_service_provider_name>",
+      "password": "<password>",
+      "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"`
+  
+  First you need to find the Service Principal in the below link and click on it to get the details
+  https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps
+  
+  Then you need to add a client secret using Clients & Secrets. You need to get the appId and client secret value
+  and update AZURE_SP and AZURE_SP_PASSWORD environment variables on CircleCI  with the new appId and client secret value
+  respectively.

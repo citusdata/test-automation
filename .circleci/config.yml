@@ -173,15 +173,10 @@ workflows:
   # simply uncomment the workflow you made changes to and push to a branch.
   # Don't leave these workflows uncommented when merging to main
   
-  # onpush-valgrind:
-  #   jobs:
-  #     - valgrind-test
-
-  onpush-finalize-valgrind:
+  onpush-valgrind:
     jobs:
-      - finalize-valgrind-test:
-        filters:
-          branches:
-            only:
-              - /valgrind/.*/
+      - valgrind-test
 
+  # onpush-finalize-valgrind:
+  #   jobs:
+  #     - finalize-valgrind-test:

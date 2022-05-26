@@ -597,6 +597,14 @@ fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO
 TL;DR
 
 ```bash
+# set the appropriate az account subscription
+az account set --subscription <subscriptionId>
+
+# setup the ssh-agent and pass your credentials to it so the azure VM-s
+# will be setup to allow ssh connection requests with your public key
+eval `ssh-agent -s`
+ssh-add
+
 # 1 # start valgrind test
 
 # create valgrind instance to run
@@ -606,8 +614,6 @@ cd azure
 ./create-cluster.sh
 
 # connect to coordinator
-eval `ssh-agent -s`
-ssh-add
 ./connect.sh
 
 # run fab command in coordinator in a detachable session
@@ -646,6 +652,9 @@ DETAILS:
 To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
 
 ```bash
+eval `ssh-agent -s`
+ssh-add
+
 export VALGRIND_TEST=1
 ```
 
@@ -653,6 +662,9 @@ export VALGRIND_TEST=1
 This is because we will already be using our regression test structure and it creates a local cluster 
 itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
 PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
+Also, the `create-cluster.sh` uses the first public key it finds in the ssh-agent to setup the ssh authentication
+for the Azure VM-s so if the ssh-agent is not up or it doesn't have your credentials, you won't be able to ssh
+into the VM-s.
 
 On the coordinator node:
 

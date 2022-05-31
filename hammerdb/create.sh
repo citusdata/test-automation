@@ -43,7 +43,7 @@ export BRANCH=${branch_name}
 # get local public ip 
 local_public_ip=$(curl https://ipinfo.io/ip)
 
-az deployment group create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}" localPublicIp="$local_public_ip"
+az deployment group create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip"
 
 end_time=$(date +%s)
 echo execution time was $((end_time - start_time)) s.

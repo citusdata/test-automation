@@ -21,6 +21,4 @@ ssh_port=$(az deployment group show -g ${RESOURCE_GROUP_NAME} -n azuredeploy --q
 public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 ssh_port=$(echo ${ssh_port} | cut -d "\"" -f 2)
 
-./add-local-ip.sh
-
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} -p ${ssh_port}

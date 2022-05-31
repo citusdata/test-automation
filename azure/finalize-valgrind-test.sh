@@ -25,8 +25,6 @@ public_ip=$(echo ${public_ip} | cut -d "\"" -f 2)
 
 echo ${public_ip}
 
-./add-local-ip.sh
-
 echo "adding public ip to known hosts in remote"
 ssh -o "StrictHostKeyChecking no" -A pguser@${public_ip} -p 3456 "ssh-keyscan -H ${public_ip} >> /home/pguser/.ssh/known_hosts"
 echo "running tests in remote"

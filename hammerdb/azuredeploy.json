@@ -156,7 +156,7 @@
     "variables": {
         "imagePublisher": "OpenLogic",
         "imageOffer": "CentOS",
-        "imageSku": "7.2",
+        "imageSku": "7_9-gen2",
         "driverImageSku" : "7.5",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",

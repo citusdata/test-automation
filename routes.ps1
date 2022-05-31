@@ -17,7 +17,7 @@ import subprocess
 
 req = Request(
     "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519",
-    headers={"User-Agent": "Mozilla/5.0"},
+    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0"},
 )
 
 with urlopen(req) as response:
@@ -28,7 +28,7 @@ with urlopen(req) as response:
 
 req = Request(
     ips_url,
-    headers={"User-Agent": "Mozilla/5.0"},
+    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0"},
 )
 with urlopen(req) as response:
     data = json.load(response)

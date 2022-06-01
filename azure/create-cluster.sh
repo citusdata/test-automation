@@ -37,7 +37,11 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # store the branch name in a file so that target user can read it. Target user cannot see the envionment variables because
 # we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
-export BRANCH=${CIRCLE_BRANCH:=master}
+# https://stackoverflow.com/questions/1593051/how-to-programmatically-determine-the-current-checked-out-git-branch
+current_branch_name=$(git symbolic-ref -q HEAD)
+current_branch_name=${current_branch_name##refs/heads/}
+current_branch_name=${current_branch_name:-HEAD}
+export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
 # get local public ip 
 local_public_ip=$(curl https://ipinfo.io/ip)

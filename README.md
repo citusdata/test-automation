@@ -417,8 +417,8 @@ pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 
 ## <a name="running-automated-hammerdb-benchmark"></a>Running Automated Hammerdb Benchmark
 
-**You should create a new branch and change the settings in the new branch and push the branch so that
-when the tool clones the repository it can download your branch.**
+**Important:** Push your branch to the github repo even though the HammerDb tests are run from your local.
+The initiliazer script used to setup the Azure VM-s will pull your branch from github and not from your local.
 
 Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
 You can customize the hammerdb cluster in the `hammerdb` folder using `hammerdb/azuredeploy.parameters.json`.

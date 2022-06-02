@@ -33,14 +33,13 @@ public_key=$(ssh-add -L | head -n1 )
 start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
 
-# if this is run on a job, use the branch for the job, otherwise use master(running in local or remote without a job)
+# if this is run on a job, use the branch for the job, otherwise use the local (running in local or remote without a job)
 # store the branch name in a file so that target user can read it. Target user cannot see the envionment variables because
 # we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
-# https://stackoverflow.com/questions/1593051/how-to-programmatically-determine-the-current-checked-out-git-branch
-current_branch_name=$(git symbolic-ref -q HEAD)
-current_branch_name=${current_branch_name##refs/heads/}
-current_branch_name=${current_branch_name:-HEAD}
+
+# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
+current_branch_name=$(git branch --show-current)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
 # get local public ip 

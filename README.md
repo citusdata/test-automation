@@ -424,7 +424,7 @@ Hammerdb tests are run from a driver node. Driver node is in the same virtual ne
 You can customize the hammerdb cluster in the `hammerdb` folder using `hammerdb/azuredeploy.parameters.json`.
 Note that this is the configuration for the cluster, which is separate than benchmark configurations(`fabfile/hammerdb_confs/`)
 
-In `fabfile/hammerdb_confs` you can more configs to this folder:
+In `fabfile/hammerdb_confs` you can add more configs to this folder:
 
 * change postgres version
 * use enterprise or community

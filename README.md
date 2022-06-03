@@ -417,14 +417,14 @@ pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 
 ## <a name="running-automated-hammerdb-benchmark"></a>Running Automated Hammerdb Benchmark
 
-**You should create a new branch and change the settings in the new branch and push the branch so that
-when the tool clones the repository it can download your branch.**
+**Important:** Push your branch to the github repo even though the HammerDb tests are run from your local.
+The initiliazer script used to setup the Azure VM-s will pull your branch from github and not from your local.
 
 Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
 You can customize the hammerdb cluster in the `hammerdb` folder using `hammerdb/azuredeploy.parameters.json`.
 Note that this is the configuration for the cluster, which is separate than benchmark configurations(`fabfile/hammerdb_confs/`)
 
-In `fabfile/hammerdb_confs` you can(and you should probably add at least one more config to this folder):
+In `fabfile/hammerdb_confs` you can add more configs to this folder:
 
 * change postgres version
 * use enterprise or community
@@ -433,9 +433,9 @@ In `fabfile/hammerdb_confs` you can(and you should probably add at least one mor
 
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
 run the benchmark for each config. So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
-Even though the script will clean all the tables in each iteration to get more accurate results, the disk
-cache is likely to inflate the results of the tests running after the first file so for the most unbiased results test the setups 
-seperately (repeat this produre twice). 
+Even though the script will vacuum the tables in each iteration to get more accurate results, the disk
+cache is likely to inflate the results of the tests running after the first file so for the most unbiased results 
+test the setups seperately (repeat this produre twice). 
 The result logs will contain the config file so that it is easy to know which config was used for a run.
 
 After adding the configs `fabfile/hammerdb_confs` could look like:
@@ -464,11 +464,19 @@ vim fabfile/hammerdb_confs/<branch_name>.ini # verify that your custom config fi
 
 **After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
 
-**The cluster will be deleted if everything goes okay, but you should check if it is deleted to be on the safe side.(If it is not, you can delete that with azure/delete-resource-group.sh or from the portal).**
+The cluster deployment is flaky and sometimes it will fail. This behaviour is somewhat rare so it is not a
+big problem. In that case, simply delete the previous resource group, and try again.
+You can do that with:
+```bash
+# running from the same shell where you called create-run.sh to start the test
+../azure/delete-resource-group.sh
+./create-run.sh
+``` 
 
-Sometimes you might get random/temporary errors while provisining the cluster. In that case, simply
-delete the previous resource group, and try again. If it is persistent, try after a while, and if it is still
-persistent open an issue on test-automation.
+If it is persistent, some policy might have been changed on Azure so either consider debugging the issue,
+or opening an issue in test-automation.
+
+**The cluster will be deleted if everything goes okay, but you should check if it is deleted to be on the safe side.(If it is not, you can delete that with azure/delete-resource-group.sh or from the portal).**
 
 In order to see the process of the tests, from the driver node:
 

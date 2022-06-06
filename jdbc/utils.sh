@@ -7,22 +7,22 @@ function remove_string_quotations()
 
 function install_pg_version()
 {
-    # pg_version=$1
-    # pg_name=""postgresql-$pg_version""
-    # install_flags=${2:-""}
+    pg_version=$1
+    pg_name=""postgresql-$pg_version""
+    install_flags=${2:-""}
     
-    # wget -O "$pg_name.tar.gz" "https://ftp.postgresql.org/pub/source/v$pg_version/$pg_name.tar.gz"
-    # tar -xvzf "$pg_name.tar.gz"
-    # cd $pg_name
+    wget -O "$pg_name.tar.gz" "https://ftp.postgresql.org/pub/source/v$pg_version/$pg_name.tar.gz"
+    tar -xvzf "$pg_name.tar.gz"
+    cd $pg_name
 
-    # ./configure --prefix=$HOME/postgres $install_flags
-    # make -sj $(nproc) install
+    ./configure --prefix=$HOME/postgres $install_flags
+    make -sj $(nproc) install
 
-    # cd contrib
-    # make -s install    
+    cd contrib
+    make -s install    
 
-    # # reset to starting dir
-    # cd ../..
+    # reset to starting dir
+    cd ../..
 
     PG_EXECUTABLES="$HOME/postgres/bin"
     PG_CONFIG="$PG_EXECUTABLES/pg_config"

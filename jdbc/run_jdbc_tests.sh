@@ -8,11 +8,20 @@ source ./utils.sh
 
 apt-get update
 
+# create non root user required to run citus_dev
+USER=pguser
+useradd $USER
+
+apt-get install -y sudo
+echo "$USER     ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers
+
+sudo -u pguser -s
+
 script_directory="$(dirname "${BASH_SOURCE[0]}")"
 script_directory="$(realpath "${script_directory}")"
 
 # used to parse the json config
-apt-get install -y jq
+sudo apt-get install -y jq
 
 # download the jdbc driver
 jdbc_version=$(cat ./jdbc_config.json | jq '.jdbc_version' | remove_string_quotations)
@@ -20,13 +29,13 @@ jdbc_jar_name="postgresql-${jdbc_version}.jar"
 wget -O $jdbc_jar_name --no-verbose "https://jdbc.postgresql.org/download/${jdbc_jar_name}"
 
 # download java sdk
-apt-get install -y default-jdk
+sudo apt-get install -y default-jdk
 
 cd $HOME
 
 # install build dependencies for pg and citus
 # based on: https://github.com/citusdata/citus/blob/master/CONTRIBUTING.md#debian-based-linux-ubuntu-debian
-apt-get install -y autoconf flex libcurl4-gnutls-dev libicu-dev \
+sudo apt-get install -y autoconf flex libcurl4-gnutls-dev libicu-dev \
                         libkrb5-dev liblz4-dev libpam0g-dev libreadline-dev \
                         libselinux1-dev libssl-dev libxslt1-dev libzstd-dev \
                         uuid-dev
@@ -47,11 +56,16 @@ fi
 
 cd citus
 echo $PG_CONFIG
-PG_CONFIG=${HOME}/postgres/bin/pg_config ./configure
+./configure
 make -sj $(nproc) install
 
 # install citus_dev to setup the cluster
-# cd ..
+cd $HOME
+git clone https://github.com/citusdata/tools
+export PATH=$HOME/tools/citus_dev
+
+citus_dev make /tmp/test-cluster
+
 
 # jdbc_driver_path="./$jdbc_jar_name"
 # coordinator_port=9700

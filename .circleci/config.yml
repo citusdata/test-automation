@@ -117,4 +117,4 @@ workflows:
           filters:
             branches:
               only:
-                - /jdbc\/.*/ # match with jdbc prefix
+                - /jdbc-run\/.*/ # match with jdbc prefix

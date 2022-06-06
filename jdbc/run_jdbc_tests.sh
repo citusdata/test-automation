@@ -6,6 +6,8 @@ set -euxo pipefail
 source ../azure/add-sshkey.sh
 source ./utils.sh
 
+apt-get update
+
 script_directory="$(dirname "${BASH_SOURCE[0]}")"
 script_directory="$(realpath "${script_directory}")"
 

@@ -46,7 +46,18 @@ jobs:
             ./add-sshkey.sh
             ./citus-bot.sh citusbot_tpch_test_resource_group
           name: install dependencies and run tpch tests
-          no_output_timeout: 10m   
+          no_output_timeout: 10m 
+
+  jdbc:
+    docker:
+      - image: buildpack-deps:focal
+    working_directory: /home/circleci/project
+    steps:
+      - checkout
+      - run:
+        command: |
+          cd ./jdbc
+          ./run_jdbc_tests.sh  
 
   delete_resource_group:
     docker:
@@ -97,3 +108,8 @@ workflows:
               only: 
                 - /tpch\/.*/ # match with tpch/ prefix
                 - /all_performance_test\/.*/ # match with all_performance_test/ prefix
+      - jdbc:
+          filters:
+            branches:
+              only:
+                - /jdbc\/.*/ # match with jdbc prefix

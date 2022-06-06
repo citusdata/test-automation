@@ -55,11 +55,11 @@ jobs:
     steps:
       - checkout
       - run:
-        command: |
-          cd ./jdbc
-          ./run_jdbc_tests.sh  
-        name: install dependencies and run jdbc compatibility tests
-        no_output_timeout: 10m
+          command: |
+            cd ./jdbc
+            ./run_jdbc_tests.sh  
+          name: install dependencies and run jdbc compatibility tests
+          no_output_timeout: 10m
 
   delete_resource_group:
     docker:

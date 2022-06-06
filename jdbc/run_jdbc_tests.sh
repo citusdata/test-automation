@@ -1,15 +1,51 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Exactly two arguments should be provided"
-    echo "Arg1: Provide an available port for the coordinator instance of the temporary citus cluster to perform jdbc tests"
-    echo "Arg2: Provide path to jdbc driver for PostgreSQL, (see https://jdbc.postgresql.org/ to download it)"
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -euxo pipefail
 
-    exit 1
+source ../azure/add-sshkey.sh
+source ./utils.sh
+
+script_directory="$(dirname "${BASH_SOURCE[0]}")"
+script_directory="$(realpath "${script_directory}")"
+
+# used to parse the json config
+sudo apt-get install -y jq
+
+# download the jdbc driver
+jdbc_version=$(cat ./jdbc_config.json | jq '.jdbc_version' | remove_string_quotations)
+jdbc_jar_name="postgresql-${jdbc_version}.jar"
+wget -O $jdbc_jar_name --no-verbose "https://jdbc.postgresql.org/download/${jdbc_jar_name}"
+
+# download java sdk
+sudo apt-get install -y default-jdk
+
+cd $HOME
+
+# install pg
+pg_version=$(cat ./jdbc_config.json | jq '.pg_version' | remove_string_quotations)
+install_pg_version $pg_version "--with-openssl"
+
+# get the citus repo
+citus_branch = $(cat ./jdbc_config.json | jq '.citus_branch' | remove_string_quotations)
+use_enterprise = $(cat ./jdbc_config.json | jq '.use_enterprise')
+
+if[ "$use_enterprise" == "true" ]; then
+  git clone --branch $citus_branch git@github.com:citusdata/citus-enterprise.git citus
+else
+  git clone --branch $citus_branch git@github.com:citusdata/citus.git citus
 fi
 
-coordinator_port=$1
-jdbc_driver_path=$2
+cd citus
+./configure
+make -sj $(nproc) install
+
+# install citus_dev to setup the cluster
+cd ..
+
+jdbc_driver_path="./$jdbc_jar_name"
+coordinator_port=9700
+
 
 # create & run tmp citus cluster for jdbc test 
 citus_dev stop /tmp/jdbc_test_db --port $coordinator_port

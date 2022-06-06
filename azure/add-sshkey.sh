@@ -8,4 +8,4 @@ set -e
 eval `ssh-agent -s`
 ssh-add
 
-ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+#ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub

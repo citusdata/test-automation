@@ -46,7 +46,8 @@ else
 fi
 
 cd citus
-./configure
+echo $PG_CONFIG
+PG_CONFIG=${HOME}/postgres/bin/pg_config ./configure
 make -sj $(nproc) install
 
 # install citus_dev to setup the cluster

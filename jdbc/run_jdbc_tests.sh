@@ -104,6 +104,6 @@ do
     cd ..
 
     # finally, run jdbc tests for (type x executor) combination
-    CLASSPATH=$jdbc_driver_path:jdbc java JDBCReleaseTest $executor $COOR_PORT $PG_USER > ${type}_${executor}
+    CLASSPATH=$jdbc_driver_path:jdbc java JDBCReleaseTest $executor $COOR_PORT $PG_USER
   done
 done

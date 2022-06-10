@@ -67,7 +67,7 @@ cd $project_directory
 create_test_cluster $PG_USER
 
 cd $script_directory
-jdbc_driver_path="./$jdbc_jar_name"
+jdbc_driver_path="$script_directory/$jdbc_jar_name"
 
 # print installed citus version first
 psql -p $COOR_PORT -U $PG_USER -c "select citus_version();"

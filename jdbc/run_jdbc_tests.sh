@@ -6,11 +6,20 @@ set -euxo pipefail
 source ../azure/add-sshkey.sh
 source ./utils.sh
 
-apt-get update
-
 script_directory="$(dirname "${BASH_SOURCE[0]}")"
 script_directory="$(realpath "${script_directory}")"
+
 project_directory="$script_directory/../.."
+project_directory="$(realpath "${project_directory}")"
+
+# the user that will be used to run citus_dev
+PG_USER=pguser
+useradd $PG_USER
+  
+# give ownership of the project directory to the pguser
+chown $PG_USER $project_directory
+
+apt-get update
 
 # used to parse the json config
 apt-get install -y jq
@@ -34,6 +43,8 @@ apt-get install -y autoconf flex libcurl4-gnutls-dev libicu-dev \
 
 # install pg
 pg_version=$(cat $script_directory/jdbc_config.json | jq '.pg_version' | remove_string_quotations)
+
+# declares a PG_BIN_DIR variable and appends it to PATH
 install_pg_version $pg_version "--with-openssl"
 
 # get the citus repo
@@ -47,61 +58,52 @@ else
 fi
 
 cd citus
-echo $PG_CONFIG
-PG_CONFIG=$PG_CONFIG ./configure
+echo $PG_BIN_DIR
+PG_CONFIG=$PG_BIN_DIR/pg_config ./configure
 make -sj $(nproc) install
 
 cd $project_directory
 
-PG_USER=pguser
 create_test_cluster $PG_USER
 
+cd $script_directory
+jdbc_driver_path="./$jdbc_jar_name"
 
-# jdbc_driver_path="./$jdbc_jar_name"
-# coordinator_port=9700
+# print installed citus version first
+psql -p $COOR_PORT -U $PG_USER -c "select citus_version();"
 
+# compile java class
+javac JDBCReleaseTest.java
 
-# # create & run tmp citus cluster for jdbc test 
-# citus_dev stop /tmp/jdbc_test_db --port $coordinator_port
-# rm -rf /tmp/jdbc_test_db
-# mkdir -p /tmp/jdbc_test_db
-# citus_dev make /tmp/jdbc_test_db --port $coordinator_port
+cd ../tpch_2_13_0
 
-# # print installed citus version first
-# psql -p $coordinator_port -d $USER -c "select citus_version();"
+# clean & build dbgen to generate test data
+make clean
+make
 
-# # compile java class
-# javac JDBCReleaseTest.java
+# generate test data
+SCALE_FACTOR=1 CHUNKS="o 2 c 2 P 1 S 2 s 1" sh generate2.sh
 
-# cd ../tpch_2_13_0
+cd ..
 
-# # clean & build dbgen to generate test data
-# make clean
-# make
+# perform jdbc tests for combinations of different citus executors & partitioned tables
+for type in hash append
+do
+  for executor in real-time task-tracker adaptive
+  do
+    cd tpch_2_13_0
 
-# # generate test data
-# SCALE_FACTOR=1 CHUNKS="o 2 c 2 P 1 S 2 s 1" sh generate2.sh
+    # drop existing tables & create new ones
+    psql -p $COOR_PORT -U $PG_USER -f drop_tables.sql -f tpch_create_${type}_partitioned_tables.ddl
 
-# cd ..
+    # ingest data
+    for tbl in *.tbl.*
+      do psql -p $COOR_PORT -U $PG_USER -c "\COPY ${tbl%.tbl.*} FROM '$tbl' WITH DELIMITER '|'"
+    done
 
-# # perform jdbc tests for combinations of different citus executors & partitioned tables
-# for type in hash append
-# do
-#   for executor in real-time task-tracker adaptive
-#   do
-#     cd tpch_2_13_0
+    cd ..
 
-#     # drop existing tables & create new ones
-#     psql -p $coordinator_port -d $USER -f drop_tables.sql -f tpch_create_${type}_partitioned_tables.ddl
-
-#     # ingest data
-#     for tbl in *.tbl.*
-#       do psql -p $coordinator_port -d $USER -c "\COPY ${tbl%.tbl.*} FROM '$tbl' WITH DELIMITER '|'"
-#     done
-
-#     cd ..
-
-#     # finally, run jdbc tests for (type x executor) combination
-#     CLASSPATH=$jdbc_driver_path:jdbc java JDBCReleaseTest $executor $USER $coordinator_port > ${type}_${executor}
-#   done
-# done
+    # finally, run jdbc tests for (type x executor) combination
+    CLASSPATH=$jdbc_driver_path:jdbc java JDBCReleaseTest $executor $COOR_PORT $PG_USER > ${type}_${executor}
+  done
+done

@@ -5,6 +5,9 @@ function remove_string_quotations()
     sed -e 's/^"//' -e 's/"$//' <<<"${1:-$(</dev/stdin)}"
 }
 
+# compiles a pg version from code in the directory where it is called
+# declares a PG_BIN_DIR variable in the shell and appends it to the $PATH
+# variable
 function install_pg_version()
 {
     current_dir=$(realpath .)
@@ -26,9 +29,8 @@ function install_pg_version()
     # reset to starting dir
     cd ../..
 
-    PG_EXECUTABLES="$current_dir/postgres/bin"
-    PG_CONFIG="$PG_EXECUTABLES/pg_config"
-    export PATH=$PATH:$PG_EXECUTABLES
+    PG_BIN_DIR="$current_dir/postgres/bin"
+    export PATH=$PATH:$PG_BIN_DIR
 }
 
 function create_test_cluster()
@@ -39,17 +41,12 @@ function create_test_cluster()
     PG_USER=$1
     cd tools/citus_dev
 
-    useradd $PG_USER
-
     apt-get install -y python3-pip
     pip3 install -r requirements.txt
 
     CITUS_DEV=$current_dir/tools/citus_dev/citus_dev
-
-    apt-get install -y sudo
-    echo '${PG_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
     
-    sudo -u $PG_USER PATH="$PATH" "$CITUS_DEV" make citus-cluster
+    su - $PG_USER -c "cd $current_dir && PATH=$PATH $CITUS_DEV make citus-cluster"
 
     COOR_PORT=9700
 }

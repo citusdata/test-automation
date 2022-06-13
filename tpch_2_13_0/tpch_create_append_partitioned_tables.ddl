@@ -8,7 +8,7 @@ CREATE TABLE nation
     n_comment    VARCHAR(152)
 );
 
-select master_create_distributed_table('nation', 'n_nationkey', 'append');
+select create_distributed_table('nation', 'n_nationkey', 'append');
 
 
 CREATE TABLE region
@@ -18,7 +18,7 @@ CREATE TABLE region
     r_comment    VARCHAR(152)
 );
 
-select master_create_distributed_table('region', 'r_regionkey', 'append');
+select create_distributed_table('region', 'r_regionkey', 'append');
 
 CREATE TABLE part
 (
@@ -33,7 +33,7 @@ CREATE TABLE part
     p_comment     VARCHAR(23) not null
 );
 
-select master_create_distributed_table('part', 'p_partkey', 'append');
+select create_distributed_table('part', 'p_partkey', 'append');
 
 
 CREATE TABLE supplier
@@ -47,7 +47,7 @@ CREATE TABLE supplier
     s_comment     VARCHAR(101) not null
 );
 
-select master_create_distributed_table('supplier', 's_suppkey', 'append');
+select create_distributed_table('supplier', 's_suppkey', 'append');
 
 
 CREATE TABLE partsupp
@@ -59,7 +59,7 @@ CREATE TABLE partsupp
     ps_comment     VARCHAR(199) not null
 );
 
-select master_create_distributed_table('partsupp', 'ps_partkey', 'append');
+select create_distributed_table('partsupp', 'ps_partkey', 'append');
 
 
 CREATE TABLE customer
@@ -74,7 +74,7 @@ CREATE TABLE customer
     c_comment     VARCHAR(117) not null
 );
 
-select master_create_distributed_table('customer', 'c_custkey', 'append');
+select create_distributed_table('customer', 'c_custkey', 'append');
 
 
 CREATE TABLE ORDERS
@@ -90,7 +90,7 @@ CREATE TABLE ORDERS
     o_comment        VARCHAR(79) not null
 );
 
-select master_create_distributed_table('ORDERS', 'o_orderkey', 'append');
+select create_distributed_table('ORDERS', 'o_orderkey', 'append');
 
 
 CREATE TABLE LINEITEM
@@ -113,6 +113,6 @@ CREATE TABLE LINEITEM
     l_comment      VARCHAR(44) not null
 );
 
-select master_create_distributed_table('LINEITEM', 'l_orderkey', 'append');
+select create_distributed_table('LINEITEM', 'l_orderkey', 'append');
 
 

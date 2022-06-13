@@ -77,12 +77,11 @@ javac JDBCReleaseTest.java
 
 cd ../tpch_2_13_0
 
-# clean & build dbgen to generate test data
-make clean
+# build dbgen to generate test data
 make
 
 # generate test data
-SCALE_FACTOR=1 CHUNKS="o 2 c 2 P 1 S 2 s 1" sh generate2.sh
+SCALE_FACTOR=1 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh
 
 cd ..
 

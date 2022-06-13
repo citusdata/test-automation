@@ -37,17 +37,18 @@ public class JDBCReleaseTest {
 		// build connection string
 		url = String.format("jdbc:postgresql://localhost:%s/%s", coordnator_port, psql_username);
 
-		prep_test();
+		test_no_1();
 		test_no_2();
 		test_no_3();
 		test_no_4();
 		test_no_6();
-		test_no_7();
+		// cartesian products are unsupported by citus
+		// test_no_7(); 
 		test_no_2();
 		test_no_3();
 		test_no_4();
 		test_no_6();
-		test_no_7();
+		// test_no_7();
 		simplePreparedTest1();
 		simplePreparedTest2();
 		simplePreparedTest3();
@@ -64,45 +65,33 @@ public class JDBCReleaseTest {
 		return true;
 	}
 
-	static void prep_test() throws SQLException
-	{
-		String query = "SELECT count(*) FROM orders;";
-		String large_table_shard_count = "2";
-
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
-	}
-
 	static void test_no_1() throws SQLException
 	{
 		String query = "SELECT count(*) FROM orders;";
-		String large_table_shard_count = "2";
 
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
+		executePreparedQuery(query, task_executor_type);
 	}
 
 	static void test_no_2() throws SQLException
 	{
 		String query = "SELECT count(*) FROM orders, lineitem WHERE	o_orderkey = l_orderkey;";
-		String large_table_shard_count = "2";
 
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
+		executePreparedQuery(query, task_executor_type);
 	}
 
 
 	static void test_no_3() throws SQLException
 	{
 		String query = "SELECT count(*) FROM orders, customer WHERE o_custkey = c_custkey;";
-		String large_table_shard_count = "2";
 
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
+		executePreparedQuery(query, task_executor_type);
 	}
 
 	static void test_no_4() throws SQLException
 	{
 		String query = "SELECT count(*) FROM orders, customer, lineitem WHERE o_custkey = c_custkey AND o_orderkey = l_orderkey;";
-		String large_table_shard_count = "2";
 
-		executePreparedQuery(query, large_table_shard_count, task_executor_type);
+		executePreparedQuery(query, task_executor_type);
 	}
 
 
@@ -110,11 +99,10 @@ public class JDBCReleaseTest {
 	static void test_no_6() throws SQLException
 	{
 		String query = "SELECT	count(*) FROM orders, lineitem WHERE o_orderkey = l_orderkey AND l_suppkey > ?;";
-		String large_table_shard_count = "2";
 
-		executePreparedQueryWithParam(query, large_table_shard_count, task_executor_type, 155);
+		executePreparedQueryWithParam(query, task_executor_type, 155);
 
-		executePreparedQueryWithParam(query, large_table_shard_count, task_executor_type, 1555);
+		executePreparedQueryWithParam(query, task_executor_type, 1555);
 
 	}
 
@@ -122,28 +110,21 @@ public class JDBCReleaseTest {
 	{
 		String query = "SELECT supp_nation::text, cust_nation::text, l_year::int, sum(volume)::double precision AS revenue FROM ( SELECT supp_nation, cust_nation, extract(year FROM l_shipdate) AS l_year, l_extendedprice * (1 - l_discount) AS volume FROM supplier, lineitem, orders, customer, ( SELECT n1.n_nationkey AS supp_nation_key, n2.n_nationkey AS cust_nation_key, n1.n_name AS supp_nation, n2.n_name AS cust_nation FROM nation n1, nation n2 WHERE ( (n1.n_name = ? AND n2.n_name = ?) OR (n1.n_name = ? AND n2.n_name = ?) ) ) AS temp WHERE s_suppkey = l_suppkey AND o_orderkey = l_orderkey AND c_custkey = o_custkey AND s_nationkey = supp_nation_key AND c_nationkey = cust_nation_key AND l_shipdate between date '1995-01-01' AND date '1996-12-31' ) AS shipping GROUP BY supp_nation, cust_nation, l_year ORDER BY supp_nation, cust_nation, l_year; ";
 
-		String large_table_shard_count = "2";
+		executePreparedQueryWithTwoParam(query, task_executor_type, "RUSSIA", "UNITED STATES");
+		executePreparedQueryWithTwoParam(query, task_executor_type, "GERMANY", "FRANCE");
 
-		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "RUSSIA", "UNITED STATES");
-		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");
-
-		large_table_shard_count = "20";
-
-		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "RUSSIA", "UNITED STATES");
-		executePreparedQueryWithTwoParam(query, large_table_shard_count, task_executor_type, "GERMANY", "FRANCE");
+		executePreparedQueryWithTwoParam(query, task_executor_type, "RUSSIA", "UNITED STATES");
+		executePreparedQueryWithTwoParam(query, task_executor_type, "GERMANY", "FRANCE");
 	}
 
 
-	static void executePreparedQuery(String query, String large_table_shard_count, String task_executor_type) throws SQLException
+	static void executePreparedQuery(String query, String task_executor_type) throws SQLException
 	{
 
 		Connection db = DriverManager.getConnection(url, psql_username, "");
 
-
-
 		Statement stmtUpdate = db.createStatement();
 		stmtUpdate.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
 		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 
@@ -161,7 +142,7 @@ public class JDBCReleaseTest {
 
 
 
-	static void executePreparedQueryWithParam(String query, String large_table_shard_count, String task_executor_type, int param) throws SQLException
+	static void executePreparedQueryWithParam(String query, String task_executor_type, int param) throws SQLException
 	{
 
 		Connection db = DriverManager.getConnection(url, psql_username, "");
@@ -170,7 +151,6 @@ public class JDBCReleaseTest {
 
 		Statement stmtUpdate = db.createStatement();
 		stmtUpdate.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
 		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 
@@ -190,7 +170,7 @@ public class JDBCReleaseTest {
 
 
 
-	static void executePreparedQueryWithTwoParam(String query, String large_table_shard_count, String task_executor_type, String param1, String param2) throws SQLException
+	static void executePreparedQueryWithTwoParam(String query, String task_executor_type, String param1, String param2) throws SQLException
 	{
 
 		Connection db = DriverManager.getConnection(url, psql_username, "");
@@ -199,7 +179,6 @@ public class JDBCReleaseTest {
 
 		Statement stmtUpdate = db.createStatement();
 		stmtUpdate.executeUpdate("SET citus.enable_repartition_joins TO true");
-		stmtUpdate.executeUpdate("SET citus.large_table_shard_count TO " + large_table_shard_count );
 		stmtUpdate.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 
@@ -244,7 +223,6 @@ public class JDBCReleaseTest {
 		Connection db = DriverManager.getConnection(url, psql_username, "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		PreparedStatement st = db.prepareStatement("delete from orders where o_orderkey::text like '%88'");
@@ -272,7 +250,6 @@ public class JDBCReleaseTest {
 		Connection db = DriverManager.getConnection(url, psql_username, "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		PreparedStatement st = db.prepareStatement("insert into orders values ('')");
@@ -300,7 +277,6 @@ public class JDBCReleaseTest {
 		Connection db = DriverManager.getConnection(url, psql_username, "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmt.executeUpdate("SET citus.large_table_shard_count TO 2;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		PreparedStatement st = db.prepareStatement("SELECT 	l_partkey, o_orderkey, count(*)  FROM 	lineitem, orders WHERE 	l_suppkey = o_shippriority AND         l_quantity < ? AND o_totalprice <> ? GROUP BY 	l_partkey, o_orderkey ORDER BY 	l_partkey, o_orderkey;");
@@ -331,7 +307,6 @@ public class JDBCReleaseTest {
 		Connection db = DriverManager.getConnection(url, psql_username, "");
 		Statement stmt = db.createStatement();
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
-		stmt.executeUpdate("SET citus.large_table_shard_count TO 3;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
 		PreparedStatement st = db.prepareStatement("SELECT 	l_partkey, o_orderkey, count(*) FROM 	 lineitem, part, orders, customer WHERE l_orderkey = o_orderkey AND l_partkey = p_partkey AND 	c_custkey = o_custkey AND  (l_quantity > ? OR l_extendedprice > ?) AND p_size > 8 AND o_totalprice > ? AND  c_acctbal < ? GROUP BY 	l_partkey, o_orderkey ORDER BY l_partkey, o_orderkey LIMIT 3000;");

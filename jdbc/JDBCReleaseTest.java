@@ -42,13 +42,12 @@ public class JDBCReleaseTest {
 		test_no_3();
 		test_no_4();
 		test_no_6();
-		// cartesian products are unsupported by citus
-		// test_no_7(); 
+		test_no_7(); 
 		test_no_2();
 		test_no_3();
 		test_no_4();
 		test_no_6();
-		// test_no_7();
+		test_no_7();
 		simplePreparedTest1();
 		simplePreparedTest2();
 		simplePreparedTest3();
@@ -108,6 +107,11 @@ public class JDBCReleaseTest {
 
 	static void test_no_7() throws SQLException
 	{
+		if(!task_executor_type.equals("adaptive"))
+		{
+			return;
+		}
+
 		String query = "SELECT supp_nation::text, cust_nation::text, l_year::int, sum(volume)::double precision AS revenue FROM ( SELECT supp_nation, cust_nation, extract(year FROM l_shipdate) AS l_year, l_extendedprice * (1 - l_discount) AS volume FROM supplier, lineitem, orders, customer, ( SELECT n1.n_nationkey AS supp_nation_key, n2.n_nationkey AS cust_nation_key, n1.n_name AS supp_nation, n2.n_name AS cust_nation FROM nation n1, nation n2 WHERE ( (n1.n_name = ? AND n2.n_name = ?) OR (n1.n_name = ? AND n2.n_name = ?) ) ) AS temp WHERE s_suppkey = l_suppkey AND o_orderkey = l_orderkey AND c_custkey = o_custkey AND s_nationkey = supp_nation_key AND c_nationkey = cust_nation_key AND l_shipdate between date '1995-01-01' AND date '1996-12-31' ) AS shipping GROUP BY supp_nation, cust_nation, l_year ORDER BY supp_nation, cust_nation, l_year; ";
 
 		executePreparedQueryWithTwoParam(query, task_executor_type, "RUSSIA", "UNITED STATES");
@@ -252,13 +256,12 @@ public class JDBCReleaseTest {
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
-		PreparedStatement st = db.prepareStatement("insert into orders values ('')");
-		PreparedStatement st2 = db.prepareStatement("SELECT sum(o_totalprice) from orders where o_orderkey::text like '%88'");
+		// o_orderkey::text like '%88'
+		PreparedStatement st = db.prepareStatement("SELECT sum(o_totalprice) from orders where o_orderkey > 0");
 
 		for (int i = 0; i < 3; ++i)
 		{
-			System.out.println(st.executeUpdate());
-			ResultSet rs = st2.executeQuery();
+			ResultSet rs = st.executeQuery();
 			while (rs.next())
 			{
 				   System.out.print(rs.getString(1) + ",");

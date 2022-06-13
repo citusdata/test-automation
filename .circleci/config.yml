@@ -222,11 +222,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#0_0_*_*_1
-          cron: "45 17 * * 5"
+          cron: "0 0 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - valgrind-multi-test
 
@@ -234,11 +234,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#00_6_*_*_1
-          cron: "15 23 * * 5"
+          cron: "00 6 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - finalize-valgrind-multi-test
 
@@ -246,11 +246,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#0_0_*_*_1
-          cron: "45 17 * * 5"
+          cron: "0 0 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - valgrind-multi-1-test
 
@@ -258,11 +258,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#00_12_*_*_1
-          cron: "15 5 * * 6"
+          cron: "00 12 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - finalize-valgrind-multi-1-test
       
@@ -270,11 +270,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#0_0_*_*_1
-          cron: "45 17 * * 5"
+          cron: "0 0 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - valgrind-columnar-test
 
@@ -282,11 +282,11 @@ workflows:
     triggers:
       - schedule:
           # https://crontab.guru/#00_2_*_*_1
-          cron: "45 19 * * 5"
+          cron: "00 2 * * 1"
           filters:
             branches:
               only:
-                - add-another-vg
+                - master
     jobs:
       - finalize-valgrind-columnar-test
 

@@ -254,8 +254,7 @@ public class JDBCReleaseTest {
 		stmt.executeUpdate("SET citus.enable_repartition_joins TO true;");
 		stmt.executeUpdate("SET citus.task_executor_type TO '" + task_executor_type + "'" );
 
-		// o_orderkey::text like '%88'
-		PreparedStatement st = db.prepareStatement("SELECT sum(o_totalprice) from orders where o_orderkey > 0");
+		PreparedStatement st = db.prepareStatement("SELECT sum(o_totalprice) from orders where o_orderkey::text like '%88'");
 
 		for (int i = 0; i < 3; ++i)
 		{

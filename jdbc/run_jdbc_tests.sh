@@ -86,7 +86,10 @@ SCALE_FACTOR=1 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh
 cd ..
 
 # perform jdbc tests for combinations of different citus executors & partitioned tables
-for type in hash append
+# note that "append" has been commented out from the distribution table types since the
+# \COPY command for append distributed tables requires a append_to_shard :shardid option
+# "append" can be uncommented back if that option is no longer required. 
+for type in hash #append
 do
   for executor in real-time task-tracker adaptive
   do

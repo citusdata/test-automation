@@ -21,6 +21,7 @@ required for testing citus.
 * [Running Rests](#running-tests)
   * [Running Automated Tests](#running-automated-tests)
   * [Running Automated Hammerdb Benchmark](#running-automated-hammerdb-benchmark)
+  * [Running Automated Compatibility](#running-automated-compatibility-tests)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
@@ -513,6 +514,13 @@ You can change the thread count and initial sleep time for analytical queries fr
 If you want to run hammerdb4.0 change `hammerdb_version` to `4.0` in `create-run.sh`.
 
 By default a random region will be used, if you want you can specify the region with `AZURE_REGION` environment variable prior to running `create-run.sh` such as `export AZURE_REGION=westus2`.
+
+## <a name="running-automated-compatibility-tests"></a>Running Automated Copatibility Tests
+Currently, only testing compatibility with jdbc is automated.
+To run, create a branch call jdbc/{whatever-you-want} and push to origin.
+The citus branch and jdbc version can be configured from [JDBC Config](jdbc/jdbc_config.json)
+
+For more details read: [JDBC README](jdbc/README.md)
 
 ## <a name="basic-cluster-setup"></a> Basic Cluster Setup
 

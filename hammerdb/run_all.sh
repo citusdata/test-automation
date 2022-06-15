@@ -14,8 +14,7 @@ is_tpcc=$4
 is_ch=$5
 username=$6
 hammerdb_version=$7
-hammerdb_branch=$8
-cluster_rg=$9
+cluster_rg=$8
 
 # store hammerdb version in a file so that we can get it in other scripts
 echo "${hammerdb_version}" > ~/HAMMERDB_VERSION
@@ -25,7 +24,7 @@ echo "${hammerdb_version}" > ~/HAMMERDB_VERSION
 echo "\pset pager off" >> ~/.psqlrc
 
 # do setup of cluster
-"${HOME}"/test-automation/hammerdb/setup.sh "${coordinator_private_ip}" "${username}" "${hammerdb_branch}"
+"${HOME}"/test-automation/hammerdb/setup.sh "${coordinator_private_ip}" "${username}"
 
 # for each hammerdb config, run the tests and store the results
 for config_file in "${HOME}/test-automation/fabfile/hammerdb_confs"/*
@@ -33,7 +32,7 @@ do
   # get the file name from absolute path 
   config_file=$(basename "$config_file")
 
-  ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
+  ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab --show=debug setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"
   "${HOME}"/test-automation/hammerdb/build-and-run.sh "${coordinator_private_ip}" "${config_file}" "${is_tpcc}" "${is_ch}" "${username}"
 done
 

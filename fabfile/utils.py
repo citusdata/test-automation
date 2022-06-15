@@ -5,6 +5,7 @@ A grab bag of functions used by other modules
 import re
 import os.path
 import os
+import socket
 
 from fabric.api import run, cd
 from fabric.contrib.files import append, exists
@@ -55,3 +56,6 @@ def download_pg():
 
 def pg_url_for_version(version):
     return 'https://ftp.postgresql.org/pub/source/v{0}/postgresql-{0}.tar.bz2'.format(version)
+
+def get_local_ip():
+    return socket.gethostbyname(socket.gethostname())

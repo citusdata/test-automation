@@ -1,4 +1,5 @@
-from fabric.api import task, run, cd, runs_once, roles, execute
+from fabric.api import task, run, cd, runs_once, roles, execute, abort
+from fabric.context_managers import settings
 
 import config
 import use
@@ -12,7 +13,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind', 'valgrind_filter_put_results']
 
 
 @task
@@ -48,11 +49,11 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     path = os.path.join(config.RESULTS_DIRECTORY, 'pgbench_results_{}_{}.csv'.format(current_time_mark, config_file))
     results_file = open(path, 'w')
 
-    use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
-
     if connectionURI == '':
+        use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
+
         results_file.write("Test, PG Version, Citus Version, Shard Count, Replication Factor, Latency Average, "
-                           "TPS Including Connections, TPS Excluding Connections\n")
+                           "TPS Excluding Connections, TPS Including Connections\n")
 
         pg_citus_tuples = eval(config_parser.get('DEFAULT', 'postgres_citus_versions'))
         for pg_version, citus_version in pg_citus_tuples:
@@ -95,14 +96,24 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
                                 else:
                                     latency_average = re.search('latency average = (.+?) ms', out_val).group(1)
-                                    tps_including_connections = \
-                                        re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
-                                    tps_excluding_connections = \
-                                        re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
-
                                     results_file.write(", " + latency_average)
-                                    results_file.write(", " + tps_including_connections)
-                                    results_file.write(", " + tps_excluding_connections)
+
+                                    if re.search('tps = (.+?) \(including connections establishing\)', out_val) != None:
+                                        # With PG14, the output is slightly different so we handle that.
+                                        tps_including_connections = \
+                                            re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
+                                        tps_excluding_connections = \
+                                            re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
+                                        results_file.write(", " + tps_excluding_connections)     
+                                        results_file.write(", " + tps_including_connections)
+                                           
+                                    else:
+                                        tps_excluding_connections = \
+                                            re.search('tps = (.+?) \(without initial connection time\)', out_val).group(1)
+                                        results_file.write(", " + tps_excluding_connections)
+                                        results_file.write(", N\A")    
+
+
                                     results_file.write('\n')
 
                         elif option == 'distribute_table_command':
@@ -199,7 +210,80 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
 
     for query_code, executor_type in query_info:
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)
-        run_string = '{} {} -c "{}" -c "\\timing" -f "{}"'.format(psql, connectionURI, executor_string, tpch_path + query_code)
+        enable_repartition_joins = "set citus.enable_repartition_joins to 'on'"
+        run_string = '{} {} -c "{}" -c "{}" -c "\\timing" -f "{}"'.format(psql, connectionURI,
+            enable_repartition_joins, executor_string, tpch_path + query_code)
         out_val = run(run_string)
         results_file.write(out_val)
         results_file.write('\n')
+
+# If no citus valgrind logs exist results directory, then simply put valgrind_success 
+# file under results directory.
+def valgrind_filter_put_results():
+    'Filter valgrind test outputs, put success file if no citus related valgrind output'
+
+    repo_path = config.settings[config.REPO_PATH]
+
+    regression_test_path = os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)
+    
+    regression_diffs_path = os.path.join(regression_test_path, config.REGRESSION_DIFFS_FILE)
+    valgrind_logs_path = os.path.join(regression_test_path, config.VALGRIND_LOGS_FILE)
+    
+    citus_valgrind_logs_path = os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOG_FILE)
+    success_file_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_SUCCESS_FNAME)
+    
+    trace_ids_tmp_file = ".trace_ids"
+    trace_ids_path = os.path.join(regression_test_path, trace_ids_tmp_file)
+
+    # ship regression.diffs (if exists) to result folder
+    if os.path.isfile(regression_diffs_path):
+        run('mv {} {}'.format(regression_diffs_path, config.RESULTS_DIRECTORY))
+
+    # filter the (possibly) citus-related outputs and put to results file if existz
+
+    if os.path.isfile(valgrind_logs_path):
+        
+        # get stack trace id that includes calls to citus
+        run('cat {} | grep -i "citus" | awk \'{{ print $1 }}\' | uniq  > {}'.format(valgrind_logs_path, trace_ids_path))
+
+        if os.path.isfile(trace_ids_path) and os.path.getsize(trace_ids_path) > 0:            
+            # filter stack traces with stack trace ids that we found above (if any)
+            run('while read line; do grep {} -e $line ; done < {} > {}'.format(
+                valgrind_logs_path, 
+                trace_ids_path,
+                citus_valgrind_logs_path))
+        
+        # cleanup
+        run('rm {}'.format(trace_ids_path))
+    
+    # if we have no citus-related valgrind outputs then just put an empty file named as `config.VALGRIND_SUCCESS_FNAME`
+    if not os.path.exists(citus_valgrind_logs_path):    
+        run('touch {}'.format(success_file_path))
+
+@task
+@roles('master')
+def valgrind(*args): 
+    'Runs valgrind tests'
+
+    # set citus path variable
+    repo_path = config.settings[config.REPO_PATH]
+    
+    use.valgrind()
+    setup.valgrind()
+
+    with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
+
+        # make check-multi-vg returns 2 in case of failures in regression tests
+        # we should do failure handling here
+        with settings(warn_only=True):
+            valgrind_logs_path=os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_LOGS_FILE)
+            valgrind_test_out_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_TEST_OUT_FILE)
+
+            # wrap the command with tee to log stdout & stderr to a file in results directory as well
+            # this is done to ensure that valgrind test is actually finished
+            valgrind_test_command = 'make check-multi-vg valgrind-log-file={}'.format(valgrind_logs_path)
+            valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
+
+            run(valgrind_test_command)
+
+            valgrind_filter_put_results()

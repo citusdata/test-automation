@@ -23,7 +23,12 @@ region=${AZURE_REGION:=$random_region}
 echo ${region}
 az group create -l ${region} -n ${rg}
 
-public_key=$(cat ~/.ssh/id_rsa.pub)
+# given we might have more then one ssh key loaded we simply take the
+# first one according to ssh-add as the public key to use for the vm
+# we create in azure.
+# jobs that run in multiple stages should have the same set of keys
+# added to their invocations.
+public_key=$(ssh-add -L | head -n1 )
 
 start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"
@@ -34,18 +39,36 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${CIRCLE_BRANCH:=master}
 
-az group deployment create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" 
+# get local public ip 
+local_public_ip=$(curl https://ipinfo.io/ip)
+
+# below is the default create cluster command
+CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
+ --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
+
+# if VALGRIND_TEST variable is not exported, set it to 0
+is_valgrind_test=${VALGRIND_TEST:=0}
+
+# if we want to run valgrind tests, lets overwrite numberOfWorkers parameter with 0
+if [[ "$is_valgrind_test" != "0" ]]; then
+    # be on the safe side, add "--parameters" before "numberOfWorkers" as the order
+    # of the parameters in CREATE_CLUSTER_COMMAND may change
+    CREATE_CLUSTER_COMMAND+=(--parameters)
+    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+fi
+
+# run CREATE_CLUSTER_COMMAND
+"${CREATE_CLUSTER_COMMAND[@]}"
 
 end_time=`date +%s`
 echo execution time was `expr $end_time - $start_time` s.
 
 
-connection_string=$(az group deployment show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
+connection_string=$(az deployment group show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
 
 # remove the quotes 
 connection_string=$(echo ${connection_string} | cut -d "\"" -f 2)
 
-echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY:"
+echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY RUN THE FOLLOWING:"
 
-echo "run './delete-security-rule.sh' to temporarily disable security rule, and connect with:"
 echo ${connection_string}

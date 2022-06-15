@@ -31,6 +31,13 @@
                 "description": "The branch that will be cloned from test automation"
             }
         },
+        "localPublicIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Local server's public ip"
+            }
+        },
+
         "diskType": {
             "type": "string",
             "defaultValue": "Premium_LRS",
@@ -149,8 +156,8 @@
     "variables": {
         "imagePublisher": "OpenLogic",
         "imageOffer": "CentOS",
-        "imageSku": "7.2",
-        "driverImageSku" : "7.5",
+        "imageSku": "7_9-gen2",
+        "driverImageSku" : "7_9-gen2",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
@@ -161,7 +168,8 @@
         "publicIPAddressName": "citusPublicIP",
         "numberOfInstances":"[add(parameters('numberOfWorkers'), 2)]",
         "driverNodeIndex" : "[add(parameters('numberOfWorkers'), 1)]",
-        "ppgName": "citusPPG"
+        "ppgName": "citusPPG",
+        "customSshPort": 3456
     },
     "resources": [
         {
@@ -222,20 +230,6 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "cituscluster",
-                        "properties": {
-                            "description": "Allow ssh to localhost",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
                         "name": "citusclusterpgport",
                         "properties": {
                             "description": "Expose default pg port",
@@ -246,6 +240,20 @@
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "customSshPort",
+                        "properties": {
+                            "description": "allow accessing to custom ssh port from local ip",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "[variables('customSshPort')]",
+                            "sourceAddressPrefix": "[parameters('localPublicIp')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
                             "direction": "Inbound"
                         }
                     }
@@ -438,7 +446,7 @@
     ],
     "outputs": {
         "ssh": {
-            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "value": "[concat('ssh -A -p ', variables('customSshPort'), ' ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
             "type": "string"
         },
         "publicIP": {
@@ -456,6 +464,10 @@
         "driverPrivateIP": {
             "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', variables('driverNodeIndex')))).ipConfigurations[0].properties.privateIPAddress]",
             "type": "string" 
+        },
+        "customSshPort": {
+            "value": "[variables('customSshPort')]",
+            "type": "int"
         }
     }
 }

@@ -28,7 +28,7 @@ CH_THREAD_COUNT=1
 RAMPUP_TIME=3
 # DEFAULT_CH_RUNTIME_IN_SECS is used when tpcc part is disabled. If tpcc is disabled, this is 
 # how long we will run the analytical queries in second.
-DEFAULT_CH_RUNTIME_IN_SECS=1800
+DEFAULT_CH_RUNTIME_IN_SECS=3600
 
 connection_string=postgres://${username}:${password}@${coordinator_ip_address}:${port}
 # you can set the connection string here if you already have it.
@@ -52,11 +52,13 @@ psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-tables.sql
 # distribute ch-benchmark tables
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-distribute.sql
 
+# RUN IF pg_cituscompat IS FALSE IN build.tcl
 # distribute tpcc tables in cluster
 # psql -h ${coordinator_ip_address} -f tpcc-distribute.sql
 
+# RUN IF pg_storedprocs IS FALSE IN build.tcl
 # distribute functions in cluster 
-psql -v "ON_ERROR_STOP=1" "${connection_string}" -f tpcc-distribute-funcs.sql
+# psql -v "ON_ERROR_STOP=1" "${connection_string}" -f tpcc-distribute-funcs.sql
 
 # do vacuum to get more accurate results.
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f vacuum-ch.sql

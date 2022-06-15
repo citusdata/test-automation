@@ -11,17 +11,23 @@ set -x
 # We don't exit on this command because if we are on centos, the firewall
 # might not be active, but this also enables switching to redhat easily.
 firewall-cmd --add-port=5432/tcp || true 
+firewall-cmd --add-port=3456/tcp || true 
+
 
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
 # install pip since we will use it to install dependencies
-curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 python get-pip.py
 
 rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 yum install -y git screen tmux htop
+
+# install & update ca certificates
+yum install -y ca-certificates
+update-ca-trust -f
 
 # this is the username in our instances
 TARGET_USER=pguser
@@ -43,6 +49,17 @@ rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 # We do not want the password prompt, because we want to run tests without any user input
 echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 
+# we will use port 3456 to not hit security rule 103
+echo 'Port 3456' >> /etc/ssh/sshd_config
+echo 'Port 22' >> /etc/ssh/sshd_config
+
+# necessary for semanage, VMs have secure linux
+yum install -y policycoreutils-python
+# we need to enable the new port from semanage
+semanage port -a -t ssh_port_t -p tcp 3456
+
+# restart ssh service to be able to use the new port
+systemctl restart sshd
 
 BRANCH=$5
 

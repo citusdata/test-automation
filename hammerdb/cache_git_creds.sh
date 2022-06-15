@@ -17,17 +17,16 @@ echo "${GIT_USERNAME}" > /tmp/git_username
 echo "${GIT_TOKEN}" > /tmp/git_token
 
 su --login ${TARGET_USER} <<'EOSU'
-
 GIT_USERNAME=$(</tmp/git_username)
 GIT_TOKEN=$(</tmp/git_token)
-
 git config --global credential.helper store
 cd $HOME
+# remove .dummy if it exists
+rm -rf .dummy
 mkdir -p .dummy
 cd .dummy
 # this is to cache github username and token so that later usages wont ask for username password
-git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/citusdata/release-test-results
-
+git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/citusdata/release-test-results --single-branch
 EOSU
 
 # remove the username and token, even if they weren't removed it should be safe as this is 

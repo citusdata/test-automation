@@ -19,6 +19,12 @@
                 "description": "Configure the linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
             }
         },
+        "localPublicIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Local server's public ip"
+            }
+        },
         "branchName": {
             "type": "string",
             "metadata": {
@@ -40,7 +46,7 @@
         },
         "numberOfWorkers": {
             "defaultValue": 3,
-            "minValue": 1,
+            "minValue": 0,
             "maxValue": 21,
             "type": "int",
             "metadata": {
@@ -118,7 +124,7 @@
     "variables": {
         "imagePublisher": "OpenLogic",
         "imageOffer": "CentOS",
-        "imageSku": "7.2",
+        "imageSku": "7_9-gen2",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
@@ -128,7 +134,8 @@
         "publicIPAddressType": "Static",
         "publicIPAddressName": "citusPublicIP",
         "numberOfInstances":"[add(parameters('numberOfWorkers'), 1)]",
-        "ppgName": "citusPPG"
+        "ppgName": "citusPPG",
+        "customSshPort": 3456
     },
     "resources": [
         {
@@ -189,20 +196,6 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "cituscluster",
-                        "properties": {
-                            "description": "Allow ssh to localhost",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
                         "name": "citusclusterpgport",
                         "properties": {
                             "description": "Expose default pg port",
@@ -212,7 +205,21 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 101,
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    },
+                        {
+                        "name": "customSshPort",
+                        "properties": {
+                            "description": "allow accessing to custom ssh port from local ip",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "[variables('customSshPort')]",
+                            "sourceAddressPrefix": "[parameters('localPublicIp')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
                             "direction": "Inbound"
                         }
                     }
@@ -398,12 +405,16 @@
     ],
     "outputs": {
         "ssh": {
-            "value": "[concat('ssh -A ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
+            "value": "[concat('ssh -A -p ', variables('customSshPort'), ' ', parameters('adminUsername'),'@',reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress)]",
             "type": "string"
         },
         "publicIP": {
             "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), '0'))).IpAddress]",
             "type": "string"
+        },
+        "customSshPort": {
+            "value": "[variables('customSshPort')]",
+            "type": "int"
         }
     }
 }

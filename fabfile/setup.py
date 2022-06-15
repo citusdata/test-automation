@@ -22,6 +22,7 @@ import pg
 import add
 import use
 import prefix
+import use
 
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
@@ -46,18 +47,21 @@ def tpch():
 
 @task
 def valgrind():
-    'Just like basic_testing, but adds --enable-debug flag and installs valgrind'
+    # prepare yum install command
+    install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
+
+    # install libraries required for valgrind test
+    sudo(install_required_packages_command)
+
+    # create results directory to put resulting log files there
+    # (for pushing them to results repository)
+    utils.rmdir(config.RESULTS_DIRECTORY, force=True)
+    utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
+
+    # set build citus function
+    build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
-
-    # we do this execute dance so valgrind is installed on every node, not just the master
-    def install_valgrind():
-        sudo('yum install -q -y valgrind')
-    execute(install_valgrind)
-
-    config.PG_CONFIGURE_FLAGS.append('--enable-debug')
-
-    execute(common_setup, build_citus)
-    execute(add_workers)    
+    execute(common_setup, build_citus_func)
 
 @task
 @roles('master')
@@ -164,7 +168,7 @@ def redhat_install_packages():
 
     with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git')
+            ' openssl-devel pam-devel readline-devel libcurl-devel git libzstd-devel lz4-devel')
 
 def build_postgres():
     'Installs postges'
@@ -212,8 +216,7 @@ def build_citus():
         with hide('stdout', 'running'):
             core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-        with hide('stdout'):
-            run('make -s -j{} install'.format(core_count))
+        install_citus(core_count)
 
 def build_enterprise():
     utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -233,8 +236,13 @@ def build_enterprise():
 
         core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-        with hide('stdout'):
-            run('make -s -j{} install'.format(core_count))
+        install_citus(core_count)
+
+def install_citus(core_count):
+    with hide('stdout'):
+        # fall back to "make install" if "make install-all" is not available
+        run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
+            format(core_count=core_count))
 
 def create_database():
     pg_latest = config.PG_LATEST

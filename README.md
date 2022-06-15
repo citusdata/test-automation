@@ -27,6 +27,7 @@ required for testing citus.
   * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
   * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
+  * [Running Valgrind Tests](#valgrind)
 * [Example fab Commands](#fab-examples)
 * [Tasks, and Ordering of Tasks](#fab-tasks)
 * [Task Namespaces](#task-namespaces)
@@ -47,13 +48,15 @@ You can find more information about every step below in other categories. This l
 ### Prerequisites
 1. You should have `az cli` in your local to continue. [Install instructions](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 2. Run `az login` to make the CLI log in to your account
-3. Make sure that your default subscription is the right one:
+3. Make sure that your default subscription is the right one(Azure SQL DB Project Orcas - CitusData):
     ```bash
     # List your subscriptions
     az account list
     # Pick the correct one from the list and run
     az account set --subscription {uuid-of-correct-subscription}
     ```
+
+If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusData`, to add it, contact someone who is authorized.
 
 4. You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
     ```bash
@@ -64,6 +67,10 @@ You can find more information about every step below in other categories. This l
     ssh-add
     ```
 
+5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of latest consists of:
+* Open your VPN.
+* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires 
+`python` to be installed to run.
 
 ### General info
 In `azuredeploy.parameters.json` file, you will see the parameters that you can change. For example if you want to change the number of workers, you will need to change the parameter `numberOfWorkers`. You can change the type of coordinator and workers separately from the parameters file. Also by default for workers, memory intense vms are used(E type) while for coordinator CPU intense vms are used(D type).
@@ -73,6 +80,8 @@ After you run tests, you can see the results in `results` folder. The `results` 
 The data will be stored on the attached disk, size of which can be configured in the parameters.
 
 If you dont specify the region, a random region among `eastus`, `west us 2` and `south central us` will be chosen. This is to use resources uniformly from different regions.
+
+**Port 3456 is used for ssh, you can connect to any node via Port 3456, if you don't use this node, you will hit the security rules.**
 
 ## <a name="azure-setup-steps"></a> Setup Steps For Each Test
 
@@ -97,14 +106,6 @@ less azuredeploy.parameters.json
 
 # connect to the coordinator
 ./connect.sh
-
-# ALTERNATIVATELY instead of ./connect.sh you can do the following
-
-# Delete security rule 103 to be able to connect
-./delete-security-rule.sh
-
-# When your cluster is ready, it will prompt you with the connection string, connect to coordinator node
-ssh -A pguser@<public ip of coordinator>
 ```
 
 ## <a name="azure-delete-cluster"></a> Steps to delete a cluster
@@ -139,9 +140,9 @@ The first virtual machine with index 0 is treated as a coordinator. When all the
 
 The initialization script also finds the private ip addresses of workers and puts them to the coordinator. The way this is done is with a storage account resource. This storage account resource is created within the template itself and all the vms upload their private ip addresses to the storage. After all are uploaded the coordinator downloads all the private ip addresses from the storage account and puts it to `worker-instances` file, which is then used when creating a citus cluster.
 
-We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group. The workaround to connect to the coordinator is to remove the rule 103, and connect right after it. The rule comes back in 2-3 mins, so you should be fast here. There is a script called `delete-security-rule.sh`, which deletes that rule for you.
+We have a special security group which blocks ssh traffic. The rule's priority is 103 and 100, 101, 102 are also taken by this security group.
 
-You can use `connect.sh` which will delete the security rule and connect to the coordinator for you.
+You can use `connect.sh` which will connect to the coordinator for you on a custom ssh port (at the time of writing 3456).
 
 Before starting the process you should set the environment variable `RESOURCE_GROUP_NAME`, which is used in all scripts.
 
@@ -169,13 +170,6 @@ then you should run:
 
 ```bash
 ./connect.sh
-```
-
-or
-
-```bash
-./delete-security-rule.sh
-ssh -A pguser@<public ip of coordinator>
 ```
 
 After you are done with testing, you can delete the resource group with:
@@ -397,6 +391,10 @@ By default the tests will be run against `enterprise-master` and the latest rele
 postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.1')]
 ```
 
+*Note*: While you can run multiple tests by adding more elements to the array above, the results of the tests after the first might 
+be inflated due to cache hits (this depends on the tests being run and the type of disks being used by the VM-s). For the fairest 
+possible comparisons, consider running the tests seperately.
+
 You can change all the settings in these files, the config files for tests are located at:
 
 * pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
@@ -419,14 +417,14 @@ pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
 
 ## <a name="running-automated-hammerdb-benchmark"></a>Running Automated Hammerdb Benchmark
 
-**You should create a new branch and change the settings in the new branch and push the branch so that
-when the tool clones the repository it can download your branch.**
+**Important:** Push your branch to the github repo even though the HammerDb tests are run from your local.
+The initiliazer script used to setup the Azure VM-s will pull your branch from github and not from your local.
 
 Hammerdb tests are run from a driver node. Driver node is in the same virtual network as the cluster.
 You can customize the hammerdb cluster in the `hammerdb` folder using `hammerdb/azuredeploy.parameters.json`.
 Note that this is the configuration for the cluster, which is separate than benchmark configurations(`fabfile/hammerdb_confs/`)
 
-In `fabfile/hammerdb_confs` you can(and you should probably add at least one more config to this folder):
+In `fabfile/hammerdb_confs` you can add more configs to this folder:
 
 * change postgres version
 * use enterprise or community
@@ -434,8 +432,10 @@ In `fabfile/hammerdb_confs` you can(and you should probably add at least one mor
 * change/add postgres/citus settings
 
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
-run the benchmark for each config. It will clean all the tables in each iteration to get more accurate results.
-So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
+run the benchmark for each config. So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
+Even though the script will vacuum the tables in each iteration to get more accurate results, the disk
+cache is likely to inflate the results of the tests running after the first file so for the most unbiased results 
+test the setups seperately (repeat this produre twice). 
 The result logs will contain the config file so that it is easy to know which config was used for a run.
 
 After adding the configs `fabfile/hammerdb_confs` could look like:
@@ -451,7 +451,7 @@ eval `ssh-agent -s`
 ssh-add
 export RESOURCE_GROUP_NAME=<your resource group name>
 export GIT_USERNAME=<Your github username>
-export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens.
+export GIT_TOKEN=<Your github token with repo, write:packages and read:packages permissions> # You can create a github token from https://github.com/settings/tokens
 cd hammerdb
 # YOU SHOULD CREATE A NEW BRANCH AND CHANGE THE SETTINGS/CONFIGURATIONS IN THE NEW BRANCH
 # AND PUSH THE BRANCH SO THAT WHEN THE TOOL CLONES THE REPOSITORY
@@ -464,11 +464,19 @@ vim fabfile/hammerdb_confs/<branch_name>.ini # verify that your custom config fi
 
 **After running ./create-run.sh you do not have to be connected to the driver node at all, it will take care of the rest for you.**
 
-**You are responsible for deleting the cluster yourself(You can do that with azure/delete-resource-group.sh or from the portal).**
+The cluster deployment is flaky and sometimes it will fail. This behaviour is somewhat rare so it is not a
+big problem. In that case, simply delete the previous resource group, and try again.
+You can do that with:
+```bash
+# running from the same shell where you called create-run.sh to start the test
+../azure/delete-resource-group.sh
+./create-run.sh
+``` 
 
-Sometimes you might get random/temporary errors while provisining the cluster. In that case, simply
-delete the previous resource group, and try again. If it is persistent, try after a while, and if it is still
-persistent open an issue on test-automation.
+If it is persistent, some policy might have been changed on Azure so either consider debugging the issue,
+or opening an issue in test-automation.
+
+**The cluster will be deleted if everything goes okay, but you should check if it is deleted to be on the safe side.(If it is not, you can delete that with azure/delete-resource-group.sh or from the portal).**
 
 In order to see the process of the tests, from the driver node:
 
@@ -498,11 +506,11 @@ What files are pushed to github:
 Note that running a benchmark with a single config file with a vuuser of 250 and 1000 warehouses could
 take around 2-3 hours. (the whole process)
 
-If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false` (Alternatively you can see `IS_CH` and `IS_TPCC` environment variables). When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 1800 seconds.
+If you want to run only the tpcc benchmark or the analytical queries, you should change the `is_tpcc` and `is_ch` variables in `create-run.sh`. For example if you want to run only tpcc benchmarks, you should set `is_tpcc` to `true` and `is_ch` to `false` (Alternatively you can see `IS_CH` and `IS_TPCC` environment variables). When you are only running the analytical queries, you can also specify how long you want them to be run by changing the `DEFAULT_CH_RUNTIME_IN_SECS` variable in `build-and-run.sh`. By default it will be run 3600 seconds.
 
 You can change the thread count and initial sleep time for analytical queries from `build-and-run.sh` with `CH_THREAD_COUNT` and `RAMPUP_TIME` variables respectively.
 
-If you want to run hammerdb4.0 change `hammerdb_branch` to `hammerdb40` in `create-run.sh`.
+If you want to run hammerdb4.0 change `hammerdb_version` to `4.0` in `create-run.sh`.
 
 By default a random region will be used, if you want you can specify the region with `AZURE_REGION` environment variable prior to running `create-run.sh` such as `export AZURE_REGION=westus2`.
 
@@ -522,6 +530,17 @@ fab pg.set_config:max_connections,1000
 fab pg.restart
 ```
 
+If you want to add the coordinator to the cluster, you can run:
+
+```bash
+fab add.coordinator_to_metadata
+```
+
+If you want the coordinator to have shards, you can run:
+
+```bash
+fab add.shards_on_coordinator 
+```
 
 ## <a name="pgbench"></a> Running PgBench Tests
 
@@ -590,6 +609,104 @@ On the coordinator node:
 # Don't forget to escape `=` at the end of your connection string
 fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
 ```
+
+## <a name="valgrind"></a> Running Valgrind Tests
+
+TL;DR
+
+```bash
+# set the appropriate az account subscription
+az account set --subscription <subscriptionId>
+
+# setup the ssh-agent and pass your credentials to it so the azure VM-s
+# will be setup to allow ssh connection requests with your public key
+eval `ssh-agent -s`
+ssh-add
+
+# 1 # start valgrind test
+
+# create valgrind instance to run
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+export VALGRIND_TEST=1
+cd azure
+./create-cluster.sh
+
+# connect to coordinator
+./connect.sh
+
+# run fab command in coordinator in a detachable session
+tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind"
+
+# simply exit from coordinator after detaching
+
+# 2 # finalize valgrind test
+
+# reconnect to coordinator after 9.5 hours (if you preferred default coordinator configuration)
+export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+
+eval `ssh-agent -s`
+ssh-add
+cd azure
+./connect.sh
+
+# you can first check if valgrind test is finished by attaching to tmux session
+tmux a
+# then you should detach from the session before moving forward
+Ctrl+b d
+
+# run push results script
+cd test-automation/azure
+./push-results.sh <branch name you prefer to push results>
+
+# simply exit from coordinator after pushing the results
+
+# delete resource group finally
+cd azure
+./delete-resource-group.sh
+```
+
+DETAILS:
+
+To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
+
+```bash
+eval `ssh-agent -s`
+ssh-add
+
+export VALGRIND_TEST=1
+```
+
+, which makes `numberOfWorkers` setting useless.
+This is because we will already be using our regression test structure and it creates a local cluster 
+itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
+PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
+Also, the `create-cluster.sh` uses the first public key it finds in the ssh-agent to setup the ssh authentication
+for the Azure VM-s so if the ssh-agent is not up or it doesn't have your credentials, you won't be able to ssh
+into the VM-s.
+
+On the coordinator node:
+
+```bash
+# an example usage: Use PostgreSQL 12.1 and run valgrind test on enterprise/enterprise-master
+fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind
+```
+
+However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
+```bash
+tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind"
+```
+
+After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.
+Result can be found under `$HOME/results` directory.
+
+To push the results to `release_test_results` repository, run the below command in coordinator node:
+
+```bash
+sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
+```
+
+Finally, delete your resource group.
+Note that automated (weekly) valgrind test already destroys the resources that it uses.
 
 ## <a name="fab-examples"></a> Example fab Commands
 
@@ -766,3 +883,12 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
 - If you find a problem, and you need to update one of the scripts that are used in our cluster initialization in the `fileUris` part of `azuredeploy.json`, make sure that you change the branch name as well to see if the fix works, because by default those scripts are taken from `master` branch and if you don't update it, your change won't be used.
   * Note that https://github.com/citusdata/test-automation/blob/master/hammerdb/azuredeploy.json is used for hammerdb
   * https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.json is used for everything else but hammerdb
+
+- Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.
+
+- If you suspect if a particular `az foo bar` command doesn't work as expected, you could also insert `--debug` to have a closer look.
+
+-  If you're consistently having connection timeout errors (255) when trying to connect to a VM, then consider setting `AZURE_REGION` environment variable to `eastus`. This error will likely occur due to connection policy issues. As of latest, setting up your VPN properly should fix this issue.
+
+- While running on Azure VM-s there might be deployment errors (go to your resource group overview in the portal). This might be caused due to changing
+network security policies in Azure. The error message of the deployment failure should show the conflicting policies. You can then go to the `azuredeploy.json` file for your test and try to change the priority of the custom policies (search priority in the file) until there are no conflicts.

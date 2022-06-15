@@ -9,7 +9,8 @@ import prefix
 import pg
 
 __all__ = [
-    'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer'
+    'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer',
+    'coordinator_to_metadata', 'shards_on_coordinator'
 ]
 
 class InstallExtensionTask(Task):
@@ -156,3 +157,16 @@ def tpch(**kwargs):
 def jdbc():
     'Adds everything required to test out the jdbc connecter'
     sudo('yum install -q -y java-1.6.0-openjdk-devel') # we only need java on the master
+
+@task
+@roles('master')
+def coordinator_to_metadata():
+    local_ip = utils.get_local_ip()
+    utils.psql("SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
+
+@task
+@roles('master')
+def shards_on_coordinator():
+    local_ip = utils.get_local_ip()
+    utils.psql("SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
+        .format(local_ip, config.PORT))    

@@ -44,21 +44,9 @@ trap cleanup EXIT
 
 export RESOURCE_GROUP_NAME="$1"
 
-if [[ $RESOURCE_GROUP_NAME =~ citusbot_valgrind_.+_test_resource_group ]]; then
-    # If running valgrind tests, export VALGRIND_TEST to be 1 to ensure
-    # only coordinator instance is created in create-cluster script
-    export VALGRIND_TEST=1
-fi
-
 ./create-cluster.sh
 
-if [[ $RESOURCE_GROUP_NAME =~ citusbot_valgrind_.+_test_resource_group ]]; then
-    # If running valgrind tests, do not run cleanup function
-    # This is because, as valgrind tests requires too much time to run,
-    # we start valgrind tests via nohup in ci. Hence ssh session
-    # will immediately be closed just after the fabric command is run
-    trap - EXIT
-fi
+trap - EXIT
 
 ssh_port=$(rg_get_ssh_port ${RESOURCE_GROUP_NAME})
 public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})

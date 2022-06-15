@@ -725,7 +725,6 @@ sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
 ```
 
 Finally, delete your resource group.
-Note that automated (weekly) valgrind test already destroys the resources that it uses.
 
 ## <a name="fab-examples"></a> Example fab Commands
 

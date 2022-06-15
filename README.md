@@ -702,7 +702,7 @@ On the coordinator node:
 
 ```bash
 # an example usage: Use PostgreSQL 14.2 and run valgrind test on enterprise/enterprise-master
-fab use.postgres:14.2 use.enterprise:enterprise-master run.valgrind
+fab use.postgres:14.2 use.enterprise:enterprise-master run.valgrind:check-multi-vg
 ```
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:

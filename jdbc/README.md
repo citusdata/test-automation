@@ -1,17 +1,10 @@
-Run following in this directory:
-
-```bash
-./run_jdbc_tests.sh <coordinator_port> <jdbc_driver_path>
-```
-
-where,  
-
-coordinator_port: Provide an available port for the coordinator instance of the temporary citus cluster to perform jdbc tests
-jdbc_driver_path: Provide path to jdbc driver for PostgreSQL, (see https://jdbc.postgresql.org/ to download it).
+To trigger the test push a branch called `jdbc/{whatever-you-want}`
+To configure the citus branch or the jdbc version change the appropriate properties
+in [JDBC Config](./jdbc_config.json)
 
 Dependencies:
 * [citus_dev](https://github.com/citusdata/tools/tree/develop/citus_dev)
-* java jdk
+* java jdk (most recent version is install by apt-get)
 * jdbc driver for PostgreSQL (see https://jdbc.postgresql.org/)
 
 Compare resulting output files from 6 combinations that script executes the tests [(hash, append) x (real-time, task-tracker, adaptive)].

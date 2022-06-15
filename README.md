@@ -21,7 +21,7 @@ required for testing citus.
 * [Running Rests](#running-tests)
   * [Running Automated Tests](#running-automated-tests)
   * [Running Automated Hammerdb Benchmark](#running-automated-hammerdb-benchmark)
-  * [Running Automated Compatibility](#running-automated-compatibility-tests)
+  * [Running Automated Compatibility Tests](#running-automated-compatibility-tests)
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
@@ -517,7 +517,7 @@ By default a random region will be used, if you want you can specify the region 
 
 ## <a name="running-automated-compatibility-tests"></a>Running Automated Copatibility Tests
 Currently, only testing compatibility with jdbc is automated.
-To run, create a branch call jdbc/{whatever-you-want} and push to origin.
+To run, create a branch called `jdbc/{whatever-you-want}` and push to origin.
 The citus branch and jdbc version can be configured from [JDBC Config](jdbc/jdbc_config.json)
 
 For more details read: [JDBC README](jdbc/README.md)

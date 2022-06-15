@@ -15,16 +15,14 @@ driverdir="${0%/*}"
 hammerdb_version=$(cat ~/HAMMERDB_VERSION)
 hammerdb_dir="${HOME}"/HammerDB-"${hammerdb_version}"
 
-cd "${HOME}"
-git clone -b test-automation https://github.com/citusdata/ch-benchmark.git
-cd ch-benchmark
-./generate-hammerdb.sh "$hammerdb_version"
+cd "${HOME}"/test-automation/hammerdb/
+./download-hammerdb.sh "$hammerdb_version"
 mv HammerDB-"${hammerdb_version}" ~/
 
 # postgres is necessary for hammerdb, so install that
 sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 sudo yum-config-manager --disable pgdg95
-sudo yum -y install postgresql12-server postgresql12
+sudo yum -y install postgresql14-server postgresql14
 
 cd "${driverdir}"
 

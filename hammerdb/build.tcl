@@ -15,13 +15,15 @@ diset tpcc pg_superuser pguser
 diset tpcc pg_defaultdbase pguser
 #diset tpcc pg_pass yourpasswordhere
 #diset tpcc pg_superuserpass yourpasswordhere
-# if you change this, make sure to change tpcc-distribute-funcs.sql
+# if you change this to false, make sure to run tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
 diset tpcc pg_num_vu 250
 diset tpcc pg_count_ware 1000
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
+# this flag is only available in hammerdb 4.4+
+diset tpcc pg_cituscompat true
 loadscript
 print dict
 buildschema

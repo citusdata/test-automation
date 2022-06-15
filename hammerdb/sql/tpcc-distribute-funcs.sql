@@ -1,4 +1,3 @@
-
 -- THESE SHOULD BE UNCOMMENTED IF STORED PRODECURES ARE FALSE IN CONFIGS
 
 -- SELECT create_distributed_function('public.dbms_random (integer, integer)');

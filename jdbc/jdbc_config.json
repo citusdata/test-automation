@@ -1,0 +1,7 @@
+{
+    "pg_version": "14.3",
+    "citus_branch": "release-11.0",
+    "use_enterprise": true,
+    "COMMENT_NOT_PARSED": "You can lookup jdbc versions at: https://jdbc.postgresql.org/download.html",
+    "jdbc_version": "42.3.6"
+}

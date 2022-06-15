@@ -261,10 +261,9 @@ public class JDBCReleaseTest {
 			ResultSet rs = st.executeQuery();
 			while (rs.next())
 			{
-				   System.out.print(rs.getString(1) + ",");
+				System.out.print(rs.getString(1) + ",");
 			}
 			rs.close();
-
 
 		}
 		st.close();

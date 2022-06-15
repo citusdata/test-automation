@@ -45,7 +45,7 @@ apt-get install -y autoconf flex libcurl4-gnutls-dev libicu-dev \
 pg_version=$(cat $script_directory/jdbc_config.json | jq '.pg_version' | remove_string_quotations)
 
 # declares a PG_BIN_DIR variable and appends it to PATH
-install_pg_version $pg_version "--with-openssl"
+install_pg_with_version $pg_version "--with-openssl"
 
 # get the citus repo
 citus_branch=$(cat $script_directory/jdbc_config.json | jq '.citus_branch' | remove_string_quotations)
@@ -64,6 +64,7 @@ make -sj $(nproc) install
 
 cd $project_directory
 
+# declares COOR_PORT
 create_test_cluster $PG_USER
 
 cd $script_directory
@@ -78,6 +79,7 @@ javac JDBCReleaseTest.java
 cd ../tpch_2_13_0
 
 # build dbgen to generate test data
+make clean
 make
 
 # generate test data
@@ -86,6 +88,7 @@ SCALE_FACTOR=1 CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh
 cd ..
 
 # perform jdbc tests for combinations of different citus executors & partitioned tables
+# ---
 # note that "append" has been commented out from the distribution table types since the
 # \COPY command for append distributed tables requires a append_to_shard :shardid option
 # "append" can be uncommented back if that option is no longer required. 

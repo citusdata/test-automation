@@ -8,7 +8,7 @@ function remove_string_quotations()
 # compiles a pg version from code in the directory where it is called
 # declares a PG_BIN_DIR variable in the shell and appends it to the $PATH
 # variable
-function install_pg_version()
+function install_pg_with_version()
 {
     current_dir=$(realpath .)
 
@@ -33,6 +33,10 @@ function install_pg_version()
     export PATH=$PATH:$PG_BIN_DIR
 }
 
+# creates a default cluster with citus dev
+# declares a CITUS_DEV variable poiting to the citus_dev executable and
+# a COOR_PORT variable with the port of the coordinator of the newly created
+# cluster
 function create_test_cluster()
 {
     current_dir=$(realpath .)

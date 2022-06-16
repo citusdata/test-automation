@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   pgbench:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install
@@ -20,7 +20,7 @@ jobs:
           
   scale:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install
@@ -38,7 +38,7 @@ jobs:
   
   tpch:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install
@@ -72,7 +72,7 @@ jobs:
 
   delete_resource_group:
     docker:
-      - image: buildpack-deps:buster
+      - image: buildpack-deps:bullseye
     working_directory: /home/circleci/project  
     steps:
       - azure-cli/install

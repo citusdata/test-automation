@@ -22,8 +22,6 @@ export RESOURCE_GROUP_NAME="$1"
 
 ./create-cluster.sh
 
-trap - EXIT
-
 ssh_port=$(rg_get_ssh_port ${RESOURCE_GROUP_NAME})
 public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})
 

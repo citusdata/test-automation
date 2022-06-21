@@ -62,12 +62,14 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
             if use_enterprise == 'on':
                 citus_print_version = 'EE-' + citus_version
                 execute(use.postgres, pg_version)
-                execute(use.enterprise, citus_version)
+                if PG_CITUS_INSTALL
+                    execute(use.enterprise, citus_version)
                 setup.enterprise()
             else:
                 citus_print_version = 'CE-' + citus_version
                 execute(use.postgres, pg_version)
-                execute(use.citus, citus_version)
+                if PG_CITUS_INSTALL
+                    execute(use.citus, citus_version)
                 setup.basic_testing()
 
             postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))

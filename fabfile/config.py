@@ -34,3 +34,6 @@ PG_CONFIGURE_FLAGS = ['--with-openssl']
 settings = {
     IS_SSH_KEYS_USED: True
 }
+
+PG_CITUS_INSTALL = True
+PG_CITUS_EXT_CREATE = True

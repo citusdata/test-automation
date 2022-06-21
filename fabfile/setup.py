@@ -29,11 +29,12 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 @task
 @roles('master')
 def basic_testing():
-    'Sets up a no-frills Postgres+Citus cluster'
+    'Sets up a Postgres+citus cluster in specified citus install options'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
     execute(common_setup, build_citus)
-    execute(add_workers)
+    if config.PG_CITUS_INSTALL and PG_CITUS_EXT_CREATE:
+        execute(add_workers)
 
 @task
 @roles('master')
@@ -66,11 +67,12 @@ def valgrind():
 @task
 @roles('master')
 def enterprise():
-    'Installs the enterprise version of Citus'
+    'Sets up a Postgres+citus cluster in specified install options for enterprise version'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
     execute(common_setup, build_enterprise)
-    execute(add_workers)
+    if config.PG_CITUS_INSTALL and PG_CITUS_EXT_CREATE:
+        execute(add_workers)
 
 @task
 @roles('master')
@@ -139,7 +141,8 @@ def common_setup(build_citus_func):
 
     redhat_install_packages()
     build_postgres()
-    build_citus_func()
+    if config.PG_CITUS_INSTALL:
+        build_citus_func()
     create_database()
     pg.start()
 
@@ -150,8 +153,9 @@ def common_setup(build_citus_func):
 
         run('bin/createdb $(whoami)')
 
-    with hide('stdout'):
-        utils.psql('CREATE EXTENSION citus;')
+    if config.PG_CITUS_EXT_CREATE:
+        with hide('stdout'):
+            utils.psql('CREATE EXTENSION citus;')
 
 @roles('master')
 def add_workers():
@@ -249,7 +253,8 @@ def create_database():
     with cd(pg_latest), hide('stdout'):
         run('bin/initdb -D data')
     with cd('{}/data'.format(pg_latest)):
-        run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
+        if config.PG_CITUS_INSTALL:
+            run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "wal_level = \'logical\'" >> postgresql.conf')

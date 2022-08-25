@@ -43,7 +43,7 @@ current_branch_name=$(git branch --show-current)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
 # get local public ip 
-local_public_ip=$(curl https://ipinfo.io/ip)
+local_public_ip=$(host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.com has" | awk '{print $4}')
 
 # below is the default create cluster command
 CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json

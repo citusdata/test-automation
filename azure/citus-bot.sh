@@ -12,30 +12,6 @@ source commons.sh
 # by CircleCI
 source ./add-sshkey.sh
 
-# ssh_execute tries to send the given command over the given connection multiple times.
-# It uses the custom ssh port 3456.
-ssh_execute() {
-   ip=$1
-   ssh_port=$2
-   shift 2;
-   command=$@
-   n=0
-   until [ $n -ge 10 ]
-   do
-      ssh -o "StrictHostKeyChecking no" -A -p "${ssh_port}" pguser@${ip} "source ~/.bash_profile;${command}" && break
-      rc=$? # get return code
-      if [ $rc -ne 255 ] ; then
-         # if the error code is not 255 we didn't get a connection error.
-         exit 1
-      fi
-      n=$[$n+1]
-   done
-
-   if [ $n == 10 ]; then
-      exit 1
-   fi
-}
-
 function cleanup {
     sh ./delete-resource-group.sh
 }
@@ -45,8 +21,6 @@ trap cleanup EXIT
 export RESOURCE_GROUP_NAME="$1"
 
 ./create-cluster.sh
-
-trap - EXIT
 
 ssh_port=$(rg_get_ssh_port ${RESOURCE_GROUP_NAME})
 public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})

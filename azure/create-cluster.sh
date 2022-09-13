@@ -38,9 +38,7 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 
-# https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
-echo $(git --version)
-current_branch_name=$(git branch --show-current)
+current_branch_name=$(git rev-parse --abbrev-ref HEAD)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
 # get local public ip 

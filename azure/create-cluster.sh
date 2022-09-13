@@ -39,6 +39,7 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 
 # https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
+echo $(git --version)
 current_branch_name=$(git branch --show-current)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 

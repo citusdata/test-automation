@@ -4,7 +4,7 @@
 set -u / set -o nounset
 # exit immediately if a command fails
 set -e
-
+set -x
 ## Set mydir to the directory containing the script
 ## The ${var%pattern} format will remove the shortest match of
 ## pattern from the end of the string. Here, it will remove the

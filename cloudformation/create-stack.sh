@@ -50,7 +50,7 @@ usage: create-stack.sh [-k EC2 key pair] [-p private key file]
 
   k : specifies the name of the EC2 key pair to use
       Required.
-  p : specifies the private key file to automatically connect and run fab basic_testing on the master
+  p : specifies the private key file to automatically connect and run fab basic-testing on the master
       Optional.
   c : specifies the path to the CloudFormation template
       Default: ${default_cloudformation_template}
@@ -169,7 +169,7 @@ master_hostname=$(aws cloudformation describe-stacks \
 
 if [ -n "${private_key_file}" ]; then
     echo
-    echo Running fab basic_testing on ${master_hostname}
+    echo Running fab basic-testing on ${master_hostname}
     eval `ssh-agent -s`
     ssh-add ${private_key_file}
     ssh -A ec2-user@${master_hostname} fab --hide stdout

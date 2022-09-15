@@ -17,17 +17,24 @@ firewall-cmd --add-port=3456/tcp || true
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
-# install pip since we will use it to install dependencies
-curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-python get-pip.py
+# install epel repo
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
-yum install -y git screen tmux htop
+yum install -y git
+
+# install other utility tools
+yum install -y screen htop
+
+# install tmux
+yum install -y http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/Packages/tmux-3.2a-4.el9.x86_64.rpm
 
 # install & update ca certificates
 yum install -y ca-certificates
 update-ca-trust -f
+
+# install python3 package manager pip
+yum install -y python3-pip
 
 # this is the username in our instances
 TARGET_USER=pguser
@@ -57,10 +64,11 @@ if [ "${DEV}" = "" ]; then
 fi
 
 # attach disk and mount it for data
-mkfs.ext4 -F ${DEV}
+mkfs -t ext4 ${DEV}
 mv /home/${TARGET_USER}/ /tmp/home_copy
 mkdir -p /home/${TARGET_USER}
 mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
+yum install -y rsync
 rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 
@@ -73,7 +81,7 @@ echo 'Port 3456' >> /etc/ssh/sshd_config
 echo 'Port 22' >> /etc/ssh/sshd_config
 
 # necessary for semanage, VMs have secure linux
-yum install -y policycoreutils-python
+yum install -y policycoreutils-python-utils
 # we need to enable the new port from semanage
 semanage port -a -t ssh_port_t -p tcp 3456
 
@@ -85,20 +93,26 @@ BRANCH=$5
 echo ${BRANCH} > /tmp/branch_name
 
 su --login ${TARGET_USER} <<'EOSU'
- # add pg and local binaries to the path
+  # add pg and local binaries to the path
   echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bash_profile
+  # we add the path into bashrc as well, because fab run interactive and nonlogin shell (bash -i -c <command>)
+  # only bashrc is read and executed in that scenario
+  echo "export PATH=${HOME}/pg-latest/bin/:${HOME}/.local/bin/:$PATH" >> ${HOME}/.bashrc
 
   branch=$(</tmp/branch_name)
   cd ${HOME} && git clone --branch ${branch} https://github.com/citusdata/test-automation.git
 
-  # create a link for fabfile in home since we use it from home
+  #### fab setup ####
+  # 1) create a link for fabfile in home since we use it from home
   ln -s ${HOME}/test-automation/fabfile ${HOME}/fabfile
-
-  # source the auto completion of fab
+  # 2) source the auto completion of fab
   echo "source ${HOME}/test-automation/cloudformation/fab" >> ${HOME}/.bash_profile
-
-  # install requirements for tests
-  pip install -r ${HOME}/test-automation/fabfile/requirements.txt --user
+  # 3) install requirements for tests
+  pip3 install -r ${HOME}/fabfile/requirements.txt --user
+  # 4) set PYTHONPATH as fabfile folder to resolve imports when we run fab from other directories
+  echo "export PYTHONPATH=${HOME}/fabfile" >> ${HOME}/.bash_profile
+  echo "export PYTHONPATH=${HOME}/fabfile" >> ${HOME}/.bashrc
+  ####
 
   # generate public key and add it to authorized keys so that sshing localhost does not ask password
   echo | ssh-keygen -P "" -t rsa
@@ -115,8 +129,7 @@ EOSU
 
 find_private_ips() {
   rpm --import https://packages.microsoft.com/keys/microsoft.asc
-  sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-
+  yum install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm
   yum install -y azure-cli
 
   mkdir /home/log
@@ -131,6 +144,7 @@ find_private_ips() {
     echo $i >>$LOGS
   done
 
+  yum install -y hostname
   hostname -I >/home/log/ip_address
 
   export NODE_ID=$1

@@ -73,7 +73,7 @@ jobs:
   extension:
     docker:
       - image: buildpack-deps:bullseye
-    working_directory: /home/circleci/project  
+    working_directory: /home/circleci/project
     steps:
       - azure-cli/install
       - azure-cli/login-with-service-principal

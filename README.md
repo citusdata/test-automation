@@ -60,12 +60,12 @@ You can find more information about every step below in other categories. This l
 
 If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusData`, to add it, contact someone who is authorized.
 
-4. You should use `ssh-agent` to add your ssh keys, which will be used for downloading the enterprise repository. Note that your keys are kept only in memory, therefore this is a secure step.
+4. You should use `ssh-agent` to add your ssh keys, which will be used to upload to the release-test-results repository. Note that your keys are kept only in memory, therefore this is a secure step.
     ```bash
     # start ssh agent
     eval `ssh-agent -s`
 
-    # Add your Github ssh key for enterprise (private) repo
+    # Add your Github ssh key to upload results to release-test-results repo
     ssh-add
     ```
 
@@ -220,7 +220,7 @@ eval `ssh-agent -s`
 # Add your EC2 keypair's private key to your agent
 ssh-add path_to_keypair/metin-keypair.pem
 
-# Add your Github ssh key for enterprise (private) repo
+# Add your Github ssh key for release-test-results repo
 ssh-add
 
 # Quickly start a cluster of (1 + 3) c3.4xlarge nodes
@@ -388,10 +388,10 @@ even if it fails.
 
 You can find your test results in https://github.com/citusdata/release-test-results under `periodic_job_results` folder. Test results will be pushed to a branch which is in the format ${rg_name}/${month_day_year_uniqueID}.
 
-By default the tests will be run against `enterprise-master` and the latest released version. If you want to test on a custom branch you should change the config files of relevant tests with your custom branch name in:
+By default the tests will be run against `release-9.2` and the latest released version. If you want to test on a custom branch you should change the config files of relevant tests with your custom branch name in:
 
 ```text
-postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-enterprise'), ('12.1', 'release-9.1')]
+postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-citus'), ('12.1', 'release-9.1')]
 ```
 
 *Note*: While you can run multiple tests by adding more elements to the array above, the results of the tests after the first might 
@@ -432,7 +432,6 @@ Note that this is the configuration for the cluster, which is separate than benc
 In `fabfile/hammerdb_confs` you can add more configs to this folder:
 
 * change postgres version
-* use enterprise or community
 * use a custom branch (You can also use git refs instead of branch names)
 * change/add postgres/citus settings
 
@@ -532,11 +531,11 @@ On the coordinator node:
 
 ```bash
 # Setup your test cluster with PostgreSQL 12.1 and Citus master branch
-fab use.postgres:12.1 use.citus:master setup.basic_testing
+fab use.postgres 12.1 use.citus master setup.basic-testing
 
 # Lets change some conf values 
-fab pg.set_config:max_wal_size,"'5GB'"
-fab pg.set_config:max_connections,1000
+fab pg.set-config max_wal_size "'5GB'"
+fab pg.set-config max_connections 1000
 
 # And restart the cluster
 fab pg.restart
@@ -545,13 +544,13 @@ fab pg.restart
 If you want to add the coordinator to the cluster, you can run:
 
 ```bash
-fab add.coordinator_to_metadata
+fab add.coordinator-to-metadata
 ```
 
 If you want the coordinator to have shards, you can run:
 
 ```bash
-fab add.shards_on_coordinator 
+fab add.shards-on-coordinator 
 ```
 
 ## <a name="pgbench"></a> Running PgBench Tests
@@ -559,14 +558,14 @@ fab add.shards_on_coordinator
 On the coordinator node:
 
 ```bash
-# This will run default pgBench tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run default pgBench tests with PG=12.1 and Citus 9.2 and 8.3 release branches
 # and it will log results to pgbench_results_{timemark}.csv file
 # Yes, that's all :) You can change settings in fabfile/pgbench_confs/pgbench_default.ini
-fab run.pgbench_tests
+fab run.pgbench-tests
 
 # It's possible to provide another configuration file for tests
 # Such as with this, we run the same set of default pgBench tests without transactions
-fab run.pgbench_tests:pgbench_default_without_transaction.ini
+fab run.pgbench-tests --config-file=pgbench_default_without_transaction.ini
 ```
 
 ## <a name="scale"></a> Running Scale Tests
@@ -574,15 +573,92 @@ fab run.pgbench_tests:pgbench_default_without_transaction.ini
 On the coordinator node:
 
 ```bash
-# This will run scale tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run scale tests with PG=12.1 and Citus 9.2 and 8.3 release branches
 # and it will log results to pgbench_results_{timemark}.csv file
 # You can change settings in files under the fabfile/pgbench_confs/ directory
-fab run.pgbench_tests:scale_test.ini
-fab run.pgbench_tests:scale_test_no_index.ini
-fab run.pgbench_tests:scale_test_prepared.ini
-fab run.pgbench_tests:scale_test_reference.ini
-fab run.pgbench_tests:scale_test_foreign.ini
-fab run.pgbench_tests:scale_test_100_columns.ini
+fab run.pgbench-tests --config-file=scale_test.ini
+fab run.pgbench-tests --config-file=scale_test_no_index.ini
+fab run.pgbench-tests --config-file=scale_test_prepared.ini
+fab run.pgbench-tests --config-file=scale_test_reference.ini
+fab run.pgbench-tests --config-file=scale_test_foreign.ini
+fab run.pgbench-tests --config-file=scale_test_100_columns.ini
+```
+
+## <a name="extension"></a> Running Extension Tests
+
+You can execute a PG extension's regression tests with any combination of other extensions created in the database. The purpose of those tests is to figure out if any test fails due to having those extensions together. Currently we only support extensions whose tests can be run by pg_regress. We do not support any other extensions whose tests are run by some other tools. e.g. tap tests
+
+Here is the schema for main section:
+
+```
+[main]
+postgres_versions: [<string>]   specifies Postgres versions for which the test should be repeated
+extensions: [<string>]          specifies the extensions for which we give information
+test_count: <integer>           specifies total test scenarios which uses any extensions amongst the extension definitions
+
+
+[main]
+postgres_versions: ['14.5']
+extensions: ['citus', 'hll', 'topn', 'tdigest', 'auto_explain']
+test_count: 4
+```
+
+Here is the schema for an extension definition:
+
+```
+[<string>]                    specifies the extension name (that should be the same name with the extension name used in 'create extension <extension_name>;')
+contrib: <bool>               specifies if the extension exists in contrib folder under Postgres (we do not install if it is a contrib extension because it is bundled with Postgres)
+preload: <bool>               specifies if we should add the extension into shared_preload_libraries
+create: <bool>                specifies if we should create extension in database (for example: 'create extension auto_explain;' causes error because it does not add any object)
+configure: <bool>             specifies if the installation step has a configure step (i.e. ./configure)
+repo_url: <string>            specifies repo url for non-contrib extension
+git_ref: <string>             specifies repo branch name for non-contrib extension
+relative_test_path: <string>  specifies relative directory in which pg_regress will run the tests
+conf_string: <string>         specifies optional postgres.conf options
+post_create_hook: <string>    specifies optional method name to be called after the extension is created. You should implement the hook in fabfile/extension_hooks.py.
+
+
+[tdigest]
+contrib: False
+preload: False
+create: True
+configure: False
+repo_url: https://github.com/tvondra/tdigest.git
+git_ref: v1.4.0
+relative_test_path: .
+```
+
+Here is the schema for a test case:
+
+```
+[test-<integer>]                  specifies the test name
+ext_to_test: <string>             specifies the extension to be tested       
+dep_order: <string>               specifies the shared_preload_libraries string order
+test_command: <string>            specifies the test command
+conf_string: <string>             specifies the postgres configurations to be used in the test
+
+
+[test-4]
+ext_to_test: citus
+dep_order: citus,auto_explain
+test_command: make check-vanilla
+conf_string: '''
+    auto_explain.log_min_duration=0
+    auto_explain.log_analyze=1
+    auto_explain.log_buffers=1
+    auto_explain.log_nested_statements=1
+    '''
+```
+
+On the coordinator node:
+
+```bash
+# This will run default extension tests with PG=14.5
+# Yes, that's all :) You can change settings in fabfile/extension_confs/extension_default.ini
+fab run.extension-tests
+
+# It's possible to provide another configuration file for tests
+fab run.extension-tests --config-file=[other_config.ini]
 ```
 
 ## <a name="extension"></a> Running Extension Tests
@@ -670,7 +746,7 @@ On the coordinator node:
 
 # Use pgbench_cloud.ini config file with connection string of your Hyperscale (Citus) cluster
 # Don't forget to escape `=` at the end of your connection string
-fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
+fab run.pgbench-tests --config-file=pgbench_cloud.ini --connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
 ```
 
 **Important Note**
@@ -682,15 +758,15 @@ fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98C
 On the coordinator node:
 
 ```bash
-# This will run TPC-H tests with PG=12.1 and Citus Enterprise 9.0 and 8.3 release branches
+# This will run TPC-H tests with PG=12.1 and Citus 9.2 and 8.3 release branches
 # and it will log results to their own files on the home directory. You can use diff to 
 # compare results.
 # You can change settings in files under the fabfile/tpch_confs/ directory
-fab run.tpch_automate
+fab run.tpch-automate
 
 # If you want to run only Q1 with scale factor=1 against community master,
 # you can use this config file. Feel free to edit conf file
-fab run.tpch_automate:tpch_q1.ini
+fab run.tpch-automate --config-file=tpch_q1.ini
 ```
 
 ## <a name="tpch-cloud"></a> Running TPC-H Tests Against Hyperscale (Citus)
@@ -700,7 +776,7 @@ On the coordinator node:
 ```bash
 # Provide your tpch config file or go with the default file
 # Don't forget to escape `=` at the end of your connection string
-fab run.tpch_automate:tpch_q1.ini,connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
+fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citus:dwVg70yBfkZ6hO1WXFyq1Q@c.fhhwxh5watzbizj3folblgbnpbu.db.citusdata.com:5432/citus?sslmode\=require'
 ```
 
 ## <a name="valgrind"></a> Running Valgrind Tests
@@ -729,12 +805,12 @@ cd azure
 
 # run fab command in coordinator in a detachable session
 #
-# Note that in addition to run.valgrind:check-multi-vg, run.valgrind:check-multi-1-vg and
-# run.valgrind:check-columnar-vg are also available, where:
-#   run.valgrind:check-multi-vg runs "make check-multi-vg"
-#   run.valgrind:check-multi-1-vg runs "make check-multi-1-vg"
-#   run.valgrind:check-columnar-vg runs "make check-columnar-vg"
-tmux new -d "fab use.postgres:12.3 use.enterprise:enterprise-master run.valgrind:check-multi-vg"
+# Note that in addition to run.valgrind check-multi-vg, run.valgrind check-multi-1-vg and
+# run.valgrind check-columnar-vg are also available, where:
+#   run.valgrind check-multi-vg runs "make check-multi-vg"
+#   run.valgrind check-multi-1-vg runs "make check-multi-1-vg"
+#   run.valgrind check-columnar-vg runs "make check-columnar-vg"
+tmux new -d "fab use.postgres 12.3 use.citus release-9.2 run.valgrind check-multi-vg"
 
 # simply exit from coordinator after detaching
 
@@ -786,18 +862,18 @@ into the VM-s.
 On the coordinator node:
 
 ```bash
-# an example usage: Use PostgreSQL 14.2 and run valgrind test on enterprise/enterprise-master
-fab use.postgres:14.2 use.enterprise:enterprise-master run.valgrind:check-multi-vg
+# an example usage: Use PostgreSQL 14.2 and run valgrind test on citus/release-9.2
+fab use.postgres 14.2 use.citus release-9.2 run.valgrind check-multi-vg
 ```
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
 ```bash
-# As mentioned above, run.valgrind:check-multi-1-vg and run.valgrind:check-columnar-vg are
+# As mentioned above, run.valgrind check-multi-1-vg and run.valgrind check-columnar-vg are
 # also available, where:
-#   run.valgrind:check-multi-vg runs "make check-multi-vg"
-#   run.valgrind:check-multi-1-vg runs "make check-multi-1-vg"
-#   run.valgrind:check-columnar-vg runs "make check-columnar-vg"
-tmux new -d "fab use.postgres:12.1 use.enterprise:enterprise-master run.valgrind:check-multi-vg"
+#   run.valgrind check-multi-vg runs "make check-multi-vg"
+#   run.valgrind check-multi-1-vg runs "make check-multi-1-vg"
+#   run.valgrind check-columnar-vg runs "make check-columnar-vg"
+tmux new -d "fab use.postgres 12.1 use.citus release-9.2 run.valgrind check-multi-vg"
 ```
 
 After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.
@@ -819,23 +895,23 @@ Once you have a cluster you can use many different variations of the "fab" comma
 install Citus:
 
 - `fab --list` will return a list of the tasks you can run.
-- `fab setup.basic_testing`, will create a vanilla cluster with postgres and citus. Once this has run you can simply run `psql` to connect to it.
-- `fab use.citus:v7.1.1 setup.basic_testing` will do the same, but use the tag `v7.1.1` when installing Citus. You can give it any git ref, it defaults to `master`.
-- `fab use.postgres:10.1 setup.basic_testing` lets you choose your postgres version.
-- `fab use.enterprise:v7.1.1 setup.enterprise` will install postgres and the `v7.1.1` tag of the enterprise repo.
+- `fab setup.basic-testing`, will create a vanilla cluster with postgres and citus. Once this has run you can simply run `psql` to connect to it.
+- `fab use.citus v7.1.1 setup.basic-testing` will do the same, but use the tag `v7.1.1` when installing Citus. You can give it any git ref, it defaults to `master`.
+- `fab use.postgres 10.1 setup.basic-testing` lets you choose your postgres version.
+- `fab use.citus release-9.2 setup.citus` will install postgres and the `release-9.2` branch of the citus repo.
 
 ## <a name="fab-tasks"></a> Tasks, and Ordering of Tasks
 
-When you run a command like `fab use.citus:v7.1.1 setup.basic_testing` you are running two
-different tasks: `use.citus` with a `v7.1.1` argument and `setup.basic_testing`. Those
+When you run a command like `fab use.citus v7.1.1 setup.basic-testing` you are running two
+different tasks: `use.citus` with a `v7.1.1` argument and `setup.basic-testing`. Those
 tasks are always executed from left to right, and running them is usually equivalent to
 running them as separate commands. For example:
 
 ```
 # this command:
-fab setup.basic_testing add.tpch
+fab setup.basic-testing add.tpch
 # has exactly the same effect as this series of commands:
-fab setup.basic_testing
+fab setup.basic-testing
 fab add.tpch
 ```
 
@@ -844,10 +920,10 @@ have an effect on the current command:
 
 ```
 # this works:
-fab use.citus:v7.1.1 setup.basic_testing
+fab use.citus v7.1.1 setup.basic-testing
 # this does not work:
-fab use.citus:v7.1.1  # tells fabric to install v7.1.1, but only works during this command
-fab setup.basic_testing  # will install the master branch of citus
+fab use.citus v7.1.1  # tells fabric to install v7.1.1, but only works during this command
+fab setup.basic-testing  # will install the master branch of citus
 ```
 
 `use` tasks must come before `setup` tasks:
@@ -855,7 +931,7 @@ fab setup.basic_testing  # will install the master branch of citus
 ```
 # this does not work!
 # since the `setup` task is run before the `use` task the `use` task will have no effect
-fab setup.basic_testing use.citus:v.7.1.1
+fab setup.basic-testing use.citus v.7.1.1
 ```
 
 Finally, there are tasks, such as the ones in the `add` namespace, which asssume a cluster
@@ -870,20 +946,20 @@ These tasks configure the tasks you run after them. When run alone they have no 
 Some examples:
 
 ```
-fab use.citus:v7.1.1 setup.basic_testing
-fab use.enterprise:v7.1.1 setup.enterprise
-fab use.debug_mode use.postgres:10.1 use.citus:v7.1.1 setup.basic_testing
+fab use.citus v7.1.1 setup.basic-testing
+fab use.citus release-9.2 setup.citus
+fab use.debug-mode use.postgres 10.1 use.citus v7.1.1 setup.basic-testing
 ```
 
-`use.debug_mode` passes the following flags to postges' configure: `--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
+`use.debug-mode` passes the following flags to postges' configure: `--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"`
 
-`use.asserts` passes `--enable-cassert`, it's a subset of `use.debug_mode`.
+`use.asserts` passes `--enable-cassert`, it's a subset of `use.debug-mode`.
 
 ## <a name="add"></a> `add` Tasks
 
 It is possible to add extra extensions and features to a Citus cluster:
 
-- `fab add.tpch:scale_factor=1,partition_type='hash'` will generate and copy tpch tables.
+- `fab add.tpch --scale-factor=1 --partition-type=hash` will generate and copy tpch tables.
 
   The default scale factor is 10. The default partition type is reference for nation, region and supplier and hash for remaining. If you set partition type to 'hash' or 'append', all the tables will be created with that partition type. 
 - `fab add.session_analytics` will build and install the session_analytics package (see the instructions above for information on how to checkout this private repo)
@@ -892,7 +968,7 @@ For a complete list, run `fab --list`.
 
 As described [above](#fab-tasks), you can run these at the same time as you run `setup` tasks:
 
-- `fab use.citus:v7.1.1 setup.enterprise add.shard_rebalancer` does what you'd expect.
+- `fab use.citus v7.1.1 setup.citus add.shard_rebalancer` does what you'd expect.
 
 ## <a name="pg"></a> `pg` Tasks
 
@@ -901,17 +977,17 @@ These tasks run commands which involve the current postgres instance.
 - `fab pg.stop` will stop postgres on all nodes
 - `fab pg.restart` will restart postgres on all nodes
 - `fab pg.start` guess what this does :)
-- `fab pg.read_config:[parameter]` will run `SHOW [parameter]` on all nodes. For example:
-- `fab pg.read_config:max_prepared_transactions`
+- `fab pg.read-config [parameter]` will run `SHOW [parameter]` on all nodes. For example:
+- `fab pg.read-config max_prepared_transactions`
 
 If you want to use a literal comma in a command you must escape it (this applies to all
 fab tasks)
 
-- `fab pg.set_config:shared_preload_libraries,'citus\,cstore_fdw'`
+- `fab pg.set-config shared_preload_libraries 'citus\,cstore_fdw'`
 
-Using `pg.set_config` it's possible to get yourself into trouble. `pg.set_config` uses
+Using `pg.set-config` it's possible to get yourself into trouble. `pg.set-config` uses
 `ALTER SYSTEM`, so if you've broken your postgres instance so bad it won't boot, you won't
-be able to use `pg.set_config` to fix it.
+be able to use `pg.set-config` to fix it.
 
 To reset to a clean configuration run this command:
 
@@ -927,11 +1003,8 @@ To change the configuration file for tpch tests, you should prepare configuratio
 
 # <a name="advanced-fab"></a> Advanced fab Usage
 
-By default your fab commands configure the entire cluster, however you can target roles or
-individual machines.
+By default your fab commands configure the entire cluster, however you can target individual machines.
 
-- `fab -R master pg.restart` will restart postgres on the master node.
-- `fab -R workers pg.stop` will shutdown pg on all the workers.
 - `fab -H 10.0.1.240 pg.start` will start pg on that specific node.
 
 You can also ask to run arbitrary commands by adding them after `--`.
@@ -946,29 +1019,29 @@ simultanious installations of Citus and are able to switch between them. The fab
 scripts allow this by maintaining a symlink called `pg-latest`.
 
 Most tasks which interact with a postgres installation (such as `add.cstore` or `pg.stop`)
-simply use the installation in `pg-latest`. Tasks such as `setup.basic_testing` which
+simply use the installation in `pg-latest`. Tasks such as `setup.basic-testing` which
 install postgres will overwrite whatever is currently in `pg-latest`.
 
-You can change where `pg-latest` points by running `fab set_pg_latest:some-absolute-path`. For
-example: `fab set_pg_latest:$HOME/enterprise-installation`. Using multiple
+You can change where `pg-latest` points by running `fab set-pg-latest some-absolute-path`. For
+example: `fab set-pg-latest $HOME/postgres-installation`. Using multiple
 installations is a matter of changing your prefix whenever you want to act upon or create
 a different installation.
 
 Here's an example:
 
 ```bash
-fab set_pg_latest:$HOME/pg-960-citus-600
-fab use.postgres:9.6.0 use.citus:v6.0.0 setup.basic_testing
-fab set_pg_latest:$HOME/pg-961-citus-601
-fab use.postgres:9.6.1 use.citus:v6.0.1 setup.basic_testing
+fab set-pg-latest $HOME/pg-960-citus-600
+fab use.postgres 9.6.0 use.citus v6.0.0 setup.basic-testing
+fab set-pg-latest $HOME/pg-961-citus-601
+fab use.postgres 9.6.1 use.citus v6.0.1 setup.basic-testing
 # you now have 2 installations of Citus!
 fab pg.stop  # stop the existing Citus instance
-fab set_pg_latest:$HOME/pg-960-citus-600  # switch to using the new instance
+fab set-pg-latest $HOME/pg-960-citus-600  # switch to using the new instance
 fab pg.start  # start the new instance
 # now you've switched back to the first installation
 
 # the above can be abbreviated by writing the following:
-fab pg.stop set_pg_latest:$HOME/pg-960-citus-600 pg.start
+fab pg.stop set-pg-latest $HOME/pg-960-citus-600 pg.start
 ```
 
 ## <a name="TroubleShooting-test-automation"></a> TroubleShooting
@@ -982,10 +1055,6 @@ Currently test automation has a lot of dependencies such as fabfile, azure and m
   * switch to the root user(since `pguser` doesn't have the access to the logs) `sudo su root`
   * cd into the log directory `/var/lib/waagent/custom-script/download/0`
   * Now you can look at the `stderr` or `stdout` to see what went unexpected.
-
-- If you find a problem, and you need to update one of the scripts that are used in our cluster initialization in the `fileUris` part of `azuredeploy.json`, make sure that you change the branch name as well to see if the fix works, because by default those scripts are taken from `master` branch and if you don't update it, your change won't be used.
-  * Note that https://github.com/citusdata/test-automation/blob/master/hammerdb/azuredeploy.json is used for hammerdb
-  * https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.json is used for everything else but hammerdb
 
 - Updating `az cli` is also mostly a good option, follow the installation instructions in https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux to update your local `az cli` installation.
 

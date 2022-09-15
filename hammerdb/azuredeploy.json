@@ -69,24 +69,24 @@
         },
         "coordinatorVmSize": {
             "type": "string",
-            "defaultValue": "Standard_D4s_v3",
+            "defaultValue": "Standard_D4s_v5",
             "allowedValues": [
-                "Standard_D2s_v3",
-                "Standard_D4s_v3",
-                "Standard_D8s_v3",
-                "Standard_D16s_v3",
-                "Standard_D32s_v3",
-                "Standard_D48s_v3",
-                "Standard_D64s_v3",
-                "Standard_E2s_v3",
-                "Standard_E4s_v3",
-                "Standard_E8s_v3",
-                "Standard_E16s_v3",
-                "Standard_E20s_v3",
-                "Standard_E32s_v3",
-                "Standard_E48s_v3",
-                "Standard_E64s_v3",
-                "Standard_E64is_v3"
+                "Standard_D2s_v5",
+                "Standard_D4s_v5",
+                "Standard_D8s_v5",
+                "Standard_D16s_v5",
+                "Standard_D32s_v5",
+                "Standard_D48s_v5",
+                "Standard_D64s_v5",
+                "Standard_E2s_v5",
+                "Standard_E4s_v5",
+                "Standard_E8s_v5",
+                "Standard_E16s_v5",
+                "Standard_E20s_v5",
+                "Standard_E32s_v5",
+                "Standard_E48s_v5",
+                "Standard_E64s_v5",
+                "Standard_E64is_v5"
             ],
             "metadata": {
                 "description": "The instance type to use for coordinator"
@@ -94,24 +94,24 @@
         },
         "driverVmSize": {
             "type": "string",
-            "defaultValue": "Standard_D64s_v3",
+            "defaultValue": "Standard_D64s_v5",
             "allowedValues": [
-                "Standard_D2s_v3",
-                "Standard_D4s_v3",
-                "Standard_D8s_v3",
-                "Standard_D16s_v3",
-                "Standard_D32s_v3",
-                "Standard_D48s_v3",
-                "Standard_D64s_v3",
-                "Standard_E2s_v3",
-                "Standard_E4s_v3",
-                "Standard_E8s_v3",
-                "Standard_E16s_v3",
-                "Standard_E20s_v3",
-                "Standard_E32s_v3",
-                "Standard_E48s_v3",
-                "Standard_E64s_v3",
-                "Standard_E64is_v3"
+                "Standard_D2s_v5",
+                "Standard_D4s_v5",
+                "Standard_D8s_v5",
+                "Standard_D16s_v5",
+                "Standard_D32s_v5",
+                "Standard_D48s_v5",
+                "Standard_D64s_v5",
+                "Standard_E2s_v5",
+                "Standard_E4s_v5",
+                "Standard_E8s_v5",
+                "Standard_E16s_v5",
+                "Standard_E20s_v5",
+                "Standard_E32s_v5",
+                "Standard_E48s_v5",
+                "Standard_E64s_v5",
+                "Standard_E64is_v5"
             ],
             "metadata": {
                 "description": "The instance type to use for coordinator"
@@ -129,24 +129,24 @@
         },
         "workerVmSize": {
             "type": "string",
-            "defaultValue": "Standard_E4s_v3",
+            "defaultValue": "Standard_E4s_v5",
             "allowedValues": [
-                "Standard_D2s_v3",
-                "Standard_D4s_v3",
-                "Standard_D8s_v3",
-                "Standard_D16s_v3",
-                "Standard_D32s_v3",
-                "Standard_D48s_v3",
-                "Standard_D64s_v3",
-                "Standard_E2s_v3",
-                "Standard_E4s_v3",
-                "Standard_E8s_v3",
-                "Standard_E16s_v3",
-                "Standard_E20s_v3",
-                "Standard_E32s_v3",
-                "Standard_E48s_v3",
-                "Standard_E64s_v3",
-                "Standard_E64is_v3"
+                "Standard_D2s_v5",
+                "Standard_D4s_v5",
+                "Standard_D8s_v5",
+                "Standard_D16s_v5",
+                "Standard_D32s_v5",
+                "Standard_D48s_v5",
+                "Standard_D64s_v5",
+                "Standard_E2s_v5",
+                "Standard_E4s_v5",
+                "Standard_E8s_v5",
+                "Standard_E16s_v5",
+                "Standard_E20s_v5",
+                "Standard_E32s_v5",
+                "Standard_E48s_v5",
+                "Standard_E64s_v5",
+                "Standard_E64is_v5"
             ],
             "metadata": {
                 "description": "The instance type to use for worker"
@@ -154,10 +154,10 @@
         }
     },
     "variables": {
-        "imagePublisher": "OpenLogic",
-        "imageOffer": "CentOS",
-        "imageSku": "7_9-gen2",
-        "driverImageSku" : "7_9-gen2",
+        "imagePublisher": "RedHat",
+        "imageOffer": "RHEL",
+        "imageSku": "90-gen2",
+        "driverImageSku" : "90-gen2",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",
@@ -177,6 +177,9 @@
             "apiVersion": "2017-10-01",
             "name": "[variables('storageAcctName')]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            ],
             "sku": {
                 "name": "Standard_LRS"
             },
@@ -184,7 +187,13 @@
             "properties": {
                 "networkAcls": {
                     "bypass": "AzureServices",
-                    "defaultAction": "Allow"
+                    "defaultAction": "Deny",
+                    "virtualNetworkRules": [
+                        {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
+                          "action": "Allow"
+                        }
+                    ]
                 },
                 "supportsHttpsTrafficOnly": false,
                 "encryption": {
@@ -206,7 +215,7 @@
             "name": "[variables('ppgName')]",
             "location": "[parameters('location')]",
             "properties": {
-                
+
             }
         },
         {
@@ -239,7 +248,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 101,
+                            "priority": 102,
                             "direction": "Inbound"
                         }
                     },
@@ -253,7 +262,7 @@
                             "sourceAddressPrefix": "[parameters('localPublicIp')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 102,
+                            "priority": 110,
                             "direction": "Inbound"
                         }
                     }
@@ -263,7 +272,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vnetName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2016-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
@@ -274,9 +283,6 @@
                         "[variables('addressPrefix')]"
                     ]
                 },
-                "proximityPlacementGroup": {
-                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppgName'))]"
-                },
                 "subnets": [
                     {
                         "name": "[variables('subnetName')]",
@@ -284,7 +290,12 @@
                             "addressPrefix": "[variables('subnetPrefix')]",
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-                            }
+                            },
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage"
+                                }
+                            ]
                         }
                     }
                 ]
@@ -296,7 +307,7 @@
             "name": "[concat(parameters('clusterName'),'nic', copyindex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
             ],
@@ -429,12 +440,12 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'))]",
+                    "commandToExecute": "[concat('sh entry.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', parameters('git_username'), ' ', parameters('git_token'), ' ', if(equals(copyindex(),0), parameters('coordinatorDiskSizeGB'), parameters('workerDiskSizeGB')))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/entry.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/driver-init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh",
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/hammerdb/cache_git_creds.sh"
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/hammerdb/entry.sh')]",
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/hammerdb/driver-init.sh')]",
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/azure/init.sh')]",
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/hammerdb/cache_git_creds.sh')]"
                     ]
                 }
             },
@@ -463,7 +474,7 @@
         },
         "driverPrivateIP": {
             "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'),'nic', variables('driverNodeIndex')))).ipConfigurations[0].properties.privateIPAddress]",
-            "type": "string" 
+            "type": "string"
         },
         "customSshPort": {
             "value": "[variables('customSshPort')]",

@@ -41,7 +41,7 @@ branch_name=${branch_name:-HEAD}
 export BRANCH=${branch_name}
 
 # get local public ip
-local_public_ip=$(host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.com has" | awk '{print $4}')
+local_public_ip=$(curl ifconfig.me)
 
 az deployment group create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}" localPublicIp="$local_public_ip"
 

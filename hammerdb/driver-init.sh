@@ -13,29 +13,57 @@ set -x
 firewall-cmd --add-port=5432/tcp || true
 firewall-cmd --add-port=3456/tcp || true
 
-# install pip since we will use it to install dependencies
-curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-python get-pip.py
 
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# fail in a pipeline if any of the commands fails
+set -o pipefail
+
+# install epel repo
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+
 # install git to clone the repository
-# install screen so that we can run commands in a detached session
-yum install -y git screen tmux htop patch
+yum install -y git
+
+# install other utility tools
+yum install -y screen htop patch
+
+# install tmux
+yum install -y http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/Packages/tmux-3.2a-4.el9.x86_64.rpm
+
+# install & update ca certificates
+yum install -y ca-certificates
+update-ca-trust -f
 
 # this is the username in our instances
 TARGET_USER=pguser
 
-#A set of disks to ignore from partitioning and formatting
-BLACKLIST="/dev/sda|/dev/sdb"
-DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
-read DEV __ <<< "${DEVS}"
+# find data disk by filtering out the first unmounted block device of specified size with no partitions
+echo $(lsblk)
+DATA_DISK_SIZE=$2
+DATA_DISK_SIZE+=G
+disks_of_specified_size=($(lsblk --noheadings -o NAME,SIZE,TYPE | awk -v disksize=${DATA_DISK_SIZE} '{ if ($3=="disk" && $2==disksize) { print $1 } }'))
+DEV=""
+for disk in "${disks_of_specified_size[@]}"; do
+  disk_partition_count=$(lsblk --noheadings -o NAME,TYPE | (grep ${disk} || true) | awk '{ if ($2=="part") { print $1 } }' | wc -l)
+  disk_unmounted=$(lsblk --noheadings -o NAME,MOUNTPOINT | (grep ${disk} || true) | awk '{ if ($2=="") { print $1 } }' | wc -l)
+
+  if [[ ${disk_partition_count} -eq 0 && ${disk_unmounted} -eq 1 ]]; then
+    DEV=/dev/${disk}
+    break
+  fi
+done
+
+if [ "${DEV}" = "" ]; then
+  echo "Could not find data disk device!" && exit 1
+fi
 
 # attach disk and mount it for data
-mkfs.ext4 -F "${DEV}"
-mv /home/"${TARGET_USER}"/ /tmp/home_copy
-mkdir -p /home/"${TARGET_USER}"
-mount -o barrier=0 "${DEV}" /home/"${TARGET_USER}"/
-rsync -aXS /tmp/home_copy/. /home/"${TARGET_USER}"/.
+mkfs -t ext4 ${DEV}
+mv /home/${TARGET_USER}/ /tmp/home_copy
+mkdir -p /home/${TARGET_USER}
+mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
+yum install -y rsync
+rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
+
 
 # add the username to sudoers so that sudo command does not prompt password.
 # We do not want the password prompt, because we want to run tests without any user input
@@ -46,7 +74,7 @@ echo 'Port 3456' >> /etc/ssh/sshd_config
 echo 'Port 22' >> /etc/ssh/sshd_config
 
 # necessary for semanage, VMs have secure linux
-yum install -y policycoreutils-python
+yum install -y policycoreutils-python-utils
 # we need to enable the new port from semanage
 semanage port -a -t ssh_port_t -p tcp 3456
 
@@ -55,9 +83,9 @@ systemctl restart sshd
 
 BRANCH=$1
 
-echo "${BRANCH}" > /tmp/branch_name
+echo ${BRANCH} > /tmp/branch_name
 
-su --login "${TARGET_USER}" <<'EOSU'
+su --login ${TARGET_USER} <<'EOSU'
 
 branch=$(</tmp/branch_name)
 cd ${HOME} && git clone --branch ${branch} https://github.com/citusdata/test-automation.git

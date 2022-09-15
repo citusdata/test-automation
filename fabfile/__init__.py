@@ -1,64 +1,48 @@
-from fabric.api import env, task, execute, runs_once, abort
+from invoke import task
+from invoke import Collection
 
-import config
-
-def mess_with_roledefs(environment):
-    '''
-    For some reason -R and -H and, by default, lowest in the order of precedence.
-
-    This method attempts to put them somewhere in the middle.
-
-    If -R and -H are not specified, tasks will be run on all machines.
-    -R and -H can be used to only run tasks on the given roles or hosts, respectively.
-    If a task uses the @roles decorator, that task will always be run on the nodes in that
-      role, regardless of what was passed into -H or -R.
-
-    TODO: This means that any tasks with @roles('workers') will fail to take into account
-    -H and instead run on all workers.
-
-    TODO: There's a strong chance this interacts badly with --exclude-hosts
-    '''
-    if environment.roles and environment.hosts:
-        abort('Specifying both a role and a host to use is not supported.')
-
-    environment.roledefs = {
-        'master': ['localhost'],
-        'workers': [ip.strip() for ip in open(config.HOME_DIR + '/test-automation/worker-instances')],
-    }
-
-    if environment.hosts or environment.roles:
-        return
-
-    environment.roles = ['master', 'workers']
-
-mess_with_roledefs(env)
-
-env.forward_agent = True # So remote machines can checkout private git repos
-
-import config # settings, but no tasks
-import pg  # tasks which control postgres
-import add  # tasks which add things to existing clusters
-import setup  # tasks which create clusters with preset settings
-import use  # tasks which change some configuration future tasks read
-import run  # tasks to run misc commands
+import multi_connections # multi_connections module implements some features on top of fabric
 import prefix  # utilities for keeping track of where we're installing everything
+from connection import all_connections # connections for nodes
 
-# control the output of "fab --list"
-__all__ = ['pg', 'add', 'setup', 'use', 'run', 'set_pg_latest', 'main']
+import pg # tasks which control postgres
+import add # tasks which add things to existing clusters
+import setup # tasks which create clusters with preset settings
+import use # tasks which change some configuration future tasks read
+import run # tasks to run misc commands
 
 @task(default=True)
-@runs_once
-def main():
-    'The default task (what happens when you type "fab"), currently setup.basic_testing'
-    setup.basic_testing()
+def main(c):
+    'The default task (what happens when you type "fab"), currently setup.basic-testing'
+    if not multi_connections.is_coordinator_connection(c):
+        return
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, main):
+        return
 
-@task
-@runs_once
-def set_pg_latest(*args):
+    setup.basic_testing(c)
+
+@task(positional=['prefixpath'])
+def set_pg_latest(c, prefixpath):
     'Use this if you want multiple simultaneous installs, the README has more information'
+    if not multi_connections.is_coordinator_connection(c):
+        return
 
-    if len(args) != 1:
-        abort('You must provide an argument. Such as: "set_prefix:${HOME}/prefix"')
-    new_prefix = args[0]
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, set_pg_latest, prefixpath):
+        return
 
-    execute(prefix.set_prefix, new_prefix)
+    new_prefix = prefixpath
+
+    multi_connections.execute(all_connections, prefix.set_prefix, new_prefix)
+
+# control the output of "fab --list"
+def setup_tasks():
+    ns = Collection('fabfile')
+    ns.add_task(main)
+    ns.add_task(set_pg_latest)
+    ns.add_collection(pg)
+    ns.add_collection(add)
+    ns.add_collection(setup)
+    ns.add_collection(use)
+    ns.add_collection(run)
+    return ns
+ns = setup_tasks()

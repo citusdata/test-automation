@@ -70,6 +70,22 @@ jobs:
           name: install dependencies and run jdbc compatibility tests
           no_output_timeout: 10m
 
+  extension:
+    docker:
+      - image: buildpack-deps:focal
+    working_directory: /home/circleci/project
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
+      - checkout
+      - run:
+          command: |
+            cd ./azure
+            ./citus-bot.sh citusbot_extension_test_resource_group
+          name: install dependencies and run tpch tests
+          no_output_timeout: 10m 
+
   delete_resource_group:
     docker:
       - image: buildpack-deps:bullseye
@@ -127,3 +143,8 @@ workflows:
             branches:
               only:
                 - /jdbc\/.*/ # match with jdbc prefix
+      - extension:
+          filters:
+            branches:
+              only:
+                - /extension\/.*/ # match with extension prefix

@@ -22,4 +22,8 @@ if [ "$rg_name" = "citusbot_tpch_test_resource_group" ]; then
     fab run.tpch_automate
 fi 
 
+if [ "$rg_name" = "citusbot_extension_test_resource_group" ]; then
+    fab run.extension_tests
+fi 
+
 sh "${HOME}"/test-automation/azure/push-results.sh "$1";

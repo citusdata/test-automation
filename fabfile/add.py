@@ -9,8 +9,8 @@ import prefix
 import pg
 
 __all__ = [
-    'session_analytics', 'hll', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer',
-    'coordinator_to_metadata', 'shards_on_coordinator'
+    'session_analytics', 'hll', 'topn', 'tdigest', 'cstore', 'tpch', 'jdbc', 
+    'shard_rebalancer', 'coordinator_to_metadata', 'shards_on_coordinator'
 ]
 
 class InstallExtensionTask(Task):
@@ -79,8 +79,22 @@ session_analytics = InstallExtensionTask(
 hll = InstallExtensionTask(
     task_name='hll',
     doc='Adds the hll extension to the instance in pg-latest',
-    repo_url='https://github.com/aggregateknowledge/postgresql-hll.git',
-    default_git_ref='v2.10.0',
+    repo_url='https://github.com/citusdata/postgresql-hll.git',
+    default_git_ref='v2.17',
+)
+
+topn = InstallExtensionTask(
+    task_name='topn',
+    doc='Adds the topn extension to the instance in pg-latest',
+    repo_url='https://github.com/citusdata/postgresql-topn.git',
+    default_git_ref='v2.5.0',
+)
+
+tdigest = InstallExtensionTask(
+    task_name='tdigest',
+    doc='Adds the tdigest extension to the instance in pg-latest',
+    repo_url='https://github.com/tvondra/tdigest.git',
+    default_git_ref='v1.4.0',
 )
 
 def add_cstore_to_shared_preload_libraries():

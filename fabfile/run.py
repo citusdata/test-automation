@@ -199,6 +199,55 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 
 
 @task
+@runs_once
+@roles('master')
+def extension_tests(config_file='extension_default.ini', connectionURI=''):
+    config_parser = ConfigParser.ConfigParser()
+
+    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/extension_confs/")
+    config_parser.read(config_folder_path + config_file)
+
+    for section in config_parser.sections():
+        pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
+        extensions = eval(config_parser.get(section, 'extensions'))
+
+        for pg_version, citus_version in pg_citus_tuples:
+            execute(use.postgres, pg_version)
+            execute(use.citus, citus_version)
+            setup.basic_testing()
+
+            for extension in extensions:
+                extension_add_method = getattr(add, extension)
+                execute(extension_add_method)
+                extension_run_method = globals()[extension]
+                extension_run_method(connectionURI)
+
+            execute(pg.stop)
+
+
+def hll(connectionURI):
+    psql = '{}/bin/psql'.format(config.PG_LATEST)
+    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
+
+    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'hll.sql')
+    run(run_string)
+
+
+def topn(connectionURI):
+    psql = '{}/bin/psql'.format(config.PG_LATEST)
+    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
+    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'topn.sql')
+    run(run_string)
+
+
+def tdigest(connectionURI):
+    psql = '{}/bin/psql'.format(config.PG_LATEST)
+    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
+    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'tdigest.sql')
+    run(run_string)
+
+
+@task
 @roles('master')
 def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_file):
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)

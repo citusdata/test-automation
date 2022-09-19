@@ -28,11 +28,11 @@ __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
 @task
 @roles('master')
-def basic_testing():
+def basic_testing(extensions=[]):
     'Sets up a no-frills Postgres+Citus cluster'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
-    execute(common_setup, build_citus)
+    execute(common_setup, build_citus, extensions)
     execute(add_workers)
 
 @task
@@ -129,7 +129,7 @@ def total_memory_in_gb():
     return mem_gib
 
 @parallel
-def common_setup(build_citus_func):
+def common_setup(build_citus_func, extensions=[]):
     with hide('stdout'):
         run('pkill -9 postgres || true')
 
@@ -140,6 +140,7 @@ def common_setup(build_citus_func):
     redhat_install_packages()
     build_postgres()
     build_citus_func()
+    build_extensions(extensions)
     create_database()
     pg.start()
 
@@ -152,6 +153,7 @@ def common_setup(build_citus_func):
 
     with hide('stdout'):
         utils.psql('CREATE EXTENSION citus;')
+        utils.create_extensions(extensions)
 
 @roles('master')
 def add_workers():
@@ -199,6 +201,11 @@ def build_postgres():
 
             with cd('contrib'), hide('stdout'):
                 run('make -s install')
+
+def build_extensions(extensions):
+    for extension in extensions:
+        extension_add_method = getattr(add, extension)
+        execute(extension_add_method)
 
 def build_citus():
     repo = config.CITUS_REPO

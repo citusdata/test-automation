@@ -214,11 +214,10 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
         for pg_version, citus_version in pg_citus_tuples:
             execute(use.postgres, pg_version)
             execute(use.citus, citus_version)
-            setup.basic_testing()
+            setup.basic_testing(extensions)
 
+            # run extension tests for each extension
             for extension in extensions:
-                extension_add_method = getattr(add, extension)
-                execute(extension_add_method)
                 extension_run_method = globals()[extension]
                 extension_run_method(connectionURI)
 

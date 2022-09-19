@@ -21,9 +21,6 @@ class InstallExtensionTask(Task):
     Tasks created with this class accept a single parameter, the git revision to check out
     and build. e.x. `fab add.shard_rebalancer:master`. Will default to using 'master'
     unless you specify otherwise by passing 'default_git_ref'.
-
-    If you don't specify `extension_name` (used to call CREATE EXTENSION) it defaults to
-    using the name of the task.
     '''
 
     def __init__(self, task_name, doc, repo_url, **kwargs):
@@ -31,7 +28,6 @@ class InstallExtensionTask(Task):
         self.__doc__ = doc  # the description which fab --list will list
         self.repo_url = repo_url
 
-        self.extension_name = kwargs.get('extension_name', self.name)
         self.default_git_ref = kwargs.get('default_git_ref', 'master')
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
@@ -67,8 +63,6 @@ class InstallExtensionTask(Task):
 
         if self.post_install_hook:
             self.post_install_hook()
-
-        utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.extension_name))
 
 session_analytics = InstallExtensionTask(
     task_name='session_analytics',
@@ -119,7 +113,6 @@ cstore = InstallExtensionTask(
     task_name='cstore',
     doc='Adds the cstore extension to the instance in pg-latest',
     repo_url='https://github.com/citusdata/cstore_fdw.git',
-    extension_name='cstore_fdw',
     before_run_hook=lambda: sudo('yum install -q -y protobuf-c-devel'),
     post_install_hook=add_cstore_to_shared_preload_libraries,
 )

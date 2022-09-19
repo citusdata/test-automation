@@ -13,7 +13,7 @@ import add
 import ConfigParser
 import time
 
-__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'valgrind', 'valgrind_filter_put_results']
+__all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'extension_tests', 'valgrind', 'valgrind_filter_put_results']
 
 
 @task

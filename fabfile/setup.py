@@ -204,8 +204,8 @@ def build_postgres():
 
 def build_extensions(extensions):
     for extension in extensions:
-        extension_add_method = getattr(add, extension)
-        execute(extension_add_method)
+        extension_task = getattr(add, extension)
+        extension_task.run()
 
 def build_citus():
     repo = config.CITUS_REPO

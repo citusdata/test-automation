@@ -227,7 +227,6 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
 def hll(connectionURI):
     psql = '{}/bin/psql'.format(config.PG_LATEST)
     extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
-
     run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'hll.sql')
     run(run_string)
 

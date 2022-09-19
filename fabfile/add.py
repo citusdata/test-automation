@@ -47,12 +47,12 @@ class InstallExtensionTask(Task):
         prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
         utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
 
-        repo = self.repo_path_for_url(self.repo_url)
-
         if len(args) == 0:
             git_ref = self.default_git_ref
         else:
             git_ref = args[0]
+
+        repo = self.repo_path_for_url(self.repo_url)
 
         utils.rmdir(repo, force=True) # force because git write-protects files
         run('git clone -q {} {}'.format(self.repo_url, repo))

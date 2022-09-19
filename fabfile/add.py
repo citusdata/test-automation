@@ -74,7 +74,7 @@ hll = InstallExtensionTask(
     task_name='hll',
     doc='Adds the hll extension to the instance in pg-latest',
     repo_url='https://github.com/citusdata/postgresql-hll.git',
-    default_git_ref='v2.17',
+    default_git_ref='v2.16',
 )
 
 topn = InstallExtensionTask(

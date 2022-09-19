@@ -25,6 +25,7 @@ required for testing citus.
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
+  * [Running Extension Tests](#extension)
   * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
   * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
@@ -361,7 +362,7 @@ be lifted in the future.
 
 **Depending of the tests you trigger here, you can block at most 3 jobs slots in circleci for around 3 hours. Choose wisely the time you want to run the tests to not block development**
 
-If you want, you can run trigger a job which can run pgbench, scale and tpch tests. What the job does is:
+If you want, you can run trigger a job which can run pgbench, scale, tpch and extension tests. What the job does is:
 
 * It creates a cluster with the test resource group name
 * It connects to the coordinator
@@ -374,6 +375,7 @@ There is a separate job for each test and you can run any combinations of them. 
 * If the branch has a prefix `scale/`, then scale job will be triggered.
 * If the branch has a prefix `tpch/`, then tpch job will be triggered.
 * If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
+* If the branch has a prefix `extension/`, then extension job will be triggered. 
 
 You should push your branch to Github so that the circleci job will be triggerred.
 
@@ -401,12 +403,14 @@ You can change all the settings in these files, the config files for tests are l
 * pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
 * scale: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
 * tpch: https://github.com/citusdata/test-automation/tree/master/fabfile/tpch_confs
+* extension: https://github.com/citusdata/test-automation/tree/master/fabfile/extension_confs
 
 By default, the following tests will be run for each test:
 
 * pgbench: `pgbench_default.ini` and `pgbench_default_without_transaction.ini`
 * scale: `scale_test.ini`
 * tpch: `tpch_default.ini`
+* extension: `extension_default.ini`
 
 If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
 
@@ -579,6 +583,19 @@ fab run.pgbench_tests:scale_test_prepared.ini
 fab run.pgbench_tests:scale_test_reference.ini
 fab run.pgbench_tests:scale_test_foreign.ini
 fab run.pgbench_tests:scale_test_100_columns.ini
+```
+
+## <a name="extension"></a> Running Extension Tests
+
+On the coordinator node:
+
+```bash
+# This will run default extension tests with PG=14.5 and Citus 11.1 release branch
+# Yes, that's all :) You can change settings in fabfile/extension_confs/extension_default.ini
+fab run.extension_tests
+
+# It's possible to provide another configuration file for tests
+fab run.extension_tests:[other_config.ini]
 ```
 
 ## <a name="pgbench-cloud"></a> Running PgBench Tests Against Hyperscale (Citus)

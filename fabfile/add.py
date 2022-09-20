@@ -1,4 +1,6 @@
 import os.path
+from os import listdir
+import glob
 
 from fabric.api import task, cd, path, run, roles, sudo, abort, execute
 from fabric.tasks import Task
@@ -9,8 +11,8 @@ import prefix
 import pg
 
 __all__ = [
-    'session_analytics', 'hll', 'topn', 'tdigest', 'cstore', 'tpch', 'jdbc', 
-    'shard_rebalancer', 'coordinator_to_metadata', 'shards_on_coordinator'
+    'session_analytics', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer', 
+    'coordinator_to_metadata', 'shards_on_coordinator'
 ]
 
 class InstallExtensionTask(Task):
@@ -31,6 +33,9 @@ class InstallExtensionTask(Task):
         self.default_git_ref = kwargs.get('default_git_ref', 'master')
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
+        self.test_dir=kwargs.get('test_dir', None)
+        self.is_new_schedule=kwargs.get('is_new_schedule', False)
+        self.schedule_name=kwargs.get('schedule_name', None)
 
         super(InstallExtensionTask, self).__init__()
 
@@ -64,31 +69,45 @@ class InstallExtensionTask(Task):
         if self.post_install_hook:
             self.post_install_hook()
 
+    def create_schedule(self, schedule_dir):
+        with cd(schedule_dir):
+            run('touch {}'.format(self.schedule_name))
+            test_files = [f for f in listdir("{}/sql".format(schedule_dir)) if f.endswith(".sql")]
+            for test_file in test_files:
+                test_name = test_file.split('.sql')[0]
+                run('echo test: {} >> {}'.format(test_name, self.schedule_name))
+
+    def create_extension(self):
+        utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.name))
+
+    def regression(self):
+        db = run('whoami')
+        user = run('whoami')
+
+        # alter default db's lc_monetary to C
+        utils.psql('ALTER DATABASE {} SET lc_monetary TO \'C\';'.format(db))
+
+        # find pg_regress path
+        pgxsdir = run('dirname $({}/bin/pg_config --pgxs)'.format(config.PG_LATEST))
+        pg_regress = "{}/../test/regress/pg_regress".format(pgxsdir)
+
+        # set inout paths
+        repo_path = self.repo_path_for_url(self.repo_url)
+        test_inout_dir = os.path.join(repo_path, self.test_dir)
+
+        # create schedule file
+        if self.is_new_schedule:
+            self.create_schedule(test_inout_dir)
+
+        # run pg_regress
+        run("{} --inputdir {} --outputdir {} --schedule {}/{} --use-existing --user {} --dbname {}".format(
+            pg_regress, test_inout_dir, test_inout_dir, test_inout_dir, self.schedule_name, user, db
+        ))
+
 session_analytics = InstallExtensionTask(
     task_name='session_analytics',
     doc='Adds the session analytics extension to the instance in pg-latest',
     repo_url='git@github.com:citusdata/session_analytics.git',
-)
-
-hll = InstallExtensionTask(
-    task_name='hll',
-    doc='Adds the hll extension to the instance in pg-latest',
-    repo_url='https://github.com/citusdata/postgresql-hll.git',
-    default_git_ref='v2.16',
-)
-
-topn = InstallExtensionTask(
-    task_name='topn',
-    doc='Adds the topn extension to the instance in pg-latest',
-    repo_url='https://github.com/citusdata/postgresql-topn.git',
-    default_git_ref='v2.5.0',
-)
-
-tdigest = InstallExtensionTask(
-    task_name='tdigest',
-    doc='Adds the tdigest extension to the instance in pg-latest',
-    repo_url='https://github.com/tvondra/tdigest.git',
-    default_git_ref='v1.4.0',
 )
 
 def add_cstore_to_shared_preload_libraries():

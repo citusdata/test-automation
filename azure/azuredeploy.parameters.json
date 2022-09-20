@@ -6,19 +6,19 @@
             "value": 1
         },
         "diskType": {
-            "value": "Premium_LRS"
+            "value": "Standard_LRS"
         },
         "coordinatorVmSize": {
-            "value": "Standard_D16s_v3"
+            "value": "Standard_D4s_v3"
         },
         "workerVmSize": {
-            "value": "Standard_E16s_v3"
+            "value": "Standard_E4s_v3"
         },
         "coordinatorDiskSizeGB": {
-            "value": 512
+            "value": 32
         },
         "workerDiskSizeGB": {
-            "value": 512
+            "value": 32
         }
     }
 }

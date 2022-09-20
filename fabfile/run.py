@@ -10,6 +10,7 @@ import utils
 import re
 import os
 import add
+from add import InstallExtensionTask
 import ConfigParser
 import time
 
@@ -207,43 +208,46 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/extension_confs/")
     config_parser.read(config_folder_path + config_file)
 
-    for section in config_parser.sections():
-        pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
-        extensions = eval(config_parser.get(section, 'extensions'))
+    sections = config_parser.sections()
+    for section in sections:
+        if section == 'main':
+            pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
+            extensions = eval(config_parser.get(section, 'extensions'))
+            extension_tasks = get_extension_tasks_from_config(extensions, config_parser)
 
-        for pg_version, citus_version in pg_citus_tuples:
-            execute(use.postgres, pg_version)
-            execute(use.citus, citus_version)
-            setup.basic_testing(extensions)
+            for pg_version, citus_version in pg_citus_tuples:
+                execute(use.postgres, pg_version)
+                execute(use.citus, citus_version)
+                setup.basic_testing(extension_tasks)
 
-            # run extension tests for each extension
-            for extension in extensions:
-                extension_run_method = globals()[extension]
-                extension_run_method(connectionURI)
+                # run extension tests for each extension
+                for extension_task in extension_tasks:
+                    extension_task.regression()
 
-            execute(pg.stop)
+                execute(pg.stop)
 
+def get_extension_tasks_from_config(extensions, config_parser):
+    extension_tasks = []
+    for extension in extensions:
+        test_dir = config_parser.get(extension, 'test_dir')
+        is_new_schedule = True if config_parser.get(extension, 'create_schedule') == 'on' else False
+        schedule_name = config_parser.get(extension, 'schedule_name')
+        doc = config_parser.get(extension, 'doc')
+        repo_url = config_parser.get(extension, 'repo_url')
+        default_git_ref = config_parser.get(extension, 'default_git_ref')
 
-def hll(connectionURI):
-    psql = '{}/bin/psql'.format(config.PG_LATEST)
-    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
-    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'hll.sql')
-    run(run_string)
+        extension_task = InstallExtensionTask(
+            task_name=extension,
+            doc=doc,
+            repo_url=repo_url,
+            default_git_ref=default_git_ref,
+            test_dir=test_dir,
+            is_new_schedule=is_new_schedule,
+            schedule_name=schedule_name,
+        )
+        extension_tasks.append(extension_task)
 
-
-def topn(connectionURI):
-    psql = '{}/bin/psql'.format(config.PG_LATEST)
-    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
-    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'topn.sql')
-    run(run_string)
-
-
-def tdigest(connectionURI):
-    psql = '{}/bin/psql'.format(config.PG_LATEST)
-    extension_query_path = '{}/extensionQueries/'.format(config.TESTS_REPO)
-    run_string = '{} {} -f "{}"'.format(psql, connectionURI, extension_query_path + 'tdigest.sql')
-    run(run_string)
-
+    return extension_tasks
 
 @task
 @roles('master')

@@ -1,6 +1,7 @@
 import os.path
 from os import listdir
 import glob
+import re
 
 from fabric.api import task, cd, path, run, roles, sudo, abort, execute
 from fabric.tasks import Task
@@ -34,8 +35,6 @@ class InstallExtensionTask(Task):
         self.default_git_ref = kwargs.get('default_git_ref', 'master')
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
-        self.test_dir=kwargs.get('test_dir', None)
-        self.is_new_schedule=kwargs.get('is_new_schedule', False)
         self.schedule_name=kwargs.get('schedule_name', None)
 
         super(InstallExtensionTask, self).__init__()
@@ -70,13 +69,37 @@ class InstallExtensionTask(Task):
         if self.post_install_hook:
             self.post_install_hook()
 
-    def create_schedule(self, schedule_dir):
-        with cd(schedule_dir):
-            run('touch {}'.format(self.schedule_name))
-            test_files = [f for f in listdir("{}/sql".format(schedule_dir)) if f.endswith(".sql")]
-            for test_file in test_files:
-                test_name = test_file.split('.sql')[0]
-                run('echo test: {} >> {}'.format(test_name, self.schedule_name))
+    def create_schedule(self):
+        repo_path = self.repo_path_for_url(self.repo_url)
+        test_input_dir = repo_path
+
+        if self.schedule_name == 'none':
+            self.schedule_name = 'ext_schedule'
+
+            # fetch schedule info from Makefile
+            makefile_path = os.path.join(repo_path, 'Makefile')
+            schedule_tests = None
+            with open(makefile_path, 'r') as makefile:
+                makefile_content = makefile.read()
+
+                schedule_tests_pattern = 'REGRESS\s*=\s*(.*)\s*'
+                schedule_tests_match = re.search(schedule_tests_pattern, makefile_content)
+                if schedule_tests_match: # if makefile contains $REGRESS, then fetch test names
+                    schedule_tests = schedule_tests_match.group(1).split()
+
+                schedule_relative_dir_pattern = 'REGRESS_OPTS\s*=\s*--inputdir=(.*)\s*'
+                schedule_relative_dir_match = re.search(schedule_relative_dir_pattern, makefile_content)
+                if schedule_relative_dir_match: # if makefile contains $REGRESS_OPTS, then fetch relative_test_dir
+                    relative_test_dir = schedule_relative_dir_match.group(1)
+                    test_input_dir = os.path.join(repo_path, relative_test_dir)
+
+            # create schedule
+            with cd(test_input_dir):
+                run('touch {}'.format(self.schedule_name))
+                for test in schedule_tests:
+                    run('echo test: {} >> {}'.format(test, self.schedule_name))
+
+        return test_input_dir
 
     def create_extension(self):
         utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.name))
@@ -99,14 +122,11 @@ class InstallExtensionTask(Task):
         pgxsdir = run('dirname $({}/bin/pg_config --pgxs)'.format(config.PG_LATEST))
         pg_regress = "{}/../test/regress/pg_regress".format(pgxsdir)
 
-        # set inout paths
-        repo_path = self.repo_path_for_url(self.repo_url)
-        test_input_dir = os.path.join(repo_path, self.test_dir)
-        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
+        # create schedule if necessary
+        test_input_dir = self.create_schedule()
 
-        # create schedule file
-        if self.is_new_schedule:
-            self.create_schedule(test_input_dir)
+        # create result folder if not exists
+        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)            
 
         # run pg_regress with warn_only option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too. 

@@ -229,8 +229,6 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
 def get_extension_tasks_from_config(extensions, config_parser):
     extension_tasks = []
     for extension in extensions:
-        test_dir = config_parser.get(extension, 'test_dir')
-        is_new_schedule = True if config_parser.get(extension, 'create_schedule') == 'on' else False
         schedule_name = config_parser.get(extension, 'schedule_name')
         doc = config_parser.get(extension, 'doc')
         repo_url = config_parser.get(extension, 'repo_url')
@@ -241,8 +239,6 @@ def get_extension_tasks_from_config(extensions, config_parser):
             doc=doc,
             repo_url=repo_url,
             default_git_ref=default_git_ref,
-            test_dir=test_dir,
-            is_new_schedule=is_new_schedule,
             schedule_name=schedule_name,
         )
         extension_tasks.append(extension_task)

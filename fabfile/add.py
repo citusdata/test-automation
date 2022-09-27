@@ -4,6 +4,7 @@ import glob
 
 from fabric.api import task, cd, path, run, roles, sudo, abort, execute
 from fabric.tasks import Task
+from fabric.context_managers import settings
 
 import utils
 import config
@@ -80,6 +81,13 @@ class InstallExtensionTask(Task):
     def create_extension(self):
         utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.name))
 
+    def rename_regression_diff(self):
+        with cd(config.RESULTS_DIRECTORY):
+            regression_diffs_path = os.path.join(config.RESULTS_DIRECTORY, config.REGRESSION_DIFFS_FILE)
+            if os.path.isfile(regression_diffs_path):
+                extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_ext_' + self.name
+                run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, extension_regression_diff))
+
     def regression(self):
         db = run('whoami')
         user = run('whoami')
@@ -93,16 +101,22 @@ class InstallExtensionTask(Task):
 
         # set inout paths
         repo_path = self.repo_path_for_url(self.repo_url)
-        test_inout_dir = os.path.join(repo_path, self.test_dir)
+        test_input_dir = os.path.join(repo_path, self.test_dir)
+        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
         # create schedule file
         if self.is_new_schedule:
-            self.create_schedule(test_inout_dir)
+            self.create_schedule(test_input_dir)
 
-        # run pg_regress
-        run("{} --inputdir {} --outputdir {} --schedule {}/{} --use-existing --user {} --dbname {}".format(
-            pg_regress, test_inout_dir, test_inout_dir, test_inout_dir, self.schedule_name, user, db
-        ))
+        # run pg_regress with warn_only option to not exit in case of a test failure in the extension,
+        # because we want to run regression tests for other extensions too. 
+        with settings(warn_only=True):
+            run("{} --inputdir {} --outputdir {} --schedule {}/{} --use-existing --user {} --dbname {}".format(
+                pg_regress, test_input_dir, config.RESULTS_DIRECTORY, test_input_dir, self.schedule_name, user, db
+            ))
+
+        # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'        
+        self.rename_regression_diff()
 
 session_analytics = InstallExtensionTask(
     task_name='session_analytics',

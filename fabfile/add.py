@@ -30,12 +30,13 @@ class InstallExtensionTask(Task):
     def __init__(self, task_name, doc, repo_url, **kwargs):
         self.name = task_name  # the name of the task (fab [xxx])
         self.__doc__ = doc  # the description which fab --list will list
+        self.schedule_name = 'ext_schedule'
         self.repo_url = repo_url
 
         self.default_git_ref = kwargs.get('default_git_ref', 'master')
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
-        self.schedule_name=kwargs.get('schedule_name', None)
+        self.before_regression_hook = kwargs.get('before_regression_hook', None)
 
         super(InstallExtensionTask, self).__init__()
 
@@ -69,40 +70,15 @@ class InstallExtensionTask(Task):
         if self.post_install_hook:
             self.post_install_hook()
 
-    def create_schedule(self):
-        repo_path = self.repo_path_for_url(self.repo_url)
-        test_input_dir = repo_path
-
-        if self.schedule_name == 'none':
-            self.schedule_name = 'ext_schedule'
-
-            # fetch schedule info from Makefile
-            makefile_path = os.path.join(repo_path, 'Makefile')
-            schedule_tests = None
-            with open(makefile_path, 'r') as makefile:
-                makefile_content = makefile.read()
-
-                schedule_tests_pattern = 'REGRESS\s*=\s*(.*)\s*'
-                schedule_tests_match = re.search(schedule_tests_pattern, makefile_content)
-                if schedule_tests_match: # if makefile contains $REGRESS, then fetch test names
-                    schedule_tests = schedule_tests_match.group(1).split()
-
-                schedule_relative_dir_pattern = 'REGRESS_OPTS\s*=\s*--inputdir=(.*)\s*'
-                schedule_relative_dir_match = re.search(schedule_relative_dir_pattern, makefile_content)
-                if schedule_relative_dir_match: # if makefile contains $REGRESS_OPTS, then fetch relative_test_dir
-                    relative_test_dir = schedule_relative_dir_match.group(1)
-                    test_input_dir = os.path.join(repo_path, relative_test_dir)
-
-            # create schedule
-            with cd(test_input_dir):
-                run('touch {}'.format(self.schedule_name))
-                for test in schedule_tests:
-                    run('echo test: {} >> {}'.format(test, self.schedule_name))
-
-        return test_input_dir
-
     def create_extension(self):
         utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.name))
+
+    def setup_schedule_tests(self, schedule_tests):
+        # set schedule tests
+        with cd(self.test_input_dir):
+            run('touch {}'.format(self.schedule_name))
+            for schedule_test in schedule_tests:
+                run('echo test: {} >> {}'.format(schedule_test, self.schedule_name))
 
     def rename_regression_diff(self):
         with cd(config.RESULTS_DIRECTORY):
@@ -111,28 +87,32 @@ class InstallExtensionTask(Task):
                 extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_ext_' + self.name
                 run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, extension_regression_diff))
 
-    def regression(self):
-        db = run('whoami')
-        user = run('whoami')
+    def before_regression_common(self):
+        repo_path = self.repo_path_for_url(self.repo_url)
+        self.test_input_dir = repo_path
+
+        self.db = run('whoami')
+        self.user = run('whoami')
 
         # alter default db's lc_monetary to C
-        utils.psql('ALTER DATABASE {} SET lc_monetary TO \'C\';'.format(db))
+        utils.psql('ALTER DATABASE {} SET lc_monetary TO \'C\';'.format(self.db))
 
-        # find pg_regress path
+        # create result folder if not exists
+        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY) 
+
+    def regression(self):
+        self.before_regression_common()
+        if self.before_regression_hook:
+            self.before_regression_hook(self)        
+        
+        # run pg_regress with warn_only option to not exit in case of a test failure in the extension,
+        # because we want to run regression tests for other extensions too.
         pgxsdir = run('dirname $({}/bin/pg_config --pgxs)'.format(config.PG_LATEST))
         pg_regress = "{}/../test/regress/pg_regress".format(pgxsdir)
 
-        # create schedule if necessary
-        test_input_dir = self.create_schedule()
-
-        # create result folder if not exists
-        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)            
-
-        # run pg_regress with warn_only option to not exit in case of a test failure in the extension,
-        # because we want to run regression tests for other extensions too. 
         with settings(warn_only=True):
             run("{} --inputdir {} --outputdir {} --schedule {}/{} --use-existing --user {} --dbname {}".format(
-                pg_regress, test_input_dir, config.RESULTS_DIRECTORY, test_input_dir, self.schedule_name, user, db
+                pg_regress, self.test_input_dir, config.RESULTS_DIRECTORY, self.test_input_dir, self.schedule_name, self.user, self.db
             ))
 
         # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'        
@@ -143,6 +123,52 @@ session_analytics = InstallExtensionTask(
     doc='Adds the session analytics extension to the instance in pg-latest',
     repo_url='git@github.com:citusdata/session_analytics.git',
 )
+
+def before_regression_hll(hll_task):    
+    repo_path = InstallExtensionTask.repo_path_for_url(hll_task.repo_url)
+
+    # set schedule tests
+    schedule_tests = """setup add_agg agg_oob auto_sparse card_op cast_shape copy_binary cumulative_add_cardinality_correction cumulative_add_comprehensive_promotion
+                        cumulative_add_sparse_edge cumulative_add_sparse_random cumulative_add_sparse_step cumulative_union_comprehensive cumulative_union_explicit_explicit
+                        cumulative_union_explicit_promotion cumulative_union_probabilistic_probabilistic cumulative_union_sparse_full_representation cumulative_union_sparse_promotion
+                        cumulative_union_sparse_sparse disable_hashagg equal explicit_thresh hash hash_any meta_func murmur_bigint murmur_bytea nosparse notequal scalar_oob storedproc
+                        transaction typmod typmod_insert union_op"""
+    self.setup_schedule_tests(schedule_tests.split())
+
+    # copy sql update files into root repo dir with preprocessor options
+    sql_update_path = os.path.join(repo_path, 'update')
+    with cd(repo_path):
+        for sql_update_file in listdir(sql_update_path):
+            run('cpp -undef -w -P -imacros $({}/bin/pg_config --includedir-server)/pg_config.h {}/{} > {}'.format(
+                config.PG_LATEST, sql_update_path, sql_update_file, sql_update_file))
+
+def before_regression_topn(topn_task):    
+    repo_path = InstallExtensionTask.repo_path_for_url(topn_task.repo_url)
+
+    # set schedule tests
+    schedule_tests = 'add_agg union_agg char_tests null_tests add_union_tests copy_data customer_reviews_query join_tests'
+    self.setup_schedule_tests(schedule_tests.split())
+
+    # copy sql update files into root repo dir with preprocessor options
+    sql_update_path = os.path.join(repo_path, 'update')
+    with cd(repo_path):
+        for sql_update_file in listdir(sql_update_path):
+            run('cpp -undef -w -P -imacros $({}/bin/pg_config --includedir-server)/pg_config.h {}/{} > {}'.format(
+                config.PG_LATEST, sql_update_path, sql_update_file, sql_update_file))
+    
+    # download and unzip input csv file
+    data_path = os.path.join(repo_path, 'data')
+    with cd(data_path):
+        run('curl -L http://examples.citusdata.com/customer_reviews_1998.csv.gz > customer_reviews_1998.csv.gz')
+        run('gzip -d customer_reviews_1998.csv')
+
+def before_regression_tdigest(tdigest_task):
+    repo_path = InstallExtensionTask.repo_path_for_url(tdigest_task.repo_url)
+    self.test_input_dir = os.path.join(repo_path, 'test')
+
+    # set schedule tests
+    schedule_tests = 'basic cast conversions incremental parallel_query value_count_api trimmed_aggregates'
+    self.setup_schedule_tests(schedule_tests.split())
 
 def add_cstore_to_shared_preload_libraries():
     conf = '{}/data/postgresql.conf'.format(config.PG_LATEST)

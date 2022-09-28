@@ -229,17 +229,20 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
 def get_extension_tasks_from_config(extensions, config_parser):
     extension_tasks = []
     for extension in extensions:
-        schedule_name = config_parser.get(extension, 'schedule_name')
         doc = config_parser.get(extension, 'doc')
         repo_url = config_parser.get(extension, 'repo_url')
         default_git_ref = config_parser.get(extension, 'default_git_ref')
+        before_regression_hook = None
+        if config_parser.has_option(extension, 'before_regression_hook'):
+            before_regression_hook_name = config_parser.get(extension, 'before_regression_hook')
+            before_regression_hook = getattr(add, before_regression_hook_name)
 
         extension_task = InstallExtensionTask(
             task_name=extension,
             doc=doc,
             repo_url=repo_url,
             default_git_ref=default_git_ref,
-            schedule_name=schedule_name,
+            before_regression_hook=before_regression_hook,
         )
         extension_tasks.append(extension_task)
 

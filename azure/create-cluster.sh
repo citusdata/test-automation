@@ -43,11 +43,17 @@ current_branch_name=$(git branch --show-current)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
 # get local public ip 
-local_public_ip=$(curl https://ipinfo.io/ip)
+local_public_ip=$(curl ifconfig.me)
 
 # below is the default create cluster command
 CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
  --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
+
+# override numberOfWorkers param if it is extension testing
+if [ "$rg" == "citusbot_extension_test_resource_group" ]; then
+    CREATE_CLUSTER_COMMAND+=(--parameters)
+    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+fi
 
 # if VALGRIND_TEST variable is not exported, set it to 0
 is_valgrind_test=${VALGRIND_TEST:=0}

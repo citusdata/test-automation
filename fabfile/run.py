@@ -11,6 +11,7 @@ import re
 import os
 import add
 from add import InstallExtensionTask
+from add import RegressExtensionTask
 import ConfigParser
 import time
 
@@ -213,40 +214,54 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
         if section == 'main':
             pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
             extensions = eval(config_parser.get(section, 'extensions'))
-            extension_tasks = get_extension_tasks_from_config(extensions, config_parser)
+            extension_install_tasks = get_extension_install_tasks_from_config(extensions, config_parser)
+            extension_regression_tasks = get_extension_regression_tasks_from_config(extensions, config_parser)
 
             for pg_version, citus_version in pg_citus_tuples:
                 execute(use.postgres, pg_version)
                 execute(use.citus, citus_version)
-                setup.basic_testing(extension_tasks)
+                setup.basic_testing(extension_install_tasks)
 
                 # run extension tests for each extension
-                for extension_task in extension_tasks:
-                    extension_task.regression()
+                for extension_regression_task in extension_regression_tasks:
+                    # we only want to execute on coordinator, so do NOT use execute(extension_install_task)
+                    extension_regression_task.run()
 
                 execute(pg.stop)
 
-def get_extension_tasks_from_config(extensions, config_parser):
-    extension_tasks = []
+def get_extension_install_tasks_from_config(extensions, config_parser):
+    extension_install_tasks = []
     for extension in extensions:
         doc = config_parser.get(extension, 'doc')
         repo_url = config_parser.get(extension, 'repo_url')
         default_git_ref = config_parser.get(extension, 'default_git_ref')
-        before_regression_hook = None
-        if config_parser.has_option(extension, 'before_regression_hook'):
-            before_regression_hook_name = config_parser.get(extension, 'before_regression_hook')
-            before_regression_hook = getattr(add, before_regression_hook_name)
 
-        extension_task = InstallExtensionTask(
+        extension_install_task = InstallExtensionTask(
             task_name=extension,
             doc=doc,
             repo_url=repo_url,
             default_git_ref=default_git_ref,
-            before_regression_hook=before_regression_hook,
         )
-        extension_tasks.append(extension_task)
+        extension_install_tasks.append(extension_install_task)
 
-    return extension_tasks
+    return extension_install_tasks
+
+def get_extension_regression_tasks_from_config(extensions, config_parser):
+    extension_regression_tasks = []
+    for extension in extensions:
+        doc = config_parser.get(extension, 'doc')
+        repo_url = config_parser.get(extension, 'repo_url')
+        default_git_ref = config_parser.get(extension, 'default_git_ref')
+
+        extension_regression_task = RegressExtensionTask(
+            task_name=extension,
+            doc=doc,
+            repo_url=repo_url,
+            default_git_ref=default_git_ref,
+        )
+        extension_regression_tasks.append(extension_regression_task)
+
+    return extension_regression_tasks
 
 @task
 @roles('master')

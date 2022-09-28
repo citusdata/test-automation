@@ -17,6 +17,11 @@ __all__ = [
     'coordinator_to_metadata', 'shards_on_coordinator'
 ]
 
+def repo_path_for_url(repo_url):
+    repo_name = run('basename {}'.format(repo_url))
+    repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
+    return os.path.join(config.CODE_DIRECTORY, repo_name)
+
 class InstallExtensionTask(Task):
     '''
     A class which has all the boilerplate for building and installing extensions.
@@ -30,25 +35,18 @@ class InstallExtensionTask(Task):
     def __init__(self, task_name, doc, repo_url, **kwargs):
         self.name = task_name  # the name of the task (fab [xxx])
         self.__doc__ = doc  # the description which fab --list will list
-        self.schedule_name = 'ext_schedule'
         self.repo_url = repo_url
-
         self.default_git_ref = kwargs.get('default_git_ref', 'master')
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
-        self.before_regression_hook = kwargs.get('before_regression_hook', None)
 
         super(InstallExtensionTask, self).__init__()
-
-    @staticmethod
-    def repo_path_for_url(repo_url):
-        repo_name = run('basename {}'.format(repo_url))
-        repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
-        return os.path.join(config.CODE_DIRECTORY, repo_name)
 
     def run(self, *args):
         if self.before_run_hook:
             self.before_run_hook()
+
+        self.repo_path = repo_path_for_url(self.repo_url)
 
         prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
         utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
@@ -58,117 +56,64 @@ class InstallExtensionTask(Task):
         else:
             git_ref = args[0]
 
-        repo = self.repo_path_for_url(self.repo_url)
+        utils.rmdir(self.repo_path, force=True) # force because git write-protects files
+        run('git clone -q {} {}'.format(self.repo_url, self.repo_path))
 
-        utils.rmdir(repo, force=True) # force because git write-protects files
-        run('git clone -q {} {}'.format(self.repo_url, repo))
-
-        with cd(repo), path('{}/bin'.format(config.PG_LATEST)):
+        with cd(self.repo_path), path('{}/bin'.format(config.PG_LATEST)):
             run('git checkout {}'.format(git_ref))
             run('make install')
 
         if self.post_install_hook:
             self.post_install_hook()
 
-    def create_extension(self):
-        utils.psql('CREATE EXTENSION {} CASCADE;'.format(self.name))
 
-    def setup_schedule_tests(self, schedule_tests):
-        # set schedule tests
-        with cd(self.test_input_dir):
-            run('touch {}'.format(self.schedule_name))
-            for schedule_test in schedule_tests:
-                run('echo test: {} >> {}'.format(schedule_test, self.schedule_name))
+class RegressExtensionTask(Task):
+    '''
+    A class which has all the boilerplate for run regression tests for an already installed extension.
+    '''
 
-    def rename_regression_diff(self):
-        with cd(config.RESULTS_DIRECTORY):
-            regression_diffs_path = os.path.join(config.RESULTS_DIRECTORY, config.REGRESSION_DIFFS_FILE)
-            if os.path.isfile(regression_diffs_path):
-                extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_ext_' + self.name
-                run('mv {} {}'.format(config.REGRESSION_DIFFS_FILE, extension_regression_diff))
+    def __init__(self, task_name, doc, repo_url, **kwargs):
+        self.name = task_name  # the name of the task (fab [xxx])
+        self.__doc__ = doc  # the description which fab --list will list
+        self.repo_url = repo_url
+        self.default_git_ref = kwargs.get('default_git_ref', 'master')
 
-    def before_regression_common(self):
-        repo_path = self.repo_path_for_url(self.repo_url)
-        self.test_input_dir = repo_path
+        super(RegressExtensionTask, self).__init__()
 
-        self.db = run('whoami')
-        self.user = run('whoami')
+    def run(self, *args):
+        self.repo_path = repo_path_for_url(self.repo_url)
 
-        # alter default db's lc_monetary to C
-        utils.psql('ALTER DATABASE {} SET lc_monetary TO \'C\';'.format(self.db))
+        # force drop contrib_regression_db if exists, some backend still use db, so drop db not works
+        utils.psql("DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")
 
         # create result folder if not exists
-        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY) 
+        utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
-    def regression(self):
-        self.before_regression_common()
-        if self.before_regression_hook:
-            self.before_regression_hook(self)        
-        
-        # run pg_regress with warn_only option to not exit in case of a test failure in the extension,
+        # add --load-extension=citus to REGRESS_OPTS
+        with cd(self.repo_path):
+            run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --load-extension=citus' >> Makefile")
+
+        # run tests with warn_only option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too.
-        pgxsdir = run('dirname $({}/bin/pg_config --pgxs)'.format(config.PG_LATEST))
-        pg_regress = "{}/../test/regress/pg_regress".format(pgxsdir)
-
         with settings(warn_only=True):
-            run("{} --inputdir {} --outputdir {} --schedule {}/{} --use-existing --user {} --dbname {}".format(
-                pg_regress, self.test_input_dir, config.RESULTS_DIRECTORY, self.test_input_dir, self.schedule_name, self.user, self.db
-            ))
+            with cd(self.repo_path):
+                run("make installcheck")
 
         # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'        
         self.rename_regression_diff()
+
+    def rename_regression_diff(self):
+        regression_diffs_path = os.path.join(self.repo_path, config.REGRESSION_DIFFS_FILE)
+        if os.path.isfile(regression_diffs_path):
+            extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_ext_' + self.name
+            with cd(config.RESULTS_DIRECTORY):
+                run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
 
 session_analytics = InstallExtensionTask(
     task_name='session_analytics',
     doc='Adds the session analytics extension to the instance in pg-latest',
     repo_url='git@github.com:citusdata/session_analytics.git',
 )
-
-def before_regression_hll(hll_task):    
-    repo_path = InstallExtensionTask.repo_path_for_url(hll_task.repo_url)
-
-    # set schedule tests
-    schedule_tests = """setup add_agg agg_oob auto_sparse card_op cast_shape copy_binary cumulative_add_cardinality_correction cumulative_add_comprehensive_promotion
-                        cumulative_add_sparse_edge cumulative_add_sparse_random cumulative_add_sparse_step cumulative_union_comprehensive cumulative_union_explicit_explicit
-                        cumulative_union_explicit_promotion cumulative_union_probabilistic_probabilistic cumulative_union_sparse_full_representation cumulative_union_sparse_promotion
-                        cumulative_union_sparse_sparse disable_hashagg equal explicit_thresh hash hash_any meta_func murmur_bigint murmur_bytea nosparse notequal scalar_oob storedproc
-                        transaction typmod typmod_insert union_op"""
-    self.setup_schedule_tests(schedule_tests.split())
-
-    # copy sql update files into root repo dir with preprocessor options
-    sql_update_path = os.path.join(repo_path, 'update')
-    with cd(repo_path):
-        for sql_update_file in listdir(sql_update_path):
-            run('cpp -undef -w -P -imacros $({}/bin/pg_config --includedir-server)/pg_config.h {}/{} > {}'.format(
-                config.PG_LATEST, sql_update_path, sql_update_file, sql_update_file))
-
-def before_regression_topn(topn_task):    
-    repo_path = InstallExtensionTask.repo_path_for_url(topn_task.repo_url)
-
-    # set schedule tests
-    schedule_tests = 'add_agg union_agg char_tests null_tests add_union_tests copy_data customer_reviews_query join_tests'
-    self.setup_schedule_tests(schedule_tests.split())
-
-    # copy sql update files into root repo dir with preprocessor options
-    sql_update_path = os.path.join(repo_path, 'update')
-    with cd(repo_path):
-        for sql_update_file in listdir(sql_update_path):
-            run('cpp -undef -w -P -imacros $({}/bin/pg_config --includedir-server)/pg_config.h {}/{} > {}'.format(
-                config.PG_LATEST, sql_update_path, sql_update_file, sql_update_file))
-    
-    # download and unzip input csv file
-    data_path = os.path.join(repo_path, 'data')
-    with cd(data_path):
-        run('curl -L http://examples.citusdata.com/customer_reviews_1998.csv.gz > customer_reviews_1998.csv.gz')
-        run('gzip -d customer_reviews_1998.csv')
-
-def before_regression_tdigest(tdigest_task):
-    repo_path = InstallExtensionTask.repo_path_for_url(tdigest_task.repo_url)
-    self.test_input_dir = os.path.join(repo_path, 'test')
-
-    # set schedule tests
-    schedule_tests = 'basic cast conversions incremental parallel_query value_count_api trimmed_aggregates'
-    self.setup_schedule_tests(schedule_tests.split())
 
 def add_cstore_to_shared_preload_libraries():
     conf = '{}/data/postgresql.conf'.format(config.PG_LATEST)

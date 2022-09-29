@@ -73,11 +73,15 @@ jobs:
   extension:
     docker:
       - image: buildpack-deps:bullseye
-    working_directory: /home/circleci/project  
+    working_directory: /home/circleci/project
+    executor: python/default
     steps:
       - azure-cli/install
       - azure-cli/login-with-service-principal
       - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: fabfile
       - add_ssh_keys:
           fingerprints:
             - "55:5b:db:88:e2:e4:00:87:bc:55:c2:11:52:67:d9:0d"
@@ -105,6 +109,7 @@ jobs:
 
 orbs:
   azure-cli: circleci/azure-cli@1.0.0      
+  python: circleci/python@1.1.0
 
 workflows:
   version: 2

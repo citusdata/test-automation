@@ -1,5 +1,5 @@
-from fabric.api import task, run, cd, runs_once, roles, execute, abort
-from fabric.context_managers import settings
+from invoke import task
+from invoke.exceptions import Exit
 
 import config
 import use
@@ -12,35 +12,30 @@ import os
 import add
 from add import InstallExtensionTask
 from add import RegressExtensionTask
-import ConfigParser
+import configparser
 import time
 
 __all__ = ['jdbc', 'regression', 'pgbench_tests', 'tpch_automate', 'extension_tests', 'valgrind', 'valgrind_filter_put_results']
 
 
 @task
-@runs_once
-@roles('master')
-def jdbc():
+def jdbc(c):
     'Assumes add.jdbc and add.tpch have been run'
-    with cd(config.HOME_DIR + '/test-automation/jdbc'):
-        run('javac JDBCReleaseTest.java')
-        run('java -classpath postgresql-9.4.1212.jre6.jar:. JDBCReleaseTest')
+    with c.cd(config.HOME_DIR + '/test-automation/jdbc'):
+        c.run('javac JDBCReleaseTest.java')
+        c.run('java -classpath postgresql-9.4.1212.jre6.jar:. JDBCReleaseTest')
 
 
 @task
-@roles('master')
-def regression():
+def regression(c):
     'Runs Citus\' regression tests'
-    with cd(config.CITUS_REPO):
-        run('make check')
+    with c.cd(config.CITUS_REPO):
+        c.run('make check')
 
 
 @task
-@runs_once
-@roles('master')
-def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
-    config_parser = ConfigParser.ConfigParser()
+def pgbench_tests(c, config_file='pgbench_default.ini', connectionURI=''):
+    config_parser = configparser.ConfigParser()
 
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
@@ -63,30 +58,29 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
             # create database for the given citus and pg versions
             if use_enterprise == 'on':
                 citus_print_version = 'EE-' + citus_version
-                execute(use.postgres, pg_version)
-                execute(use.enterprise, citus_version)
-                setup.enterprise()
+                use.postgres(c, pg_version)
+                use.enterprise(c, citus_version)
+                setup.enterprise(c)
             else:
                 citus_print_version = 'CE-' + citus_version
-                execute(use.postgres, pg_version)
-                execute(use.citus, citus_version)
-                setup.basic_testing()
+                use.postgres(c, pg_version)
+                use.citus(c, citus_version)
+                setup.basic_testing(c)
 
             postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
             for postgresql_conf in postgresql_conf_list:
-                execute(pg.set_config_str, postgresql_conf)
+                pg.set_config_str(c, postgresql_conf)
 
-            execute(pg.restart)
+            pg.restart(c)
 
             shard_count_replication_factor_tuples = eval(config_parser.get('DEFAULT', 'shard_counts_replication_factors'))
             for shard_count, replication_factor in shard_count_replication_factor_tuples:
-
                 for section in config_parser.sections():
                     for option in config_parser.options(section):
 
                         if option == 'pgbench_command':
                             command = config_parser.get(section, 'pgbench_command')
-                            out_val = run(command)
+                            out_val = c.run(command)
 
                             if section != 'initialization':
 
@@ -125,13 +119,13 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
                                                                                                replication_factor))
 
                             sql_command += distribute_table_command
-                            utils.psql(sql_command)
+                            utils.psql(c, sql_command)
 
                         elif option == 'sql_command':
                             sql_command = config_parser.get(section, 'sql_command')
-                            utils.psql(sql_command)
+                            utils.psql(c, sql_command)
 
-            execute(pg.stop)
+            pg.stop(c)
 
     else:
         results_file.write("Test, Connection String, Latency Average, "
@@ -143,7 +137,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
                 if option == 'pgbench_command':
                     command = config_parser.get(section, 'pgbench_command')
                     command = command.replace("pgbench", "pgbench {}".format(connectionURI), 1)
-                    out_val = run(command)
+                    out_val = c.run(command)
 
                     if section != 'initialization':
 
@@ -166,15 +160,13 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 
                 elif option == 'sql_command':
                     sql_command = config_parser.get(section, 'sql_command')
-                    utils.psql(sql_command, connectionURI)
+                    utils.psql(c, sql_command, connectionURI)
 
     results_file.close()
 
 @task
-@runs_once
-@roles('master')
-def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
-    config_parser = ConfigParser.ConfigParser()
+def tpch_automate(c, config_file='tpch_default.ini', connectionURI=''):
+    config_parser = configparser.ConfigParser()
 
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/tpch_confs/")
     config_parser.read(config_folder_path + config_file)
@@ -186,25 +178,23 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 
         for pg_version, citus_version in pg_citus_tuples:
             if use_enterprise == 'on':
-                execute(use.postgres, pg_version)
-                execute(use.enterprise, citus_version)
-                setup.enterprise()
+                use.postgres(c, pg_version)
+                use.enterprise(c, citus_version)
+                setup.enterprise(c)
             else:
-                execute(use.postgres, pg_version)
-                execute(use.citus, citus_version)
-                setup.basic_testing()
+                use.postgres(c, pg_version)
+                use.citus(c, citus_version)
+                setup.basic_testing(c)
 
-            execute(add.tpch, connectionURI= connectionURI, scale_factor=scale_factor)
-            execute(tpch_queries, eval(config_parser.get(section, 'tpch_tasks_executor_types')), connectionURI,
+            add.tpch(c, connectionURI= connectionURI, scale_factor=scale_factor)
+            tpch_queries(c, eval(config_parser.get(section, 'tpch_tasks_executor_types')), connectionURI,
                     pg_version, citus_version, config_file)
-            execute(pg.stop)
+            pg.stop(c)
 
 
 @task
-@runs_once
-@roles('master')
-def extension_tests(config_file='extension_default.ini', connectionURI=''):
-    config_parser = ConfigParser.ConfigParser()
+def extension_tests(c, config_file='extension_default.ini', connectionURI=''):
+    config_parser = configparser.ConfigParser()
 
     config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/extension_confs/")
     config_parser.read(config_folder_path + config_file)
@@ -218,16 +208,16 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
             extension_regression_tasks = get_extension_regression_tasks_from_config(extensions, config_parser)
 
             for pg_version, citus_version in pg_citus_tuples:
-                execute(use.postgres, pg_version)
-                execute(use.citus, citus_version)
-                setup.basic_testing(extension_install_tasks)
+                use.postgres(c, pg_version)
+                use.citus(c, citus_version)
+                setup.basic_testing(c, extension_install_tasks)
 
                 # run extension tests for each extension
                 for extension_regression_task in extension_regression_tasks:
                     # we only want to execute on coordinator, so do NOT use execute(extension_install_task)
-                    extension_regression_task.run()
+                    extension_regression_task.run(c)
 
-                execute(pg.stop)
+                pg.stop(c)
 
 def get_extension_install_tasks_from_config(extensions, config_parser):
     extension_install_tasks = []
@@ -264,8 +254,7 @@ def get_extension_regression_tasks_from_config(extensions, config_parser):
     return extension_regression_tasks
 
 @task
-@roles('master')
-def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_file):
+def tpch_queries(c, query_info, connectionURI, pg_version, citus_version, config_file):
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
     path = os.path.join(config.RESULTS_DIRECTORY, 'tpch_benchmark_results_{}_PG-{}_Citus-{}.txt'.format(config_file, pg_version, citus_version))
     results_file = open(path, 'a')
@@ -278,13 +267,13 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         enable_repartition_joins = "set citus.enable_repartition_joins to 'on'"
         run_string = '{} {} -c "{}" -c "{}" -c "\\timing" -f "{}"'.format(psql, connectionURI,
             enable_repartition_joins, executor_string, tpch_path + query_code)
-        out_val = run(run_string)
+        out_val = c.run(run_string)
         results_file.write(out_val)
         results_file.write('\n')
 
 # If no citus valgrind logs exist results directory, then simply put valgrind_success 
 # file under results directory.
-def valgrind_filter_put_results():
+def valgrind_filter_put_results(c):
     'Filter valgrind test outputs, put success file if no citus related valgrind output'
 
     repo_path = config.settings[config.REPO_PATH]
@@ -302,64 +291,62 @@ def valgrind_filter_put_results():
 
     # ship regression.diffs (if exists) to result folder
     if os.path.isfile(regression_diffs_path):
-        run('mv {} {}'.format(regression_diffs_path, config.RESULTS_DIRECTORY))
+        c.run('mv {} {}'.format(regression_diffs_path, config.RESULTS_DIRECTORY))
 
     # filter the (possibly) citus-related outputs and put to results file if existz
 
     if os.path.isfile(valgrind_logs_path):
         
         # get stack trace id that includes calls to citus
-        run('cat {} | grep -i "citus" | awk \'{{ print $1 }}\' | uniq  > {}'.format(valgrind_logs_path, trace_ids_path))
+        c.run('cat {} | grep -i "citus" | awk \'{{ print $1 }}\' | uniq  > {}'.format(valgrind_logs_path, trace_ids_path))
 
         if os.path.isfile(trace_ids_path) and os.path.getsize(trace_ids_path) > 0:            
             # filter stack traces with stack trace ids that we found above (if any)
-            run('while read line; do grep {} -e $line ; done < {} > {}'.format(
+            c.run('while read line; do grep {} -e $line ; done < {} > {}'.format(
                 valgrind_logs_path, 
                 trace_ids_path,
                 citus_valgrind_logs_path))
         
         # cleanup
-        run('rm {}'.format(trace_ids_path))
+        c.run('rm {}'.format(trace_ids_path))
     
     # if we have no citus-related valgrind outputs then just put an empty file named as `config.VALGRIND_SUCCESS_FNAME`
     if not os.path.exists(citus_valgrind_logs_path):    
-        run('touch {}'.format(success_file_path))
+        c.run('touch {}'.format(success_file_path))
 
-def valgrind_internal(valgrind_target):
+def valgrind_internal(c, valgrind_target):
     'Runs valgrind tests'
 
     # set citus path variable
     repo_path = config.settings[config.REPO_PATH]
     
-    use.valgrind()
-    setup.valgrind()
+    use.valgrind(c)
+    setup.valgrind(c)
 
-    with cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
+    with c.cd(os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)):
 
         # make check-multi-vg returns 2 in case of failures in regression tests
         # we should do failure handling here
-        with settings(warn_only=True):
-            valgrind_logs_path=os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_LOGS_FILE)
-            valgrind_test_out_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_TEST_OUT_FILE)
+        valgrind_logs_path=os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_LOGS_FILE)
+        valgrind_test_out_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_TEST_OUT_FILE)
 
-            # wrap the command with tee to log stdout & stderr to a file in results directory as well
-            # this is done to ensure that valgrind test is actually finished
-            valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} make {}'.format(valgrind_logs_path, valgrind_target)
-            valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
+        # wrap the command with tee to log stdout & stderr to a file in results directory as well
+        # this is done to ensure that valgrind test is actually finished
+        valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} make {}'.format(valgrind_logs_path, valgrind_target)
+        valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
 
-            run(valgrind_test_command)
+        c.run(valgrind_test_command, warn=True)
 
-            valgrind_filter_put_results()
+        valgrind_filter_put_results(c)
 
 @task
-@roles('master')
-def valgrind(*args):
+def valgrind(c, *args):
     'Choose a valgrind target. For example: fab ... run.valgrind:check-multi-1-vg ...'
 
     available_valgrind_targets = ('check-multi-vg', 'check-multi-1-vg', 'check-columnar-vg')
     if len(args) != 1 or args[0] not in available_valgrind_targets:
-        abort('Only a single argument for run.valgrind is available: {}'.
+        raise Exit('Only a single argument for run.valgrind is available: {}'.
               format(', '.join(available_valgrind_targets)))
     
     valgrind_target = args[0]
-    valgrind_internal(valgrind_target)
+    valgrind_internal(c, valgrind_target)

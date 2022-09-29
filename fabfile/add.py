@@ -1,11 +1,9 @@
 import os.path
 from os import listdir
-import glob
 import re
 
-from fabric.api import task, cd, path, run, roles, sudo, abort, execute
-from fabric.tasks import Task
-from fabric.context_managers import settings
+from invoke import task
+from invoke.exceptions import Exit
 
 import utils
 import config
@@ -13,16 +11,15 @@ import prefix
 import pg
 
 __all__ = [
-    'session_analytics', 'cstore', 'tpch', 'jdbc', 'shard_rebalancer', 
-    'coordinator_to_metadata', 'shards_on_coordinator'
+    'tpch', 'jdbc', 'coordinator_to_metadata', 'shards_on_coordinator'
 ]
 
-def repo_path_for_url(repo_url):
-    repo_name = run('basename {}'.format(repo_url))
+def repo_path_for_url(c, repo_url):
+    repo_name = c.run('basename {}'.format(repo_url))
     repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
     return os.path.join(config.CODE_DIRECTORY, repo_name)
 
-class InstallExtensionTask(Task):
+class InstallExtensionTask:
     '''
     A class which has all the boilerplate for building and installing extensions.
     Instantiate it to make it show up in the list of tasks.
@@ -42,32 +39,32 @@ class InstallExtensionTask(Task):
 
         super(InstallExtensionTask, self).__init__()
 
-    def run(self, *args):
+    def run(self, c, *args):
         if self.before_run_hook:
-            self.before_run_hook()
+            self.before_run_hook(c)
 
         self.repo_path = repo_path_for_url(self.repo_url)
 
-        prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
-        utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
+        prefix.check_for_pg_latest(c)  # make sure we're pointed at a real instance
+        utils.add_github_to_known_hosts(c) # make sure ssh doesn't prompt
 
         if len(args) == 0:
             git_ref = self.default_git_ref
         else:
             git_ref = args[0]
 
-        utils.rmdir(self.repo_path, force=True) # force because git write-protects files
-        run('git clone -q {} {}'.format(self.repo_url, self.repo_path))
+        utils.rmdir(c, self.repo_path, force=True) # force because git write-protects files
+        c.run('git clone -q {} {}'.format(self.repo_url, self.repo_path))
 
-        with cd(self.repo_path), path('{}/bin'.format(config.PG_LATEST)):
-            run('git checkout {}'.format(git_ref))
-            run('make install')
+        with c.cd(self.repo_path), path('{}/bin'.format(config.PG_LATEST)):
+            c.run('git checkout {}'.format(git_ref))
+            c.run('make install')
 
         if self.post_install_hook:
-            self.post_install_hook()
+            self.post_install_hook(c)
 
 
-class RegressExtensionTask(Task):
+class RegressExtensionTask():
     '''
     A class which has all the boilerplate for run regression tests for an already installed extension.
     '''
@@ -80,78 +77,38 @@ class RegressExtensionTask(Task):
 
         super(RegressExtensionTask, self).__init__()
 
-    def run(self, *args):
-        self.repo_path = repo_path_for_url(self.repo_url)
+    def run(self, c, *args):
+        self.repo_path = repo_path_for_url(c, self.repo_url)
 
         # force drop contrib_regression_db if exists, some backend still use db, so drop db not works
-        utils.psql("DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")
+        utils.psql(c, "DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")
 
         # create result folder if not exists
         utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
         # add --load-extension=citus to REGRESS_OPTS
-        with cd(self.repo_path):
-            run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --load-extension=citus' >> Makefile")
+        with c.cd(self.repo_path):
+            c.run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --load-extension=citus' >> Makefile")
 
-        # run tests with warn_only option to not exit in case of a test failure in the extension,
+        # run tests with warn option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too.
-        with settings(warn_only=True):
-            with cd(self.repo_path):
-                run("make installcheck")
+        with c.cd(self.repo_path):
+            c.run("make installcheck", warn=True)
 
         # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'        
-        self.rename_regression_diff()
+        self.rename_regression_diff(c)
 
-    def rename_regression_diff(self):
+    def rename_regression_diff(self, c):
         regression_diffs_path = os.path.join(self.repo_path, config.REGRESSION_DIFFS_FILE)
         if os.path.isfile(regression_diffs_path):
             extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_ext_' + self.name
-            with cd(config.RESULTS_DIRECTORY):
-                run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
-
-session_analytics = InstallExtensionTask(
-    task_name='session_analytics',
-    doc='Adds the session analytics extension to the instance in pg-latest',
-    repo_url='git@github.com:citusdata/session_analytics.git',
-)
-
-def add_cstore_to_shared_preload_libraries():
-    conf = '{}/data/postgresql.conf'.format(config.PG_LATEST)
-
-    existing_line = run('grep "^shared_preload_libraries" {}'.format(conf))
-
-    if not existing_line or 'citus' not in existing_line:
-        abort('Cannot add cstore before citus has been added')
-
-    if 'cstore' in existing_line:
-        return
-
-    # append cstore to the line
-    regexp = "^shared_preload_libraries\s*=\s*'\(.*\)'$"
-    replacement = "shared_preload_libraries='\\1,cstore_fdw'"
-    run('sed -i -e "s/{}/{}/" {}'.format(regexp, replacement, conf))
-
-    execute(pg.restart)
-
-cstore = InstallExtensionTask(
-    task_name='cstore',
-    doc='Adds the cstore extension to the instance in pg-latest',
-    repo_url='https://github.com/citusdata/cstore_fdw.git',
-    before_run_hook=lambda: sudo('yum install -q -y protobuf-c-devel'),
-    post_install_hook=add_cstore_to_shared_preload_libraries,
-)
-
-shard_rebalancer = InstallExtensionTask(
-    task_name='shard_rebalancer',
-    doc='Adds the shard rebalancer extension to pg-latest (requires enterprise)',
-    repo_url='git@github.com:citusdata/shard_rebalancer.git',
-)
+            with c.cd(config.RESULTS_DIRECTORY):
+                c.run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
 
 @task
-@roles('master')
-def tpch(**kwargs):
+def tpch(c, **kwargs):
     'Generates and loads tpc-h data into the instance at pg-latest'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
     psql = '{}/bin/psql'.format(config.PG_LATEST)
 
@@ -161,43 +118,40 @@ def tpch(**kwargs):
 
     # generate tpc-h data
     tpch_path = '{}/tpch_2_13_0'.format(config.TESTS_REPO)
-    with cd(tpch_path):
-        run('make')
-        run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
+    with c.cd(tpch_path):
+        c.run('make')
+        c.run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
         # clear old tables
-        run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
+        c.run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
 
         # create the tpc-h tables
         if partition_type == 'default':
-            run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'hash':
-            run('{} {} -f tpch_create_hash_partitioned_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_hash_partitioned_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'append':
-            run('{} {} -f tpch_create_append_partitioned_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_append_partitioned_tables.ddl'.format(psql, connectionURI))
 
         # stage tpc-h data
-        for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
+        for segment in c.run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
             table_name = os.path.basename(segment).split('.')[0]
-            run('''{} {} -c "\COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, connectionURI, table_name, segment))
+            c.run('''{} {} -c "\COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, connectionURI, table_name, segment))
 
-        run('{} {} -f warm_up_cache.sql'.format(psql, connectionURI))
+        c.run('{} {} -f warm_up_cache.sql'.format(psql, connectionURI))
 
 @task
-@roles('master')
-def jdbc():
+def jdbc(c):
     'Adds everything required to test out the jdbc connecter'
-    sudo('yum install -q -y java-1.6.0-openjdk-devel') # we only need java on the master
+    c.sudo('yum install -q -y java-1.6.0-openjdk-devel') # we only need java on the master
 
 @task
-@roles('master')
-def coordinator_to_metadata():
+def coordinator_to_metadata(c):
     local_ip = utils.get_local_ip()
-    utils.psql("SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
+    utils.psql(c, "SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
 
 @task
-@roles('master')
-def shards_on_coordinator():
+def shards_on_coordinator(c):
     local_ip = utils.get_local_ip()
-    utils.psql("SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
+    utils.psql(c, "SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
         .format(local_ip, config.PORT))    

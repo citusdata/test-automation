@@ -1,4 +1,4 @@
-from fabric.api import task, run, cd, parallel
+from invoke import task
 
 import config
 import prefix
@@ -9,59 +9,53 @@ __all__ = ['start', 'stop', 'restart', 'read_config', 'set_config', 'set_config_
 
 
 @task
-@parallel
-def start():
+def start(c):
     'Start the database in pg-latest'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
-    with cd(config.PG_LATEST):
+    with c.cd(config.PG_LATEST):
         # "set -m" spawns postgres in a new process group so it runs in the background
-        run('set -m; bin/pg_ctl --timeout=1000 -D data -l logfile start')
+        c.run('set -m; bin/pg_ctl --timeout=1000 -D data -l logfile start')
 
 
 @task
-@parallel
-def stop():
+def stop(c):
     'Stop the database in pg-latest'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
-    with cd(config.PG_LATEST):
-        run('set -m; bin/pg_ctl -D data stop')
+    with c.cd(config.PG_LATEST):
+        c.run('set -m; bin/pg_ctl -D data stop')
 
 
 @task
-@parallel
-def restart():
+def restart(c):
     'Restart the database in pg-latest'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
-    with cd(config.PG_LATEST):
-        run('set -m; bin/pg_ctl -D data -l logfile restart')
+    with c.cd(config.PG_LATEST):
+        c.run('set -m; bin/pg_ctl -D data -l logfile restart')
 
         # TODO: Maybe also check that the server started properly. And if it didn't tail the log file?
 
 
 @task
-@parallel
-def read_config(key):
+def read_config(c, key):
     'Returns the present value of the requested key e.x `fab pg.read_config:max_connections`'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
-    psql('SHOW {}'.format(key))
+    psql(c, 'SHOW {}'.format(key))
 
 
 @task
-@parallel
-def set_config(key, value):
+def set_config(c, key, value):
     'Changes the postgres configuration: e.g. `fab pg.set_config:max_connections,200`'
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
 
-    psql('ALTER SYSTEM SET {} TO {}'.format(key, value))
+    psql(c, 'ALTER SYSTEM SET {} TO {}'.format(key, value))
 
 
 @task
-@parallel
-def set_config_str(config):
-    prefix.check_for_pg_latest()
+def set_config_str(c, config):
+    prefix.check_for_pg_latest(c)
 
-    psql('ALTER SYSTEM SET {}'.format(config))
+    psql(c, 'ALTER SYSTEM SET {}'.format(config))

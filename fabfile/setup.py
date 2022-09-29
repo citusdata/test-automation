@@ -8,16 +8,14 @@ import os.path
 import os
 import math
 
-from fabric.api import (
-    env, cd, hide, roles, task, parallel, execute, run,
-    sudo, abort, local, lcd, path, put, warn
-)
-from fabric.decorators import runs_once
-from fabric.contrib.files import exists
+from invoke import task
+from invoke.exceptions import Exit
+from patchwork.files import exists
 
 import utils
+import connection
 import config
-import ConfigParser
+import configparser
 import pg
 import add
 import use
@@ -27,56 +25,51 @@ import use
 __all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
 @task
-@roles('master')
-def basic_testing(extension_install_tasks=[]):
+def basic_testing(c, extension_install_tasks=[]):
     'Sets up a no-frills Postgres+Citus cluster'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    prefix.ensure_pg_latest_exists(c, default=config.CITUS_INSTALLATION)
 
-    execute(common_setup, build_citus, extension_install_tasks)
-    execute(add_workers)
+    common_setup(c, build_citus, extension_install_tasks)
+    add_workers(c)
 
 @task
-@roles('master')
-def tpch():
+def tpch(c):
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    prefix.ensure_pg_latest_exists(c, default=config.CITUS_INSTALLATION)
 
-    execute(common_setup, build_citus)
-    execute(add_workers)
-    execute(add.tpch)
+    common_setup(c, build_citus)
+    add_workers(c)
+    add.tpch(c)
 
 @task
-def valgrind():
+def valgrind(c):
     # prepare yum install command
     install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
 
     # install libraries required for valgrind test
-    sudo(install_required_packages_command)
+    c.sudo(install_required_packages_command)
 
     # create results directory to put resulting log files there
     # (for pushing them to results repository)
-    utils.rmdir(config.RESULTS_DIRECTORY, force=True)
+    utils.rmdir(c, config.RESULTS_DIRECTORY, force=True)
     utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
     # set build citus function
     build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
-    execute(common_setup, build_citus_func)
+    prefix.ensure_pg_latest_exists(c, default=config.CITUS_INSTALLATION)
+    common_setup(c, build_citus_func)
 
 @task
-@roles('master')
-def enterprise():
+def enterprise(c):
     'Installs the enterprise version of Citus'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    prefix.ensure_pg_latest_exists(c, default=config.CITUS_INSTALLATION)
 
-    execute(common_setup, build_enterprise)
-    execute(add_workers)
+    common_setup(c, build_enterprise)
+    add_workers(c)
 
 @task
-@roles('master')
 def hammerdb(config_file='hammerdb.ini', driver_ip=''):
-
-    config_parser = ConfigParser.ConfigParser()
+    config_parser = configparser.ConfigParser()
 
     config_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/hammerdb_confs", config_file)
     config_parser.read(config_path)
@@ -84,21 +77,20 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
     use_enterprise = config_parser.get('DEFAULT', 'use_enterprise')
     pg_version, citus_version = eval(config_parser.get('DEFAULT', 'postgres_citus_version'))
     # this should be run before any setup so that it sets the necessary fields.
-    execute(use.hammerdb)
+    use.hammerdb(c)
     # create database for the given citus and pg versions
     if use_enterprise == 'on':
-        execute(use.postgres, pg_version)
-        execute(use.enterprise, citus_version)
-        enterprise()
+        use.postgres(c, pg_version)
+        use.enterprise(c, citus_version)
+        enterprise(c)
     else:
-        execute(use.postgres, pg_version)
-        execute(use.citus, citus_version)
-        basic_testing()
-    execute(set_hammerdb_config, config_parser, driver_ip)
+        use.postgres(c, pg_version)
+        use.citus(c, citus_version)
+        basic_testing(c)
+    set_hammerdb_config(c, config_parser, driver_ip)
 
 @task
-@parallel
-def set_hammerdb_config(config_parser, driver_ip):
+def set_hammerdb_config(c, config_parser, driver_ip):
     total_mem_in_gb = total_memory_in_gb()
     mem_mib = total_mem_in_gb * 1024
 
@@ -108,155 +100,141 @@ def set_hammerdb_config(config_parser, driver_ip):
     maintenance_work_mem_mib = int(82.5 * math.log(total_mem_in_gb, 10) + 40)
     work_mem_mib = int(30 * math.log(total_mem_in_gb, 10) + 10)
 
-    pg.set_config_str("shared_buffers = '{}MB'".format(shared_buffers_mib))
-    pg.set_config_str("effective_cache_size = '{}MB'".format(effective_cache_size_mib))
-    pg.set_config_str("maintenance_work_mem = '{}MB'".format(maintenance_work_mem_mib))
-    pg.set_config_str("work_mem = '{}MB'".format(work_mem_mib))
+    pg.set_config_str(c, "shared_buffers = '{}MB'".format(shared_buffers_mib))
+    pg.set_config_str(c, "effective_cache_size = '{}MB'".format(effective_cache_size_mib))
+    pg.set_config_str(c, "maintenance_work_mem = '{}MB'".format(maintenance_work_mem_mib))
+    pg.set_config_str(c, "work_mem = '{}MB'".format(work_mem_mib))
 
     postgresql_conf_list = eval(config_parser.get('DEFAULT', 'postgresql_conf'))
     for postgresql_conf in postgresql_conf_list:
-        pg.set_config_str(postgresql_conf)
+        pg.set_config_str(c, postgresql_conf)
 
     pg_latest = config.PG_LATEST
-    with cd('{}/data'.format(pg_latest)):
-        run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
+    with c.cd('{}/data'.format(pg_latest)):
+        c.run('echo "host all all {}/16 trust" >> pg_hba.conf'.format(driver_ip))
 
-    pg.restart()
+    pg.restart(c)
 
 def total_memory_in_gb():
     mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
     mem_gib = mem_bytes/(1024.**3)
     return mem_gib
 
-@parallel
-def common_setup(build_citus_func, extension_install_tasks=[]):
-    with hide('stdout'):
-        run('pkill -9 postgres || true')
+def common_setup(c, build_citus_func, extension_install_tasks=[]):
+    c.run('pkill -9 postgres || true', hide='stdout')
 
-    prefix.check_for_pg_latest()
+    prefix.check_for_pg_latest(c)
     # empty it but don't delete the link
-    run('rm -rf {}/* || true'.format(config.PG_LATEST))
+    c.run('rm -rf {}/* || true'.format(config.PG_LATEST))
 
-    redhat_install_packages()
-    build_postgres()
-    build_citus_func()
-    build_extensions(extension_install_tasks)
-    create_database()
-    pg.start()
+    redhat_install_packages(c)
+    build_postgres(c)
+    build_citus_func(c)
+    build_extensions(c, extension_install_tasks)
+    create_database(c)
+    pg.start(c)
 
     pg_latest = config.PG_LATEST
-    with cd(pg_latest):
-        while getattr(run('bin/pg_isready'), 'return_code') != 0:
+    with c.cd(pg_latest):
+        while getattr(c.run('bin/pg_isready'), 'return_code') != 0:
             print ('Waiting for database to be ready')
 
-        run('bin/createdb $(whoami)')
+        c.run('bin/createdb $(whoami)')
 
-    with hide('stdout'):
-        utils.psql('CREATE EXTENSION citus;')
+    utils.psql(c, 'CREATE EXTENSION citus;', hide='stdout')
 
-@roles('master')
-def add_workers():
-    with cd('{}/data'.format(config.PG_LATEST)):
-        for ip in env.roledefs['workers']:
-            with hide('stdout'):
-                utils.psql('SELECT master_add_node(\'{}\', 5432);'.format(ip))
-                run('echo "{} 5432" >> pg_worker_list.conf'.format(ip))
+def add_workers(c):
+    with c.cd('{}/data'.format(config.PG_LATEST)):
+        workers = Connection.workers
+        utils.psql(workers, 'SELECT master_add_node(\'{}\', 5432);'.format(ip))
+        workers.run('echo "{} 5432" >> pg_worker_list.conf'.format(ip), hide='stdout')
 
-def redhat_install_packages():
+def redhat_install_packages(c):
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
-    with hide('stdout'):
-        sudo("yum groupinstall -q -y 'Development Tools'")
+    c.sudo("yum groupinstall -q -y 'Development Tools'", hide='stdout')
 
-    with hide('stdout'):
-        sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git libzstd-devel lz4-devel')
+    c.sudo('yum install -q -y libxml2-devel libxslt-devel'
+        ' openssl-devel pam-devel readline-devel libcurl-devel git libzstd-devel lz4-devel', hide='stdout')
 
-def build_postgres():
+def build_postgres(c):
     'Installs postges'
 
     # Give the postgres source to the remote nodes
     sourceball_loc = utils.download_pg()
-    if env.host_string != 'localhost':
-        put(local_path=sourceball_loc, remote_path=sourceball_loc)
+    if c.host != 'localhost':
+        c.put(local_path=sourceball_loc, remote_path=sourceball_loc)
 
-    with cd(config.PG_SOURCE_BALLS):
+    with c.cd(config.PG_SOURCE_BALLS):
         final_dir = os.path.basename(sourceball_loc).split('.tar.bz2')[0]
         # rm makes this idempotent, if not a bit inefficient
 
-        utils.rmdir(final_dir)
-        with hide('stdout'):
-            run('tar -xf {}.tar.bz2'.format(final_dir))
+        utils.rmdir(c, final_dir)
+        c.run('tar -xf {}.tar.bz2'.format(final_dir), hide='stdout')
 
-        with cd(final_dir):
+        with c.cd(final_dir):
             pg_latest = config.PG_LATEST
             flags = ' '.join(config.PG_CONFIGURE_FLAGS)
-            with hide('stdout'):
-                run('./configure --prefix={} {}'.format(pg_latest, flags))
+            c.run('./configure --prefix={} {}'.format(pg_latest, flags), hide='stdout')
 
-            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+            core_count = c.run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-            with hide('stdout'):
-                run('make -s -j{} install'.format(core_count))
+            c.run('make -s -j{} install'.format(core_count), hide='stdout')
 
-            with cd('contrib'), hide('stdout'):
-                run('make -s install')
+            with c.cd('contrib'):
+                c.run('make -s install', hide='stdout')
 
-def build_extensions(extension_install_tasks):
+def build_extensions(c, extension_install_tasks):
     for extension_install_task in extension_install_tasks:
         # we already execute on all workers, so do NOT use execute(extension_install_task)
-        extension_install_task.run()
+        extension_install_task.run(c)
 
-def build_citus():
+def build_citus(c):
     repo = config.CITUS_REPO
-    utils.rmdir(repo, force=True) # force because git write-protects files
+    utils.rmdir(c, repo, force=True) # force because git write-protects files
 
-    run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
-    with cd(repo):
+    c.run('git clone -q https://github.com/citusdata/citus.git {}'.format(repo))
+    with c.cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'master')
-        run('git checkout {}'.format(git_ref))
+        c.run('git checkout {}'.format(git_ref))
 
         pg_latest = config.PG_LATEST
-        with hide('stdout'):
-            run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
+        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest), hide='stdout')
 
-        with hide('stdout', 'running'):
-            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+        core_count = c.run('cat /proc/cpuinfo | grep "core id" | wc -l', hide='stdout')
 
-        install_citus(core_count)
+        install_citus(c, core_count)
 
-def build_enterprise():
-    utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
+def build_enterprise(c):
+    utils.add_github_to_known_hosts(c) # make sure ssh doesn't prompt
     repo = config.ENTERPRISE_REPO
-    utils.rmdir(repo, force=True)
+    utils.rmdir(c, repo, force=True)
     if config.settings[config.IS_SSH_KEYS_USED]:
-        run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
+        c.run('git clone -q git@github.com:citusdata/citus-enterprise.git {}'.format(repo))
     else:
-        run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
-    with cd(repo):
+        c.run('git clone -q https://github.com/citusdata/citus-enterprise.git {}'.format(repo))
+    with c.cd(repo):
         git_ref = config.settings.get('citus-git-ref', 'enterprise-master')
-        run('git checkout {}'.format(git_ref))
+        c.run('git checkout {}'.format(git_ref))
 
         pg_latest = config.PG_LATEST
-        with hide('stdout'):
-            run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
+        run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest), hide='stdout')
 
-        core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+        core_count = c.run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
-        install_citus(core_count)
+        install_citus(c, core_count)
 
-def install_citus(core_count):
-    with hide('stdout'):
-        # fall back to "make install" if "make install-all" is not available
-        run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
-            format(core_count=core_count))
+def install_citus(c, core_count):
+    # fall back to "make install" if "make install-all" is not available
+    c.run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
+        format(core_count=core_count), hide='stdout')
 
-def create_database():
+def create_database(c):
     pg_latest = config.PG_LATEST
-    with cd(pg_latest), hide('stdout'):
-        run('bin/initdb -D data')
-    with cd('{}/data'.format(pg_latest)):
-        run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
-        run('echo "max_prepared_transactions = 100" >> postgresql.conf')
-        run('echo "listen_addresses = \'*\'" >> postgresql.conf')
-        run('echo "wal_level = \'logical\'" >> postgresql.conf')
-        run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
+    with c.cd(pg_latest):
+        c.run('bin/initdb -D data', hide='stdout')
+    with c.cd('{}/data'.format(pg_latest)):
+        c.run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
+        c.run('echo "max_prepared_transactions = 100" >> postgresql.conf')
+        c.run('echo "listen_addresses = \'*\'" >> postgresql.conf')
+        c.run('echo "wal_level = \'logical\'" >> postgresql.conf')
+        c.run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')

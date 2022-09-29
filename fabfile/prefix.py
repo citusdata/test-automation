@@ -7,49 +7,50 @@ between invocations of fab)
 '''
 import os.path
 
-from fabric.api import task, runs_once, abort, run
-from fabric.contrib.files import exists
+from invoke import task
+from invoke.exceptions import Exit
+from patchwork.files import exists
 
 import config
 
 @task
-def set_prefix(prefix):
+def set_prefix(c, prefix):
     'Change where pg-latest points to'
 
     if not os.path.isabs(prefix):
-        abort('{} is not an absolute path'.format(prefix))
+        raise Exit('{} is not an absolute path'.format(prefix))
         
     latest = config.PG_LATEST
 
     # -f to overwrite any existing links
     # -n to not follow the {latest} link, if it exists, and instead replace it
-    run('ln -snf {} {}'.format(prefix, latest))
-    run('mkdir -p {}'.format(prefix))
+    c.run('ln -snf {} {}'.format(prefix, latest))
+    c.run('mkdir -p {}'.format(prefix))
 
-def ensure_pg_latest_exists(default):
+def ensure_pg_latest_exists(c, default):
     'If there is no valid working directory make one and point it at prefix'
     latest = config.PG_LATEST
 
     # make sure pg-latest exists
-    if not exists(latest):
-        set_prefix(default)
+    if not exists(c, latest):
+        set_prefix(c, default)
 
     # make sure pg-latest is a link
-    if run('stat -c %F {}'.format(latest)) != 'symbolic link':
-        abort('pg-latest exists but is not a symbolic link!')
+    if c.run('stat -c %F {}'.format(latest)) != 'symbolic link':
+        raise Exit('pg-latest exists but is not a symbolic link!')
 
     # make sure the link points to something
-    destination = run('readlink {}'.format(latest))
-    run('mkdir -p {}'.format(destination))
+    destination = c.run('readlink {}'.format(latest))
+    c.run('mkdir -p {}'.format(destination))
 
-def check_for_pg_latest():
+def check_for_pg_latest(c):
     "Fail-fast if there isn't a valid working directory"
     latest = config.PG_LATEST
 
-    if not exists(latest):
-        abort('There is no pg-latest symlink, run a setup.XXX task to create a cluster or the set_pg_latest task to point pg-latest to a citus installation')
+    if not exists(c, latest):
+        raise Exit('There is no pg-latest symlink, run a setup.XXX task to create a cluster or the set_pg_latest task to point pg-latest to a citus installation')
 
-    destination = run('readlink {}'.format(latest))
+    destination = c.run('readlink {}'.format(latest))
 
-    if not exists(destination):
-        abort('pg-latest does not point to a valid working directory, run a setup.XXX task to create a cluster')
+    if not exists(c, destination):
+        raise Exit('pg-latest does not point to a valid working directory, run a setup.XXX task to create a cluster')

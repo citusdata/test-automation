@@ -391,9 +391,9 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'))]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', if(equals(copyindex(),0), parameters('coordinatorDiskSizeGB'), parameters('workerDiskSizeGB')))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/dummy/azure/init.sh"
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/azure/init.sh')]"
                     ]
                 }
             },

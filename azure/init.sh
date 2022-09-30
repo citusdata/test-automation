@@ -25,20 +25,23 @@ rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 yum install -y git screen tmux htop
 
+# install & update ca certificates
+yum install -y ca-certificates
+update-ca-trust -f
+
 # this is the username in our instances
 TARGET_USER=pguser
 
-#A set of disks to ignore from partitioning and formatting
-#BLACKLIST="/dev/sda|/dev/sdb"
-#DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
-#read DEV __ <<< ${DEVS}
+#find data disk by filtering first block device that has specified size and also is unmounted
+DATA_DISK_SIZE=$6
+DEV=$(lsblk -o NAME,SIZE,MOUNTPOINT | grep ${DATA_DISK_SIZE}G | awk '$3==""' | head -1 | cut -d ' ' -f 1)
 
 # attach disk and mount it for data
-#mkfs.ext4 -F ${DEV}
-#mv /home/${TARGET_USER}/ /tmp/home_copy
-#mkdir -p /home/${TARGET_USER}
-#mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
-#rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
+mkfs.ext4 -F ${DEV}
+mv /home/${TARGET_USER}/ /tmp/home_copy
+mkdir -p /home/${TARGET_USER}
+mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
+rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 
 # add the username to sudoers so that sudo command does not prompt password.
@@ -48,10 +51,6 @@ echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 # we will use port 3456 to not hit security rule 103
 echo 'Port 3456' >> /etc/ssh/sshd_config
 echo 'Port 22' >> /etc/ssh/sshd_config
-
-# install & update ca certificates
-yum install -y ca-certificates
-update-ca-trust -f
 
 # necessary for semanage, VMs have secure linux
 yum install -y policycoreutils-python

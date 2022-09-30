@@ -33,16 +33,16 @@ update-ca-trust -f
 TARGET_USER=pguser
 
 #A set of disks to ignore from partitioning and formatting
-BLACKLIST="/dev/sda|/dev/sdb"
-DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
-read DEV __ <<< ${DEVS}
+#BLACKLIST="/dev/sda|/dev/sdb"
+#DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+#read DEV __ <<< ${DEVS}
 
 # attach disk and mount it for data
-mkfs.ext4 -F ${DEV}
-mv /home/${TARGET_USER}/ /tmp/home_copy
-mkdir -p /home/${TARGET_USER}
-mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
-rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
+#mkfs.ext4 -F ${DEV}
+#mv /home/${TARGET_USER}/ /tmp/home_copy
+#mkdir -p /home/${TARGET_USER}
+#mount -o barrier=0 ${DEV} /home/${TARGET_USER}/
+#rsync -aXS /tmp/home_copy/. /home/${TARGET_USER}/.
 
 
 # add the username to sudoers so that sudo command does not prompt password.

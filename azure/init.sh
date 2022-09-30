@@ -32,9 +32,9 @@ update-ca-trust -f
 # this is the username in our instances
 TARGET_USER=pguser
 
-#find data disk by filtering first block device that has specified size and also is unmounted
+# find data disk by filtering out the first block device that has specified size and also is unmounted
 DATA_DISK_SIZE=$6
-DEV=$(lsblk -o NAME,SIZE,MOUNTPOINT | grep ${DATA_DISK_SIZE}G | awk '$3==""' | head -1 | cut -d ' ' -f 1)
+DEV=/dev/$(lsblk -o NAME,SIZE,MOUNTPOINT | grep ${DATA_DISK_SIZE}G | awk '$3==""' | head -1 | cut -d ' ' -f 1)
 
 # attach disk and mount it for data
 mkfs.ext4 -F ${DEV}

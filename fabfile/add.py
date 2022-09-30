@@ -22,6 +22,10 @@ def repo_path_for_url(repo_url):
     repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
     return os.path.join(config.CODE_DIRECTORY, repo_name)
 
+def contrib_path_for_extension(extension_name):
+    pg_contrib_dir = utils.pg_contrib_dir()
+    return os.path.join(pg_contrib_dir, extension_name)
+
 class InstallExtensionTask(Task):
     '''
     A class which has all the boilerplate for building and installing extensions.
@@ -32,11 +36,14 @@ class InstallExtensionTask(Task):
     unless you specify otherwise by passing 'default_git_ref'.
     '''
 
-    def __init__(self, task_name, doc, repo_url, **kwargs):
+    def __init__(self, task_name, doc, contrib, repo_url, default_git_ref, preload, conf_lines, **kwargs):
         self.name = task_name  # the name of the task (fab [xxx])
         self.__doc__ = doc  # the description which fab --list will list
+        self.contrib = contrib
         self.repo_url = repo_url
-        self.default_git_ref = kwargs.get('default_git_ref', 'master')
+        self.default_git_ref = default_git_ref
+        self.preload = preload
+        self.conf_lines = conf_lines
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
 
@@ -46,22 +53,26 @@ class InstallExtensionTask(Task):
         if self.before_run_hook:
             self.before_run_hook()
 
-        self.repo_path = repo_path_for_url(self.repo_url)
-
-        prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
-        utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
-
-        if len(args) == 0:
-            git_ref = self.default_git_ref
+        if contrib:
+            self.repo_path = contrib_path_for_extension(self.task_name)
         else:
-            git_ref = args[0]
+            self.repo_path = repo_path_for_url(self.contrib, self.repo_url)
 
-        utils.rmdir(self.repo_path, force=True) # force because git write-protects files
-        run('git clone -q {} {}'.format(self.repo_url, self.repo_path))
+        if not contrib: # contrib extensions are already installed
+            prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
+            utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
 
-        with cd(self.repo_path), path('{}/bin'.format(config.PG_LATEST)):
-            run('git checkout {}'.format(git_ref))
-            run('make install')
+            if len(args) == 0:
+                git_ref = self.default_git_ref
+            else:
+                git_ref = args[0]
+
+            utils.rmdir(self.repo_path, force=True) # force because git write-protects files
+            run('git clone -q {} {}'.format(self.repo_url, self.repo_path))
+
+            with cd(self.repo_path), path('{}/bin'.format(config.PG_LATEST)):
+                run('git checkout {}'.format(git_ref))
+                run('make install')
 
         if self.post_install_hook:
             self.post_install_hook()
@@ -72,16 +83,22 @@ class RegressExtensionTask(Task):
     A class which has all the boilerplate for run regression tests for an already installed extension.
     '''
 
-    def __init__(self, task_name, doc, repo_url, **kwargs):
+    def __init__(self, task_name, doc, contrib, repo_url, default_git_ref, **kwargs):
         self.name = task_name  # the name of the task (fab [xxx])
         self.__doc__ = doc  # the description which fab --list will list
+        self.contrib = contrib
         self.repo_url = repo_url
-        self.default_git_ref = kwargs.get('default_git_ref', 'master')
+        self.default_git_ref = default_git_ref
+        self.before_run_hook = kwargs.get('before_run_hook', None)
+        self.post_install_hook = kwargs.get('post_install_hook', None)
 
         super(RegressExtensionTask, self).__init__()
 
     def run(self, *args):
-        self.repo_path = repo_path_for_url(self.repo_url)
+        if contrib:
+            self.repo_path = contrib_path_for_extension(self.task_name)
+        else:
+            self.repo_path = repo_path_for_url(self.contrib, self.repo_url)
 
         # force drop contrib_regression_db if exists, some backend still use db, so drop db not works
         utils.psql("DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")

@@ -233,15 +233,29 @@ def get_extension_install_tasks_from_config(extensions, config_parser):
     extension_install_tasks = []
     for extension in extensions:
         doc = config_parser.get(extension, 'doc')
-        repo_url = config_parser.get(extension, 'repo_url')
-        default_git_ref = config_parser.get(extension, 'default_git_ref')
+        contrib = eval(config_parser.get(extension, 'contrib'))
+        preload = eval(config_parser.get(extension, 'preload'))
+
+        repo_url = ''
+        default_git_ref = ''
+        if contrib:
+            repo_url = config_parser.get(extension, 'repo_url')
+            default_git_ref = config_parser.get(extension, 'default_git_ref')
+
+        conf_lines = []
+        if config_parser.has_option(extension, 'conf_string'):
+            conf_lines = eval(config_parser.get(extension, 'conf_string')).split()
 
         extension_install_task = InstallExtensionTask(
             task_name=extension,
             doc=doc,
+            contrib=contrib,
             repo_url=repo_url,
             default_git_ref=default_git_ref,
+            preload=preload,
+            conf_lines=conf_lines,
         )
+
         extension_install_tasks.append(extension_install_task)
 
     return extension_install_tasks
@@ -250,15 +264,22 @@ def get_extension_regression_tasks_from_config(extensions, config_parser):
     extension_regression_tasks = []
     for extension in extensions:
         doc = config_parser.get(extension, 'doc')
-        repo_url = config_parser.get(extension, 'repo_url')
-        default_git_ref = config_parser.get(extension, 'default_git_ref')
+        contrib = eval(config_parser.get(extension, 'contrib'))
+
+        repo_url = ''
+        default_git_ref = ''
+        if contrib:
+            repo_url = config_parser.get(extension, 'repo_url')
+            default_git_ref = config_parser.get(extension, 'default_git_ref')
 
         extension_regression_task = RegressExtensionTask(
             task_name=extension,
             doc=doc,
+            contrib=contrib,
             repo_url=repo_url,
             default_git_ref=default_git_ref,
         )
+
         extension_regression_tasks.append(extension_regression_task)
 
     return extension_regression_tasks

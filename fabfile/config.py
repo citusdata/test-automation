@@ -29,7 +29,7 @@ VALGRIND_REQUIRED_PACKAGES = ['valgrind', 'valgrind-devel.x86_64', 'openssl-deve
 VALGRIND_SUCCESS_FNAME = 'valgrind_success'
 
 PG_VERSION = '9.6.1'
-PG_CONFIGURE_FLAGS = ['--with-openssl']
+PG_CONFIGURE_FLAGS = ['--with-openssl','--enable-tap-tests']
 
 settings = {
     IS_SSH_KEYS_USED: True

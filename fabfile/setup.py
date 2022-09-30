@@ -141,7 +141,8 @@ def common_setup(build_citus_func, extension_install_tasks=[]):
     build_postgres()
     build_citus_func()
     build_extensions(extension_install_tasks)
-    create_database()
+    pg.create()
+    configure_database(extension_install_tasks)
     pg.start()
 
     pg_latest = config.PG_LATEST
@@ -169,7 +170,8 @@ def redhat_install_packages():
 
     with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
-            ' openssl-devel pam-devel readline-devel libcurl-devel git libzstd-devel lz4-devel')
+            ' openssl-devel pam-devel readline-devel libcurl-devel'
+            ' git libzstd-devel lz4-devel perl-IPC-Run')
 
 def build_postgres():
     'Installs postges'
@@ -199,6 +201,7 @@ def build_postgres():
                 run('make -s -j{} install'.format(core_count))
 
             with cd('contrib'), hide('stdout'):
+                config.CONTRIBDIR = run('pwd')
                 run('make -s install')
 
 def build_extensions(extension_install_tasks):
@@ -250,13 +253,41 @@ def install_citus(core_count):
         run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
             format(core_count=core_count))
 
-def create_database():
+def configure_database(extension_install_tasks):
     pg_latest = config.PG_LATEST
-    with cd(pg_latest), hide('stdout'):
-        run('bin/initdb -D data')
     with cd('{}/data'.format(pg_latest)):
-        run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
+        # configure shared_preload_libraries
+        preload_string = get_preload_libs_string()
+        run('echo {} >> postgresql.conf'.format(preload_string))
+
+        # configure other pg options
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
+
+        # configure extensions' options
+        for task in extension_install_tasks:
+            for conf_line in task.conf_lines:
+                run('echo {} >> postgresql.conf'.format(conf_line))
+
+def get_preload_libs_string(extension_install_tasks):
+    preloaded_libs = get_preloaded_libs(extension_install_tasks)
+
+    preload_line = "shared_preload_libraries = \'"
+    first_lib = True
+    for preloaded_lib in preloaded_libs:
+        if not first_lib:
+            preload_line.append("," + preloaded_lib)
+        preload_line.append(preloaded_lib)
+        first_lib = False
+    preload_line.append("\'")
+
+    return preload_line
+
+def get_preloaded_libs(extension_install_tasks):
+    preloaded_libs = []
+    for task in extension_install_tasks:
+        if task.preload:
+            preloaded_libs.append(task.name)
+    return preloaded_libs

@@ -53,6 +53,10 @@ def download_pg():
     run('wget -O {} --no-verbose {}'.format(target_file, url))
     return target_file
 
+def pg_contrib_dir():
+    src_dir = os.path.join(config.PG_SOURCE_BALLS, 'postgresql-{}'.format(version))
+    contrib_dir = os.path.join(src_dir, 'contrib')
+    return contrib_dir
 
 def pg_url_for_version(version):
     return 'https://ftp.postgresql.org/pub/source/v{0}/postgresql-{0}.tar.bz2'.format(version)

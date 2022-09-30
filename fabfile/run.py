@@ -10,8 +10,7 @@ import utils
 import re
 import os
 import add
-from add import InstallExtensionTask
-from add import RegressExtensionTask
+from add import InstallExtensionTask, Extension, ExtensionTest, ConfigureExtensionTest
 import ConfigParser
 import time
 
@@ -212,77 +211,39 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
     sections = config_parser.sections()
     for section in sections:
         if section == 'main':
-            pg_citus_tuples = eval(config_parser.get(section, 'postgres_citus_versions'))
-            extensions = eval(config_parser.get(section, 'extensions'))
-            extension_install_tasks = get_extension_install_tasks_from_config(extensions, config_parser)
-            extension_regression_tasks = get_extension_regression_tasks_from_config(extensions, config_parser)
+            pg_versions = eval(config_parser.get(section, 'postgres_versions'))
+            extension_names = eval(config_parser.get(section, 'extensions'))
+            extension_regress_tests = get_extension_tests_from_config(extension_names, config_parser)
 
-            for pg_version, citus_version in pg_citus_tuples:
+            for pg_version in pg_versions:
                 execute(use.postgres, pg_version)
-                execute(use.citus, citus_version)
-                setup.basic_testing(extension_install_tasks)
 
-                # run extension tests for each extension
-                for extension_regression_task in extension_regression_tasks:
-                    # we only want to execute on coordinator, so do NOT use execute(extension_install_task)
-                    extension_regression_task.run()
+                # run each extension test scenario
+                for extension_regress_test in extension_regress_tests:
+                    # we need to restart pg because we modify preload_shared_libraries
+                    extension_install_tasks = extension_regress_test.get_install_tasks()
+                    configure_task = extension_regress_test.get_configure_task()
 
-                execute(pg.stop)
+                    setup.extension_testing(extension_install_tasks, configure_task)
+                    extension_regress_test.regress()
+                    execute(pg.stop)
 
-def get_extension_install_tasks_from_config(extensions, config_parser):
-    extension_install_tasks = []
-    for extension in extensions:
-        doc = config_parser.get(extension, 'doc')
-        contrib = eval(config_parser.get(extension, 'contrib'))
-        preload = eval(config_parser.get(extension, 'preload'))
+def get_extension_tests_from_config(extension_names, config_parser):
+    extension_tests= []
+    test_count = eval(config_parser.get('test_cases', 'test_count'))
+    for i in range(1, test_count+1):
+        test_name = 'test-{}'.format(i)
+        extension_name = config_parser.get(test_name, 'ext_to_test')
 
-        repo_url = ''
-        default_git_ref = ''
-        if contrib:
-            repo_url = config_parser.get(extension, 'repo_url')
-            default_git_ref = config_parser.get(extension, 'default_git_ref')
+        extension = Extension(extension_name)
+        extension.parse_from_config(config_parser)
 
-        conf_lines = []
-        if config_parser.has_option(extension, 'conf_string'):
-            conf_lines = eval(config_parser.get(extension, 'conf_string')).split()
+        extension_test = ExtensionTest(test_name, extension)
+        extension_test.parse_from_config(config_parser)
 
-        extension_install_task = InstallExtensionTask(
-            task_name=extension,
-            doc=doc,
-            contrib=contrib,
-            repo_url=repo_url,
-            default_git_ref=default_git_ref,
-            preload=preload,
-            conf_lines=conf_lines,
-        )
+        extension_tests.append(extension_test)
 
-        extension_install_tasks.append(extension_install_task)
-
-    return extension_install_tasks
-
-def get_extension_regression_tasks_from_config(extensions, config_parser):
-    extension_regression_tasks = []
-    for extension in extensions:
-        doc = config_parser.get(extension, 'doc')
-        contrib = eval(config_parser.get(extension, 'contrib'))
-
-        repo_url = ''
-        default_git_ref = ''
-        if contrib:
-            repo_url = config_parser.get(extension, 'repo_url')
-            default_git_ref = config_parser.get(extension, 'default_git_ref')
-
-        extension_regression_task = RegressExtensionTask(
-            task_name=extension,
-            doc=doc,
-            contrib=contrib,
-            repo_url=repo_url,
-            default_git_ref=default_git_ref,
-        )
-
-        extension_regression_tasks.append(extension_regression_task)
-
-    return extension_regression_tasks
+    return extension_tests
 
 @task
 @roles('master')

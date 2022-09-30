@@ -24,16 +24,24 @@ import use
 import prefix
 import use
 
-__all__ = ["basic_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
+__all__ = ["basic_testing", "extension_testing", "tpch", "valgrind", "enterprise", "hammerdb"]
 
 @task
 @roles('master')
-def basic_testing(extension_install_tasks=[]):
+def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
     execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
 
-    execute(common_setup, build_citus, extension_install_tasks)
+    execute(common_setup, build_citus)
     execute(add_workers)
+
+@task
+@roles('master')
+def extension_testing(extension_install_tasks, extension_configure_task):
+    'Sets up Postgres + Citus cluster with the extensions in given order'
+    # extension testing supports runs only for single node setup
+    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(extension_setup, extension_install_tasks, extension_configure_task)
 
 @task
 @roles('master')
@@ -129,22 +137,56 @@ def total_memory_in_gb():
     return mem_gib
 
 @parallel
-def common_setup(build_citus_func, extension_install_tasks=[]):
+def common_setup(build_citus_func):
+    # make it ready to install a new postgres version
+    kill_postgres()
+    clean_postgres_build_dir()
+
+    # build and install postgres and citus versions
+    redhat_install_packages()
+    build_postgres()
+    build_citus_func()
+    
+    # create db directory and configure it
+    pg.create()
+    configure_database()
+    
+    # start db and create default db + citus extension
+    pg.start()
+    create_db()
+    create_citus()
+
+@parallel
+def extension_setup(extension_install_tasks, extension_configure_task):
+    # make it ready to install a new postgres version
+    kill_postgres()
+    clean_postgres_build_dir()
+
+    # build and install postgres and required extensions for the test
+    redhat_install_packages()
+    build_postgres()
+    build_extensions(extension_install_tasks)
+    
+    # create db directory and configure it
+    pg.create()
+    configure_database()
+    if extension_configure_task:
+        extension_configure_task.configure()
+    
+    # start db and create default db
+    pg.start()
+    create_db()
+
+def kill_postgres():
     with hide('stdout'):
         run('pkill -9 postgres || true')
 
+def clean_postgres_build_dir():
     prefix.check_for_pg_latest()
     # empty it but don't delete the link
     run('rm -rf {}/* || true'.format(config.PG_LATEST))
 
-    redhat_install_packages()
-    build_postgres()
-    build_citus_func()
-    build_extensions(extension_install_tasks)
-    pg.create()
-    configure_database(extension_install_tasks)
-    pg.start()
-
+def create_db():
     pg_latest = config.PG_LATEST
     with cd(pg_latest):
         while getattr(run('bin/pg_isready'), 'return_code') != 0:
@@ -152,6 +194,7 @@ def common_setup(build_citus_func, extension_install_tasks=[]):
 
         run('bin/createdb $(whoami)')
 
+def create_citus():
     with hide('stdout'):
         utils.psql('CREATE EXTENSION citus;')
 
@@ -253,41 +296,11 @@ def install_citus(core_count):
         run('make -s -j{core_count} install-all || make -s -j{core_count} install'.\
             format(core_count=core_count))
 
-def configure_database(extension_install_tasks):
+def configure_database():
     pg_latest = config.PG_LATEST
     with cd('{}/data'.format(pg_latest)):
-        # configure shared_preload_libraries
-        preload_string = get_preload_libs_string()
-        run('echo {} >> postgresql.conf'.format(preload_string))
-
-        # configure other pg options
+        run('echo "shared_preload_libraries = \'citus\'" >> postgresql.conf')
         run('echo "max_prepared_transactions = 100" >> postgresql.conf')
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
-
-        # configure extensions' options
-        for task in extension_install_tasks:
-            for conf_line in task.conf_lines:
-                run('echo {} >> postgresql.conf'.format(conf_line))
-
-def get_preload_libs_string(extension_install_tasks):
-    preloaded_libs = get_preloaded_libs(extension_install_tasks)
-
-    preload_line = "shared_preload_libraries = \'"
-    first_lib = True
-    for preloaded_lib in preloaded_libs:
-        if not first_lib:
-            preload_line.append("," + preloaded_lib)
-        preload_line.append(preloaded_lib)
-        first_lib = False
-    preload_line.append("\'")
-
-    return preload_line
-
-def get_preloaded_libs(extension_install_tasks):
-    preloaded_libs = []
-    for task in extension_install_tasks:
-        if task.preload:
-            preloaded_libs.append(task.name)
-    return preloaded_libs

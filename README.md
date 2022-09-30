@@ -590,7 +590,7 @@ fab run.pgbench_tests:scale_test_100_columns.ini
 On the coordinator node:
 
 ```bash
-# This will run default extension tests with PG=14.5 and Citus 11.1 release branch
+# This will run default extension tests with PG=14.5
 # Yes, that's all :) You can change settings in fabfile/extension_confs/extension_default.ini
 fab run.extension_tests
 

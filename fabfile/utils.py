@@ -54,6 +54,7 @@ def download_pg():
     return target_file
 
 def pg_contrib_dir():
+    version = config.PG_VERSION
     src_dir = os.path.join(config.PG_SOURCE_BALLS, 'postgresql-{}'.format(version))
     contrib_dir = os.path.join(src_dir, 'contrib')
     return contrib_dir
@@ -63,3 +64,15 @@ def pg_url_for_version(version):
 
 def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
+
+def get_preload_libs_string(preloaded_libs):
+    preload_line = "shared_preload_libraries = \'"
+    first_lib = True
+    for preloaded_lib in preloaded_libs:
+        if not first_lib:
+            preload_line = preload_line + ","
+        preload_line = preload_line + preloaded_lib
+        first_lib = False
+    preload_line = preload_line + "\'"
+
+    return preload_line

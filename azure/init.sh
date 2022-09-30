@@ -21,7 +21,7 @@ set -o pipefail
 curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 python get-pip.py
 
-yum install -y epel-release
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 # install git to clone the repository
 yum install -y git screen tmux htop
 

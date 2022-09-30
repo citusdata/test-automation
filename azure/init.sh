@@ -32,10 +32,25 @@ update-ca-trust -f
 # this is the username in our instances
 TARGET_USER=pguser
 
-#A set of disks to ignore from partitioning and formatting
-BLACKLIST="/dev/sda|/dev/sdb"
-DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
-read DEV __ <<< ${DEVS}
+# find data disk by filtering out the first unmounted block device of specified size with no partitions
+echo $(lsblk)
+DATA_DISK_SIZE=$6
+DATA_DISK_SIZE+=G
+disks_of_specified_size=($(lsblk --noheadings -o NAME,SIZE,TYPE | awk -v disksize=${DATA_DISK_SIZE} '{ if ($3=="disk" && $2==disksize) { print $1 } }'))
+DEV=""
+for disk in "${disks_of_specified_size[@]}"; do
+  disk_partition_count=$(lsblk --noheadings -o NAME,SIZE,TYPE | (grep ${disk} || true) | awk '{ if ($3=="part") { print $1 } }' | wc -l)
+  disk_unmounted=$(lsblk --noheadings -o NAME,MOUNTPOINT | (grep ${disk} || true) | awk '{ if ($2=="") { print $1 } }' | wc -l)
+  
+  if [[ ${disk_partition_count} -eq 0 && ${disk_unmounted} -eq 1 ]]; then
+    DEV=/dev/${disk}
+    break
+  fi
+done
+
+if [ "${DEV}" = "" ]; then
+  echo "Could not find data disk device!" && exit 1 
+fi
 
 # attach disk and mount it for data
 mkfs.ext4 -F ${DEV}

@@ -47,7 +47,7 @@ class Extension:
 
         repo_url = ''
         default_git_ref = ''
-        if contrib:
+        if not contrib:
             repo_url = config_parser.get(extension_name, 'repo_url')
             default_git_ref = config_parser.get(extension_name, 'default_git_ref')
 
@@ -76,7 +76,7 @@ class ExtensionTest:
     def parse_from_config(self, config_parser):
         test_name = self.test_name
 
-        dep_order = eval(config_parser.get(test_name, 'dep_order')).split(',')
+        dep_order = config_parser.get(test_name, 'dep_order').split(',')
         for dep in dep_order:
             dep_ext = Extension(dep)
             dep_ext.parse_from_config(config_parser)

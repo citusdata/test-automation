@@ -15,10 +15,10 @@
             "value": "Standard_E4s_v5"
         },
         "coordinatorDiskSizeGB": {
-            "value": 512
+            "value": 128
         },
         "workerDiskSizeGB": {
-            "value": 512
+            "value": 128
         }
     }
 }

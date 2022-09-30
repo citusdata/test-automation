@@ -143,6 +143,9 @@
             "apiVersion": "2017-10-01",
             "name": "[variables('storageAcctName')]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            ],
             "sku": {
                 "name": "Standard_LRS"
             },
@@ -150,7 +153,13 @@
             "properties": {
                 "networkAcls": {
                     "bypass": "AzureServices",
-                    "defaultAction": "Allow"
+                    "defaultAction": "Deny",
+                    "virtualNetworkRules": [
+                        {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
+                          "action": "Allow"
+                        }
+                    ]
                 },
                 "supportsHttpsTrafficOnly": false,
                 "encryption": {
@@ -229,7 +238,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vnetName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2016-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
@@ -247,7 +256,12 @@
                             "addressPrefix": "[variables('subnetPrefix')]",
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-                            }
+                            },
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage"
+                                }
+                            ]
                         }
                     }
                 ]
@@ -259,7 +273,7 @@
             "name": "[concat(parameters('clusterName'),'nic', copyindex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
             ],
@@ -269,7 +283,7 @@
                         "name": "[concat(parameters('clusterName'),'ip', copyindex())]",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), copyIndex())]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
@@ -391,9 +405,9 @@
                 "type": "CustomScript",
                 "typeHandlerVersion": "2.0",
                 "settings": {
-                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'))]",
+                    "commandToExecute": "[concat('sh init.sh ', copyIndex(), ' ', variables('numberOfInstances'), ' ', variables('storageAcctName'), ' ', listKeys(variables('storageAcctName'),'2017-10-01').keys[0].value, ' ', parameters('branchName'), ' ', if(equals(copyindex(),0), parameters('coordinatorDiskSizeGB'), parameters('workerDiskSizeGB')))]",
                     "fileUris": [
-                        "https://raw.githubusercontent.com/citusdata/test-automation/master/azure/init.sh"
+                        "[concat('https://raw.githubusercontent.com/citusdata/test-automation/', parameters('branchName'), '/azure/init.sh')]"
                     ]
                 }
             },

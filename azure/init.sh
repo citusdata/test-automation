@@ -21,6 +21,10 @@ set -o pipefail
 curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 python get-pip.py
 
+yum install -y epel-release
+# install git to clone the repository
+yum install -y git screen tmux htop
+
 # this is the username in our instances
 TARGET_USER=pguser
 
@@ -44,10 +48,6 @@ echo '${TARGET_USER}     ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 # we will use port 3456 to not hit security rule 103
 echo 'Port 3456' >> /etc/ssh/sshd_config
 echo 'Port 22' >> /etc/ssh/sshd_config
-
-#yum install -y epel-release
-# install git to clone the repository
-yum install -y git screen tmux htop
 
 # install & update ca certificates
 yum install -y ca-certificates

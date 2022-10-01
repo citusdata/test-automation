@@ -34,6 +34,7 @@ class Extension:
         self.repo_url = ""
         self.default_git_ref = ""
         self.preload = False
+        self.create = False
         self.configure = False
         self.relative_test_path = ""
 
@@ -43,6 +44,7 @@ class Extension:
         doc = config_parser.get(extension_name, 'doc')
         contrib = eval(config_parser.get(extension_name, 'contrib'))
         preload = eval(config_parser.get(extension_name, 'preload'))
+        create = eval(config_parser.get(extension_name, 'create'))
         configure = eval(config_parser.get(extension_name, 'configure'))
 
         repo_url = ''
@@ -58,6 +60,7 @@ class Extension:
         self.repo_url = repo_url
         self.default_git_ref = default_git_ref
         self.preload = preload
+        self.create = create
         self.configure = configure
         self.relative_test_path = relative_test_path
 
@@ -67,7 +70,7 @@ class ExtensionTest:
     '''
 
     def __init__(self, test_name, extension):
-        self.test_name = test_name  # the name of the task (fab [xxx])
+        self.test_name = test_name
         self.extension = extension
         self.conf_lines = []
         self.test_command = ""
@@ -91,7 +94,7 @@ class ExtensionTest:
         if self.extension.contrib:
             extension_path = contrib_path_for_extension(self.extension.name)
         else:
-            extension_path = extension_path_for_url(self.extension.contrib, self.extension.repo_url)
+            extension_path = extension_path_for_url(self.extension.repo_url)
         self.test_path = os.path.join(extension_path, self.extension.relative_test_path)
 
     def get_install_tasks(self):
@@ -104,22 +107,24 @@ class ExtensionTest:
     def get_configure_task(self):
         return ConfigureExtensionTest(self.dep_exts, self.conf_lines)
 
-    def load_depended_extensions(self):
+    def create_depended_extensions(self):
         # add --load-extension=deps to REGRESS_OPTS in Makefile
+        # that will cause pg_regress to create those extensions which should be already installed (and preloaded if necessary)
         with cd(self.test_path):
             for dep_ext in self.dep_exts:
-                if dep_ext.preload:
+                if dep_ext.create:
                     run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --load-extension={}' >> Makefile".format(dep_ext.name))
 
     def regress(self):
         # force drop contrib_regression or regression dbs if exists, some backend still use db, so drop db not works
-        utils.psql("DROP DATABASE IF EXISTS contrib_regression, regression WITH (FORCE);")
+        utils.psql("DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")
+        utils.psql("DROP DATABASE IF EXISTS regression WITH (FORCE);")
 
         # create result folder if not exists
         utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
         # load depended extensions
-        self.load_depended_extensions()
+        self.create_depended_extensions()
 
         # run tests with warn_only option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too.
@@ -150,12 +155,16 @@ class InstallExtensionTask(Task):
         self.repo_url = extension.repo_url
         self.default_git_ref = extension.default_git_ref
         self.preload = extension.preload
+        self.create = extension.create
         self.configure = extension.configure
         self.before_run_hook = kwargs.get('before_run_hook', None)
         self.post_install_hook = kwargs.get('post_install_hook', None)
 
         super(InstallExtensionTask, self).__init__()
 
+    def create_extension(self):
+        if self.create:
+            utils.psql('CREATE EXTENSION {};'.format(self.name))
 
     def run(self, *args):
         if self.before_run_hook:
@@ -165,9 +174,9 @@ class InstallExtensionTask(Task):
         if self.contrib:
             extension_path = contrib_path_for_extension(self.name)
         else:
-            extension_path = extension_path_for_url(self.contrib, self.repo_url)
+            extension_path = extension_path_for_url(self.repo_url)
 
-        if not contrib: # contrib extensions are already installed
+        if not self.contrib: # contrib extensions are already installed
             prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
             utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
 
@@ -211,7 +220,7 @@ class ConfigureExtensionTest:
             preload_string = utils.get_preload_libs_string(preloaded_dep_names)
             
             # modify shared_preload_libraries according to dep order given in the regression test's config
-            run('echo {} >> postgresql.conf'.format(preload_string))
+            run('echo "{}" >> postgresql.conf'.format(preload_string))
 
             # add conf options given in the regression test's config
             for option in self.conf_lines:

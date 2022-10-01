@@ -170,12 +170,12 @@ def extension_setup(extension_install_tasks, extension_configure_task):
     # create db directory and configure it
     pg.create()
     configure_database()
-    if extension_configure_task:
-        extension_configure_task.configure()
+    configure_extensions(extension_configure_task)
     
-    # start db and create default db
+    # start db and create default db and extensions after db starts
     pg.start()
     create_db()
+    create_extensions(extension_install_tasks)
 
 def kill_postgres():
     with hide('stdout'):
@@ -198,6 +198,10 @@ def create_citus():
     with hide('stdout'):
         utils.psql('CREATE EXTENSION citus;')
 
+def create_extensions(extension_install_tasks):
+    for extension_install_task in extension_install_tasks:
+        extension_install_task.create_extension()
+
 @roles('master')
 def add_workers():
     with cd('{}/data'.format(config.PG_LATEST)):
@@ -214,7 +218,7 @@ def redhat_install_packages():
     with hide('stdout'):
         sudo('yum install -q -y libxml2-devel libxslt-devel'
             ' openssl-devel pam-devel readline-devel libcurl-devel'
-            ' git libzstd-devel lz4-devel perl-IPC-Run')
+            ' git libzstd-devel lz4-devel perl-IPC-Run perl-Test-Simple')
 
 def build_postgres():
     'Installs postges'
@@ -304,3 +308,7 @@ def configure_database():
         run('echo "listen_addresses = \'*\'" >> postgresql.conf')
         run('echo "wal_level = \'logical\'" >> postgresql.conf')
         run('echo "host all all 10.192.0.0/16 trust" >> pg_hba.conf')
+
+def configure_extensions(extension_configure_task):
+    if extension_configure_task:
+        extension_configure_task.configure()

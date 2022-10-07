@@ -8,7 +8,7 @@ set -e
 ## Set mydir to the directory containing the script
 ## The ${var%pattern} format will remove the shortest match of
 ## pattern from the end of the string. Here, it will remove the
-## script's name,. leaving only the directory. 
+## script's name,. leaving only the directory.
 driverdir="${0%/*}"
 cd "${driverdir}"
 
@@ -40,7 +40,7 @@ branch_name=${branch_name:-HEAD}
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 export BRANCH=${branch_name}
 
-# get local public ip 
+# get local public ip
 local_public_ip=$(host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.com has" | awk '{print $4}')
 
 az deployment group create -g "${rg}" --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --parameters sshPublicKey="${public_key}" branchName="$BRANCH" git_username="${GIT_USERNAME}" git_token="${GIT_TOKEN}" localPublicIp="$local_public_ip"

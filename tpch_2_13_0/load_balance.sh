@@ -26,7 +26,7 @@ usage()
 ###
 # MAIN
 ###
-case $# in 
+case $# in
 0)	# no args, summarize usage and exit
 	usage
 	;;
@@ -47,7 +47,7 @@ case $# in
 esac
 # validate commands
 if [ ! -f "$TASKS" ]
-then 
+then
 	echo "ERROR: no list of tasks found"
 	exit
 fi

@@ -25,8 +25,8 @@ echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6Tb
 
 git clone https://github.com/citusdata/release-test-results.git
 
-git config --global user.email "citus-bot@microsoft.com" 
-git config --global user.name "citus bot" 
+git config --global user.email "citus-bot@microsoft.com"
+git config --global user.name "citus bot"
 
 now=$(date +"%m_%d_%Y_%s")
 
@@ -35,6 +35,6 @@ mv "${hammerdb_dir}"/results "${HOME}"/release-test-results/hammerdb/"${now}"
 cd "${HOME}"/release-test-results
 
 git checkout -b "${rg_name}"/"${now}"
-git add -A 
+git add -A
 git commit -m "add test results for hammerdb tests ${rg_name}"
 git push origin "${rg_name}"/"${now}"

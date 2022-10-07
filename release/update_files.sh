@@ -24,10 +24,10 @@ find . -type f -name "*.ini" |
 # replace all .ini config files:
 # postgres_citus_versions: [('<pg_version>', '<branch_name>')]
 # postgres_citus_versions: [('<new_pg_version>', '<new_branch1>')]
-find . -type f -name "*.ini" | 
+find . -type f -name "*.ini" |
     xargs sed -i "s@postgres_citus_versions: \[('[^,;]\+', '[^,;]\+')\]@postgres_citus_versions: \[('${new_pg_version}', '${new_branch1}')\]@g"
 # replace all .ini config files:
 # use_enterprise: <use_enterprise>
 # use_enterprise: <new_use_enterprise>
-find . -type f -name "*.ini" | 
+find . -type f -name "*.ini" |
     xargs sed -i "s@use_enterprise: [^,;]\+@use_enterprise: ${new_use_enterprise}@g"

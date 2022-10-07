@@ -16,7 +16,7 @@ echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6Tb
 
 git clone https://github.com/citusdata/test-automation.git
 
-git config --global user.email "citus-bot@microsoft.com" 
+git config --global user.email "citus-bot@microsoft.com"
 git config --global user.name "citus bot"
 
 # use the current second as id

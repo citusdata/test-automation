@@ -10,7 +10,7 @@ import subprocess
 from os.path import expanduser
 from threading import Thread
 from time import sleep
-import time 
+import time
 import datetime
 
 ch_queries = [
@@ -234,7 +234,7 @@ order by custdist desc, c_count desc LIMIT 10;
 -- Q14
 select    100.00 * sum(case when i_data like 'PR%' then ol_amount else 0 end) / (1+sum(ol_amount)) as promo_revenue
 from order_line, item
-where ol_i_id = i_id 
+where ol_i_id = i_id
     LIMIT 10;
 """,
 """
@@ -384,7 +384,7 @@ sent_query_amount = 0
 is_terminated = False
 file_suffix="0"
 
-RANDOM_SEED = 123 
+RANDOM_SEED = 123
 
 
 def save_pid_to_file():
@@ -410,7 +410,7 @@ def start_ch_thread(start_index):
         if return_code != 0:
              continue
         sent_query_amount += 1
-        
+
         cur_index += 1
         cur_index %= size
 
@@ -445,7 +445,7 @@ def terminate():
     global is_terminated
     global sent_query_amount
     global start_time_in_secs
-    
+
     end_time_in_secs = get_curtime_in_seconds()
 
     give_stats(sent_query_amount, end_time_in_secs - start_time_in_secs)
@@ -470,13 +470,13 @@ if __name__ == "__main__":
     coord_ip = sys.argv[2]
     initial_sleep_in_mins=int(sys.argv[3])
     file_suffix=sys.argv[4]
-    
+
     random.seed(RANDOM_SEED)
 
     all_start_indexes = [i for i in range(0, len(ch_queries))]
-    random.shuffle(all_start_indexes) 
+    random.shuffle(all_start_indexes)
     start_indexes = all_start_indexes[:thread_count]
-    
+
     save_pid_to_file()
     jobs = []
     for i in range(0, thread_count):
@@ -488,7 +488,7 @@ if __name__ == "__main__":
     start_time_in_secs = get_curtime_in_seconds()
     for j in jobs:
         j.start()
-        
+
     killer = GracefulKiller()
     while not killer.kill_now:
         time.sleep(10)

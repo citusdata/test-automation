@@ -146,11 +146,11 @@ def common_setup(build_citus_func):
     redhat_install_packages()
     build_postgres()
     build_citus_func()
-    
+
     # create db directory and configure it
     pg.create()
     configure_database()
-    
+
     # start db and create default db + citus extension
     pg.start()
     create_db()
@@ -166,12 +166,12 @@ def extension_setup(extension_install_tasks, extension_configure_task):
     redhat_install_packages()
     build_postgres()
     build_extensions(extension_install_tasks)
-    
+
     # create db directory and configure it
     pg.create()
     configure_database()
     configure_extensions(extension_configure_task)
-    
+
     # start db and create default db and extensions after db starts
     pg.start()
     create_db()

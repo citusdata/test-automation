@@ -19,7 +19,7 @@ export GIT_TOKEN=$7
 if [[ $(( NODE_COUNT - 1 )) == "$NODE_ID" ]]; then
    ./driver-init.sh "$BRANCH"
 else
-   ./init.sh "$NODE_ID" $(( NODE_COUNT - 1 )) "$AZURE_STORAGE_ACCOUNT" "$AZURE_STORAGE_KEY" "$BRANCH" 
+   ./init.sh "$NODE_ID" $(( NODE_COUNT - 1 )) "$AZURE_STORAGE_ACCOUNT" "$AZURE_STORAGE_KEY" "$BRANCH"
 fi
 
 ./cache_git_creds.sh

@@ -26,7 +26,7 @@ CH_THREAD_COUNT=1
 # tpcc doesn't start recording results while doing a rampup. So we should sleep for that long
 # in the analytical script as well so that they start recording around the same time.
 RAMPUP_TIME=3
-# DEFAULT_CH_RUNTIME_IN_SECS is used when tpcc part is disabled. If tpcc is disabled, this is 
+# DEFAULT_CH_RUNTIME_IN_SECS is used when tpcc part is disabled. If tpcc is disabled, this is
 # how long we will run the analytical queries in second.
 DEFAULT_CH_RUNTIME_IN_SECS=3600
 
@@ -57,14 +57,14 @@ psql -v "ON_ERROR_STOP=1" "${connection_string}" -f ch-benchmark-distribute.sql
 # psql -h ${coordinator_ip_address} -f tpcc-distribute.sql
 
 # RUN IF pg_storedprocs IS FALSE IN build.tcl
-# distribute functions in cluster 
+# distribute functions in cluster
 # psql -v "ON_ERROR_STOP=1" "${connection_string}" -f tpcc-distribute-funcs.sql
 
 # do vacuum to get more accurate results.
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f vacuum-ch.sql
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f vacuum-tpcc.sql
 
-# we always do a checkpoint before starting the benchmark so that the timing of it 
+# we always do a checkpoint before starting the benchmark so that the timing of it
 # doesn't ruin the results randomly.
 psql -v "ON_ERROR_STOP=1" "${connection_string}" -f do-checkpoint.sql
 
@@ -92,5 +92,5 @@ if [ "$is_ch" = true ] ; then
     sleep 30
 fi
 
-# save the total size of tables, this can be useful for 
+# save the total size of tables, this can be useful for
 psql "${connection_string}" -f tables-total-size.sql >> ./results/table_total_size.out

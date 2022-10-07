@@ -129,7 +129,7 @@ class ExtensionTest:
             with cd(self.test_path):
                 run(self.test_command)
 
-        # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'        
+        # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'
         self.rename_regression_diff()
 
     def rename_regression_diff(self):
@@ -209,7 +209,7 @@ class ConfigureExtensionTest:
             # only select if dep extension is chosen to be preloaded
             preloaded_dep_names = [dep_ext.name for dep_ext in self.dep_exts if dep_ext.preload]
             preload_string = utils.get_preload_libs_string(preloaded_dep_names)
-            
+
             # modify shared_preload_libraries according to dep order given in the regression test's config
             run('echo "{}" >> postgresql.conf'.format(preload_string))
 
@@ -271,4 +271,4 @@ def coordinator_to_metadata():
 def shards_on_coordinator():
     local_ip = utils.get_local_ip()
     utils.psql("SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
-        .format(local_ip, config.PORT))    
+        .format(local_ip, config.PORT))

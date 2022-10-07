@@ -105,14 +105,14 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
                                             re.search('tps = (.+?) \(including connections establishing\)', out_val).group(1)
                                         tps_excluding_connections = \
                                             re.search('tps = (.+?) \(excluding connections establishing\)', out_val).group(1)
-                                        results_file.write(", " + tps_excluding_connections)     
+                                        results_file.write(", " + tps_excluding_connections)
                                         results_file.write(", " + tps_including_connections)
-                                           
+
                                     else:
                                         tps_excluding_connections = \
                                             re.search('tps = (.+?) \(without initial connection time\)', out_val).group(1)
                                         results_file.write(", " + tps_excluding_connections)
-                                        results_file.write(", N\A")    
+                                        results_file.write(", N\A")
 
 
                                     results_file.write('\n')
@@ -264,7 +264,7 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
         results_file.write(out_val)
         results_file.write('\n')
 
-# If no citus valgrind logs exist results directory, then simply put valgrind_success 
+# If no citus valgrind logs exist results directory, then simply put valgrind_success
 # file under results directory.
 def valgrind_filter_put_results():
     'Filter valgrind test outputs, put success file if no citus related valgrind output'
@@ -272,13 +272,13 @@ def valgrind_filter_put_results():
     repo_path = config.settings[config.REPO_PATH]
 
     regression_test_path = os.path.join(repo_path, config.RELATIVE_REGRESS_PATH)
-    
+
     regression_diffs_path = os.path.join(regression_test_path, config.REGRESSION_DIFFS_FILE)
     valgrind_logs_path = os.path.join(regression_test_path, config.VALGRIND_LOGS_FILE)
-    
+
     citus_valgrind_logs_path = os.path.join(config.RESULTS_DIRECTORY, config.CITUS_RELATED_VALGRIND_LOG_FILE)
     success_file_path = os.path.join(config.RESULTS_DIRECTORY, config.VALGRIND_SUCCESS_FNAME)
-    
+
     trace_ids_tmp_file = ".trace_ids"
     trace_ids_path = os.path.join(regression_test_path, trace_ids_tmp_file)
 
@@ -289,22 +289,22 @@ def valgrind_filter_put_results():
     # filter the (possibly) citus-related outputs and put to results file if existz
 
     if os.path.isfile(valgrind_logs_path):
-        
+
         # get stack trace id that includes calls to citus
         run('cat {} | grep -i "citus" | awk \'{{ print $1 }}\' | uniq  > {}'.format(valgrind_logs_path, trace_ids_path))
 
-        if os.path.isfile(trace_ids_path) and os.path.getsize(trace_ids_path) > 0:            
+        if os.path.isfile(trace_ids_path) and os.path.getsize(trace_ids_path) > 0:
             # filter stack traces with stack trace ids that we found above (if any)
             run('while read line; do grep {} -e $line ; done < {} > {}'.format(
-                valgrind_logs_path, 
+                valgrind_logs_path,
                 trace_ids_path,
                 citus_valgrind_logs_path))
-        
+
         # cleanup
         run('rm {}'.format(trace_ids_path))
-    
+
     # if we have no citus-related valgrind outputs then just put an empty file named as `config.VALGRIND_SUCCESS_FNAME`
-    if not os.path.exists(citus_valgrind_logs_path):    
+    if not os.path.exists(citus_valgrind_logs_path):
         run('touch {}'.format(success_file_path))
 
 def valgrind_internal(valgrind_target):
@@ -312,7 +312,7 @@ def valgrind_internal(valgrind_target):
 
     # set citus path variable
     repo_path = config.settings[config.REPO_PATH]
-    
+
     use.valgrind()
     setup.valgrind()
 
@@ -342,6 +342,6 @@ def valgrind(*args):
     if len(args) != 1 or args[0] not in available_valgrind_targets:
         abort('Only a single argument for run.valgrind is available: {}'.
               format(', '.join(available_valgrind_targets)))
-    
+
     valgrind_target = args[0]
     valgrind_internal(valgrind_target)

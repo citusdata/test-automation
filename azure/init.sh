@@ -10,8 +10,8 @@ set -x
 # in redhat we need to enable default port for postgres
 # We don't exit on this command because if we are on centos, the firewall
 # might not be active, but this also enables switching to redhat easily.
-firewall-cmd --add-port=5432/tcp || true 
-firewall-cmd --add-port=3456/tcp || true 
+firewall-cmd --add-port=5432/tcp || true
+firewall-cmd --add-port=3456/tcp || true
 
 
 # fail in a pipeline if any of the commands fails
@@ -44,7 +44,7 @@ for disk in "${disks_of_specified_size[@]}"; do
   disk_partition_count=$(lsblk --noheadings -o NAME,TYPE | (grep ${disk} || true) | awk '{ if ($2=="part") { print $1 } }' | wc -l)
   # found if given disk is unmounted
   disk_unmounted=$(lsblk --noheadings -o NAME,MOUNTPOINT | (grep ${disk} || true) | awk '{ if ($2=="") { print $1 } }' | wc -l)
-  
+
   # if given disk has no partition and also unmounted, then this is our data disk(we found it)
   if [[ ${disk_partition_count} -eq 0 && ${disk_unmounted} -eq 1 ]]; then
     DEV=/dev/${disk}
@@ -53,7 +53,7 @@ for disk in "${disks_of_specified_size[@]}"; do
 done
 
 if [ "${DEV}" = "" ]; then
-  echo "Could not find data disk device!" && exit 1 
+  echo "Could not find data disk device!" && exit 1
 fi
 
 # attach disk and mount it for data

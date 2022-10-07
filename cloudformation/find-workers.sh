@@ -2,7 +2,7 @@
 
 if [ -z "$AWS_DEFAULT_REGION" ]; then
     export AWS_DEFAULT_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
-fi  
+fi
 
 if [ -z "$WORKER_AS_GROUP" ]; then
     WORKER_AS_GROUP=$(cat $HOME/worker-as-group.txt)

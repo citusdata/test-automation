@@ -29,10 +29,9 @@ class Extension:
 
     def __init__(self, name):
         self.name = name
-        self.__doc__ = ""
         self.contrib = False
         self.repo_url = ""
-        self.default_git_ref = ""
+        self.git_ref = ""
         self.preload = False
         self.create = False
         self.configure = False
@@ -41,24 +40,22 @@ class Extension:
     def parse_from_config(self, config_parser):
         extension_name = self.name
 
-        doc = config_parser.get(extension_name, 'doc')
         contrib = eval(config_parser.get(extension_name, 'contrib'))
         preload = eval(config_parser.get(extension_name, 'preload'))
         create = eval(config_parser.get(extension_name, 'create'))
         configure = eval(config_parser.get(extension_name, 'configure'))
 
         repo_url = ''
-        default_git_ref = ''
+        git_ref = ''
         if not contrib:
             repo_url = config_parser.get(extension_name, 'repo_url')
-            default_git_ref = config_parser.get(extension_name, 'default_git_ref')
+            git_ref = config_parser.get(extension_name, 'git_ref')
 
         relative_test_path = config_parser.get(extension_name, 'relative_test_path')
 
-        self.doc = doc
         self.contrib = contrib
         self.repo_url = repo_url
-        self.default_git_ref = default_git_ref
+        self.git_ref = git_ref
         self.preload = preload
         self.create = create
         self.configure = configure
@@ -138,7 +135,7 @@ class ExtensionTest:
     def rename_regression_diff(self):
         regression_diffs_path = os.path.join(self.test_path, config.REGRESSION_DIFFS_FILE)
         if os.path.isfile(regression_diffs_path):
-            extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_{}_'.format(self.test_name) + self.extension.name
+            extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_{}_{}_'.format(config.PG_VERSION, self.test_name) + self.extension.name
             with cd(config.RESULTS_DIRECTORY):
                 run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
 
@@ -149,11 +146,10 @@ class InstallExtensionTask(Task):
     '''
 
     def __init__(self, extension, **kwargs):
-        self.name = extension.name  # the name of the task (fab [xxx])
-        self.__doc__ = extension.doc  # the description which fab --list will list
+        self.name = extension.name
         self.contrib = extension.contrib
         self.repo_url = extension.repo_url
-        self.default_git_ref = extension.default_git_ref
+        self.git_ref = extension.git_ref
         self.preload = extension.preload
         self.create = extension.create
         self.configure = extension.configure
@@ -180,16 +176,11 @@ class InstallExtensionTask(Task):
             prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
             utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
 
-            if len(args) == 0:
-                git_ref = self.default_git_ref
-            else:
-                git_ref = args[0]
-
             utils.rmdir(extension_path, force=True) # force because git write-protects files
             run('git clone -q {} {}'.format(self.repo_url, extension_path))
 
             with cd(extension_path), path('{}/bin'.format(config.PG_LATEST)):
-                run('git checkout {}'.format(git_ref))
+                run('git checkout {}'.format(self.git_ref))
                 core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
 
                 # run configure if extension has that step

@@ -12,7 +12,7 @@ PG_LATEST = os.path.join(HOME_DIR, 'pg-latest')
 PG_SOURCE_BALLS = os.path.join(HOME_DIR, 'postgres-source')
 HOME_DIRECTORY = HOME_DIR
 RESULTS_DIRECTORY = os.path.join(HOME_DIR, 'results')
-CITUS_INSTALLATION = os.path.join(HOME_DIR, 'citus-installation')
+POSTGRES_INSTALLATION = os.path.join(HOME_DIR, 'postgres-installation')
 PORT = 5432
 RELATIVE_REGRESS_PATH = 'src/test/regress'
 

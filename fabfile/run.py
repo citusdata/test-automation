@@ -41,7 +41,7 @@ def regression():
 def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pgbench_confs/")
+    config_folder_path = os.path.join(config.HOME_DIR, config.TEST_REPO, "fabfile/pgbench_confs/")
     config_parser.read(config_folder_path + config_file)
 
 
@@ -175,7 +175,7 @@ def pgbench_tests(config_file='pgbench_default.ini', connectionURI=''):
 def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/tpch_confs/")
+    config_folder_path = os.path.join(config.HOME_DIR, config.TEST_REPO, "fabfile/tpch_confs/")
     config_parser.read(config_folder_path + config_file)
 
     for section in config_parser.sections():
@@ -205,7 +205,7 @@ def tpch_automate(config_file='tpch_default.ini', connectionURI=''):
 def extension_tests(config_file='extension_default.ini', connectionURI=''):
     config_parser = ConfigParser.ConfigParser()
 
-    config_folder_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/extension_confs/")
+    config_folder_path = os.path.join(config.HOME_DIR, config.TEST_REPO, "fabfile/extension_confs/")
     config_parser.read(config_folder_path + config_file)
 
     sections = config_parser.sections()
@@ -230,7 +230,7 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
 
 def get_extension_tests_from_config(extension_names, config_parser):
     extension_tests= []
-    test_count = eval(config_parser.get('test_cases', 'test_count'))
+    test_count = eval(config_parser.get('main', 'test_count'))
     for i in range(1, test_count+1):
         test_name = 'test-{}'.format(i)
         extension_name = config_parser.get(test_name, 'ext_to_test')

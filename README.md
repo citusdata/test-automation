@@ -587,6 +587,68 @@ fab run.pgbench_tests:scale_test_100_columns.ini
 
 ## <a name="extension"></a> Running Extension Tests
 
+You can execute a PG extension's regression tests with any combination of other extensions created in the database. The purpose of those tests is to figure out if any test fails due to having those extensions together. Currently we only support extensions whose tests can be run by pg_regress. We do not support any other extensions whose tests are run by some other tools. e.g. tap tests
+
+Here is the schema for main section:
+
+```
+[main]
+postgres_versions: [<string>]   specifies Postgres versions for which the test should be repeated
+extensions: [<string>]          specifies the extensions for which we give information
+test_count: <integer>           specifies total test scenarios which uses any extensions amongst the extension definitions
+
+
+[main]
+postgres_versions: ['14.5']
+extensions: ['citus', 'hll', 'topn', 'tdigest', 'auto_explain']
+test_count: 4
+```
+
+Here is the schema for an extension definition:
+
+```
+[<string>]                    specifies the extension name (that should be the same name with the extension name used in 'create extension <extension_name>;')
+contrib: <bool>               specifies if the extension exists in contrib folder under Postgres (we do not install if it is a contrib extension because it is bundled with Postgres)
+preload: <bool>               specifies if we should add the extension into shared_preload_libraries
+create: <bool>                specifies if we should create extension in database (for example: 'create extension auto_explain;' causes error because it does not add any object)
+configure: <bool>             specifies if the installation step has a configure step (i.e. ./configure)
+repo_url: <string>            specifies repo url for non-contrib extension
+git_ref: <string>             specifies repo branch name for non-contrib extension
+relative_test_path: <string>  specifies relative directory for which pg_regress should consider
+
+
+[tdigest]
+contrib: False
+preload: False
+create: True
+configure: False
+repo_url: https://github.com/tvondra/tdigest.git
+git_ref: v1.4.0
+relative_test_path: .
+```
+
+Here is the schema for a test case:
+
+```
+[test-<integer>]                  specifies the test name
+ext_to_test: <string>             specifies the extension to be tested       
+dep_order: <string>               specifies the shared_preload_libraries string order
+test_command: <string>            specifies the test command
+conf_string: <string>             specifies the postgres configurations to be used in the test
+
+
+[test-4]
+ext_to_test: citus
+dep_order: citus,auto_explain
+test_command: make check-vanilla
+conf_string: '''
+    auto_explain.log_min_duration=0
+    auto_explain.log_analyze=1
+    auto_explain.log_buffers=1
+    auto_explain.log_nested_statements=1
+    '''
+```
+
 On the coordinator node:
 
 ```bash

@@ -66,13 +66,8 @@ def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
 
 def get_preload_libs_string(preloaded_libs):
-    preload_line = "shared_preload_libraries = \'"
-    first_lib = True
-    for preloaded_lib in preloaded_libs:
-        if not first_lib:
-            preload_line = preload_line + ","
-        preload_line = preload_line + preloaded_lib
-        first_lib = False
-    preload_line = preload_line + "\'"
+    return "shared_preload_libraries = \'{}\'".format(",".join(preloaded_libs))
 
-    return preload_line
+def get_core_count(c):
+    core_count = eval(c.run('nproc').stdout.strip())
+    return core_count

@@ -51,8 +51,7 @@ CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azur
 
 # override numberOfWorkers param if it is extension testing
 if [ "$rg" == "citusbot_extension_test_resource_group" ]; then
-    CREATE_CLUSTER_COMMAND+=(--parameters)
-    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+    CREATE_CLUSTER_COMMAND+=(--parameters numberOfWorkers=0)
 fi
 
 # if VALGRIND_TEST variable is not exported, set it to 0
@@ -62,8 +61,7 @@ is_valgrind_test=${VALGRIND_TEST:=0}
 if [[ "$is_valgrind_test" != "0" ]]; then
     # be on the safe side, add "--parameters" before "numberOfWorkers" as the order
     # of the parameters in CREATE_CLUSTER_COMMAND may change
-    CREATE_CLUSTER_COMMAND+=(--parameters)
-    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+    CREATE_CLUSTER_COMMAND+=(--parameters numberOfWorkers=0)
 fi
 
 # run CREATE_CLUSTER_COMMAND

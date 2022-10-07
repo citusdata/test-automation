@@ -30,7 +30,7 @@ __all__ = ["basic_testing", "extension_testing", "tpch", "valgrind", "enterprise
 @roles('master')
 def basic_testing():
     'Sets up a no-frills Postgres+Citus cluster'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -40,14 +40,14 @@ def basic_testing():
 def extension_testing(extension_install_tasks, extension_configure_task):
     'Sets up Postgres + Citus cluster with the extensions in given order'
     # extension testing supports runs only for single node setup
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
     execute(extension_setup, extension_install_tasks, extension_configure_task)
 
 @task
 @roles('master')
 def tpch():
     'Just like basic_testing, but also includes some files useful for tpc-h'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
 
     execute(common_setup, build_citus)
     execute(add_workers)
@@ -68,14 +68,14 @@ def valgrind():
 
     # set build citus function
     build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
     execute(common_setup, build_citus_func)
 
 @task
 @roles('master')
 def enterprise():
     'Installs the enterprise version of Citus'
-    execute(prefix.ensure_pg_latest_exists, default=config.CITUS_INSTALLATION)
+    execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
 
     execute(common_setup, build_enterprise)
     execute(add_workers)

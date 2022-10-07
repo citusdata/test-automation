@@ -36,12 +36,16 @@ TARGET_USER=pguser
 echo $(lsblk)
 DATA_DISK_SIZE=$6
 DATA_DISK_SIZE+=G
+# found all disks of given data disk size
 disks_of_specified_size=($(lsblk --noheadings -o NAME,SIZE,TYPE | awk -v disksize=${DATA_DISK_SIZE} '{ if ($3=="disk" && $2==disksize) { print $1 } }'))
 DEV=""
 for disk in "${disks_of_specified_size[@]}"; do
-  disk_partition_count=$(lsblk --noheadings -o NAME,SIZE,TYPE | (grep ${disk} || true) | awk '{ if ($3=="part") { print $1 } }' | wc -l)
+  # found partition count for given disk
+  disk_partition_count=$(lsblk --noheadings -o NAME,TYPE | (grep ${disk} || true) | awk '{ if ($2=="part") { print $1 } }' | wc -l)
+  # found if given disk is unmounted
   disk_unmounted=$(lsblk --noheadings -o NAME,MOUNTPOINT | (grep ${disk} || true) | awk '{ if ($2=="") { print $1 } }' | wc -l)
   
+  # if given disk has no partition and also unmounted, then this is our data disk(we found it)
   if [[ ${disk_partition_count} -eq 0 && ${disk_unmounted} -eq 1 ]]; then
     DEV=/dev/${disk}
     break

@@ -7,7 +7,7 @@ import os.path
 import os
 import socket
 
-from fabric.api import run, cd
+from fabric.api import run, cd, abort
 from fabric.contrib.files import append, exists
 
 import config
@@ -26,9 +26,18 @@ def rmdir(path, force=False):
         run('rm {} -r {}'.format(flag, path))
 
 
-def psql(command, connectionURI=''):
+def psql(command='', filepath='', connectionURI=''):
+    if command == '' and filepath == '':
+        abort('psql needs at least one of the -c or -f options!')
+
     with cd(config.PG_LATEST):
-        return run('bin/psql {} -c "{}"'.format(connectionURI, command))
+        psql_command = 'bin/psql {} '.format(connectionURI)
+
+        if command != '':
+            psql_command += '-c "{}" '.format(command)
+        if filepath != '':
+            psql_command += '-f {} '.format(filepath)
+        return run(psql_command)
 
 
 def add_github_to_known_hosts():
@@ -68,6 +77,6 @@ def get_local_ip():
 def get_preload_libs_string(preloaded_libs):
     return "shared_preload_libraries = \'{}\'".format(",".join(preloaded_libs))
 
-def get_core_count(c):
-    core_count = eval(c.run('nproc').stdout.strip())
+def get_core_count():
+    core_count = eval(run('nproc'))
     return core_count

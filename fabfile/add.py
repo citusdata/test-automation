@@ -8,6 +8,7 @@ import utils
 import config
 import prefix
 import pg
+import extension_hooks
 
 __all__ = [
     'tpch', 'jdbc', 'coordinator_to_metadata', 'shards_on_coordinator'
@@ -36,6 +37,8 @@ class Extension:
         self.create = False
         self.configure = False
         self.relative_test_path = ""
+        self.conf_lines = []
+        self.post_create_hook = None
 
     def parse_from_config(self, config_parser):
         extension_name = self.name
@@ -53,6 +56,15 @@ class Extension:
 
         relative_test_path = config_parser.get(extension_name, 'relative_test_path')
 
+        conf_lines = []
+        if config_parser.has_option(extension_name, 'conf_string'):
+            conf_lines = eval(config_parser.get(extension_name, 'conf_string')).split()
+
+        post_create_hook = None
+        if config_parser.has_option(extension_name, 'post_create_hook'):
+            post_create_hook_name = config_parser.get(extension_name, 'post_create_hook')
+            post_create_hook = getattr(extension_hooks, post_create_hook_name)
+
         self.contrib = contrib
         self.repo_url = repo_url
         self.git_ref = git_ref
@@ -60,6 +72,8 @@ class Extension:
         self.create = create
         self.configure = configure
         self.relative_test_path = relative_test_path
+        self.conf_lines = conf_lines
+        self.post_create_hook = post_create_hook
 
 class ExtensionTest:
     '''
@@ -87,13 +101,6 @@ class ExtensionTest:
         if config_parser.has_option(test_name, 'conf_string'):
             self.conf_lines = eval(config_parser.get(test_name, 'conf_string')).split()
 
-        extension_path = ''
-        if self.extension.contrib:
-            extension_path = contrib_path_for_extension(self.extension.name)
-        else:
-            extension_path = extension_path_for_url(self.extension.repo_url)
-        self.test_path = os.path.join(extension_path, self.extension.relative_test_path)
-
     def get_install_tasks(self):
         extension_install_tasks = []
         for dept_ext in self.dep_exts:
@@ -104,24 +111,28 @@ class ExtensionTest:
     def get_configure_task(self):
         return ConfigureExtensionTest(self.dep_exts, self.conf_lines)
 
-    def create_depended_extensions(self):
-        # add --load-extension=deps to REGRESS_OPTS in Makefile
-        # that will cause pg_regress to create those extensions which should be already installed (and preloaded if necessary)
+    def use_existing_database(self):
+        # pg_regress will not drop and recreate database for testing. It will use the pguser default db which is already setup.
         with cd(self.test_path):
-            for dep_ext in self.dep_exts:
-                if dep_ext.create:
-                    run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --load-extension={}' >> Makefile".format(dep_ext.name))
+            run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --use-existing --dbname=pguser --user=pguser' >> Makefile")
+
+    def set_test_path(self):
+        extension_path = ''
+        if self.extension.contrib:
+            extension_path = contrib_path_for_extension(self.extension.name)
+        else:
+            extension_path = extension_path_for_url(self.extension.repo_url)
+        self.test_path = os.path.join(extension_path, self.extension.relative_test_path)
 
     def regress(self):
-        # force drop contrib_regression or regression dbs if exists, some backend still use db, so drop db not works
-        utils.psql("DROP DATABASE IF EXISTS contrib_regression WITH (FORCE);")
-        utils.psql("DROP DATABASE IF EXISTS regression WITH (FORCE);")
-
         # create result folder if not exists
         utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
-        # load depended extensions
-        self.create_depended_extensions()
+        # set test dir so that next steps can use it
+        self.set_test_path()
+
+        # some pg_regress options to use existing database instead of recreating it
+        self.use_existing_database()
 
         # run tests with warn_only option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too.
@@ -153,19 +164,23 @@ class InstallExtensionTask(Task):
         self.preload = extension.preload
         self.create = extension.create
         self.configure = extension.configure
-        self.before_run_hook = kwargs.get('before_run_hook', None)
-        self.post_install_hook = kwargs.get('post_install_hook', None)
+        self.post_create_hook = extension.post_create_hook
 
         super(InstallExtensionTask, self).__init__()
 
     def create_extension(self):
         if self.create:
-            utils.psql('CREATE EXTENSION {};'.format(self.name))
+            utils.psql('CREATE EXTENSION "{}";'.format(self.name))
+        if self.post_create_hook:
+            self.post_create_hook()
 
-    def run(self, *args):
-        if self.before_run_hook:
-            self.before_run_hook()
+    def get_unique_package_name(self):
+        if self.contrib:
+            return "{}-{}".format(self.name, config.PG_VERSION)
+        else:
+            return "{}-{}-{}".format(self.name, self.git_ref, config.PG_VERSION)
 
+    def run(self):
         extension_path = ''
         if self.contrib:
             extension_path = contrib_path_for_extension(self.name)
@@ -181,7 +196,7 @@ class InstallExtensionTask(Task):
 
             with cd(extension_path), path('{}/bin'.format(config.PG_LATEST)):
                 run('git checkout {}'.format(self.git_ref))
-                core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+                core_count = utils.get_core_count()
 
                 # run configure if extension has that step
                 if self.configure:
@@ -189,9 +204,6 @@ class InstallExtensionTask(Task):
 
                 # fallback to make install if make install-all does not exist
                 run('make -s -j{core_count} install-all || make -s -j{core_count} install'.format(core_count=core_count))
-
-        if self.post_install_hook:
-            self.post_install_hook()
 
 
 class ConfigureExtensionTest:
@@ -206,6 +218,11 @@ class ConfigureExtensionTest:
     def configure(self):
         pg_latest = config.PG_LATEST
         with cd('{}/data'.format(pg_latest)):
+            # add general conf options for the extension if it has any
+            for dep_ext in self.dep_exts:
+                for option in dep_ext.conf_lines:
+                    run('echo {} >> postgresql.conf'.format(option))
+
             # only select if dep extension is chosen to be preloaded
             preloaded_dep_names = [dep_ext.name for dep_ext in self.dep_exts if dep_ext.preload]
             preload_string = utils.get_preload_libs_string(preloaded_dep_names)
@@ -213,7 +230,7 @@ class ConfigureExtensionTest:
             # modify shared_preload_libraries according to dep order given in the regression test's config
             run('echo "{}" >> postgresql.conf'.format(preload_string))
 
-            # add conf options given in the regression test's config
+            # add conf options given in the regression test's config (maybe override general settings for the extensions)
             for option in self.conf_lines:
                 run('echo {} >> postgresql.conf'.format(option))
 
@@ -231,7 +248,7 @@ def tpch(**kwargs):
     partition_type = kwargs.get('partition-type', kwargs.get('partition_type', 'default'))
 
     # generate tpc-h data
-    tpch_path = '{}/tpch_2_13_0'.format(config.TESTS_REPO)
+    tpch_path = '{}/tpch_2_13_0'.format(config.TEST_REPO)
     with cd(tpch_path):
         run('make')
         run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))

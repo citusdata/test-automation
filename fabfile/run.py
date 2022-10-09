@@ -212,8 +212,7 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
     for section in sections:
         if section == 'main':
             pg_versions = eval(config_parser.get(section, 'postgres_versions'))
-            extension_names = eval(config_parser.get(section, 'extensions'))
-            extension_regress_tests = get_extension_tests_from_config(extension_names, config_parser)
+            extension_regress_tests = get_extension_tests_from_config(config_parser)
 
             for pg_version in pg_versions:
                 execute(use.postgres, pg_version)
@@ -221,14 +220,15 @@ def extension_tests(config_file='extension_default.ini', connectionURI=''):
                 # run each extension test scenario
                 for extension_regress_test in extension_regress_tests:
                     # we need to restart pg because we modify preload_shared_libraries
+                    ext_to_test = extension_regress_test.extension.name
                     extension_install_tasks = extension_regress_test.get_install_tasks()
                     configure_task = extension_regress_test.get_configure_task()
 
-                    setup.extension_testing(extension_install_tasks, configure_task)
+                    setup.extension_testing(ext_to_test, extension_install_tasks, configure_task)
                     extension_regress_test.regress()
                     execute(pg.stop)
 
-def get_extension_tests_from_config(extension_names, config_parser):
+def get_extension_tests_from_config(config_parser):
     extension_tests= []
     test_count = eval(config_parser.get('main', 'test_count'))
     for i in range(1, test_count+1):
@@ -253,7 +253,7 @@ def tpch_queries(query_info, connectionURI, pg_version, citus_version, config_fi
     results_file = open(path, 'a')
 
     psql = '{}/bin/psql'.format(config.PG_LATEST)
-    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.TESTS_REPO)
+    tpch_path = '{}/tpch_2_13_0/distributed_queries/'.format(config.TEST_REPO)
 
     for query_code, executor_type in query_info:
         executor_string = "set citus.task_executor_type to '{}'".format(executor_type)

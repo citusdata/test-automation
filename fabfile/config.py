@@ -5,7 +5,7 @@ IS_SSH_KEYS_USED ='is_ssh_keys_used'
 HOME_DIR = expanduser("~")
 
 CODE_DIRECTORY = os.path.join(HOME_DIR, 'code')
-TESTS_REPO = os.path.join(HOME_DIR, 'test-automation')
+TEST_REPO = os.path.join(HOME_DIR, 'test-automation')
 CITUS_REPO = os.path.join(HOME_DIR, 'citus')
 ENTERPRISE_REPO = os.path.join(HOME_DIR, 'citus-enterprise')
 PG_LATEST = os.path.join(HOME_DIR, 'pg-latest')

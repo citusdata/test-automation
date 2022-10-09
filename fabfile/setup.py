@@ -9,12 +9,13 @@ import os
 import math
 
 from fabric.api import (
-    env, cd, hide, roles, task, parallel, execute, run,
+    env, cd, hide, roles, task, execute, run,
     sudo, abort, local, lcd, path, put, warn
 )
 from fabric.decorators import runs_once
 from fabric.contrib.files import exists
 
+import cache
 import utils
 import config
 import ConfigParser
@@ -37,11 +38,11 @@ def basic_testing():
 
 @task
 @roles('master')
-def extension_testing(extension_install_tasks, extension_configure_task):
+def extension_testing(ext_to_test, extension_install_tasks, extension_configure_task):
     'Sets up Postgres + Citus cluster with the extensions in given order'
     # extension testing supports runs only for single node setup
     execute(prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
-    execute(extension_setup, extension_install_tasks, extension_configure_task)
+    execute(extension_setup, ext_to_test, extension_install_tasks, extension_configure_task)
 
 @task
 @roles('master')
@@ -105,7 +106,6 @@ def hammerdb(config_file='hammerdb.ini', driver_ip=''):
     execute(set_hammerdb_config, config_parser, driver_ip)
 
 @task
-@parallel
 def set_hammerdb_config(config_parser, driver_ip):
     total_mem_in_gb = total_memory_in_gb()
     mem_mib = total_mem_in_gb * 1024
@@ -136,7 +136,6 @@ def total_memory_in_gb():
     mem_gib = mem_bytes/(1024.**3)
     return mem_gib
 
-@parallel
 def common_setup(build_citus_func):
     # make it ready to install a new postgres version
     kill_postgres()
@@ -156,11 +155,10 @@ def common_setup(build_citus_func):
     create_db()
     create_citus()
 
-@parallel
-def extension_setup(extension_install_tasks, extension_configure_task):
+def extension_setup(ext_to_test, extension_install_tasks, extension_configure_task):
     # make it ready to install a new postgres version
     kill_postgres()
-    clean_postgres_build_dir()
+    clean_postgres_data_dir()
 
     # build and install postgres and required extensions for the test
     redhat_install_packages()
@@ -175,11 +173,16 @@ def extension_setup(extension_install_tasks, extension_configure_task):
     # start db and create default db and extensions after db starts
     pg.start()
     create_db()
-    create_extensions(extension_install_tasks)
+    create_extensions(ext_to_test, extension_install_tasks)
 
 def kill_postgres():
     with hide('stdout'):
         run('pkill -9 postgres || true')
+
+def clean_postgres_data_dir():
+    prefix.check_for_pg_latest()
+    # delete data dir
+    run('rm -rf {}/data || true'.format(config.PG_LATEST))
 
 def clean_postgres_build_dir():
     prefix.check_for_pg_latest()
@@ -198,9 +201,10 @@ def create_citus():
     with hide('stdout'):
         utils.psql('CREATE EXTENSION citus;')
 
-def create_extensions(extension_install_tasks):
+def create_extensions(ext_to_test, extension_install_tasks):
     for extension_install_task in extension_install_tasks:
-        extension_install_task.create_extension()
+        if extension_install_task.name != ext_to_test: # ext_to_test will be created by extension's test file
+            extension_install_task.create_extension()
 
 @roles('master')
 def add_workers():
@@ -220,8 +224,23 @@ def redhat_install_packages():
             ' openssl-devel pam-devel readline-devel libcurl-devel'
             ' git libzstd-devel lz4-devel perl-IPC-Run perl-Test-Simple')
 
+# cache to not build and install the same version of postgres or extensions
+# we will only reinstall pg if its version changes.
+# we will only reinstall an extension if its git_ref or pg-version changes
+_build_cache = cache.Cache()
+
+def _pg_package_name():
+    version = config.PG_VERSION
+    pg_name = 'pg-{}'.format(version)
+    return pg_name
+
 def build_postgres():
-    'Installs postges'
+    'Installs postgres'
+
+    package_name = _pg_package_name()
+    if _build_cache.search_build_cache(package_name): # already installed current version
+        return
+    _build_cache.insert_build_cache(package_name)
 
     # Give the postgres source to the remote nodes
     sourceball_loc = utils.download_pg()
@@ -242,7 +261,7 @@ def build_postgres():
             with hide('stdout'):
                 run('./configure --prefix={} {}'.format(pg_latest, flags))
 
-            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+            core_count = utils.get_core_count()
 
             with hide('stdout'):
                 run('make -s -j{} install'.format(core_count))
@@ -253,8 +272,11 @@ def build_postgres():
 
 def build_extensions(extension_install_tasks):
     for extension_install_task in extension_install_tasks:
-        # we already execute on all workers, so do NOT use execute(extension_install_task)
-        extension_install_task.run()
+        package_name = extension_install_task.get_unique_package_name()
+        if not _build_cache.search_build_cache(package_name):
+            # we already execute on all workers, so do NOT use execute(extension_install_task)
+            extension_install_task.run()
+            _build_cache.insert_build_cache(package_name)
 
 def build_citus():
     repo = config.CITUS_REPO
@@ -270,7 +292,7 @@ def build_citus():
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
         with hide('stdout', 'running'):
-            core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+            core_count = utils.get_core_count()
 
         install_citus(core_count)
 
@@ -290,7 +312,7 @@ def build_enterprise():
         with hide('stdout'):
             run('PG_CONFIG={}/bin/pg_config ./configure'.format(pg_latest))
 
-        core_count = run('cat /proc/cpuinfo | grep "core id" | wc -l')
+        core_count = utils.get_core_count()
 
         install_citus(core_count)
 

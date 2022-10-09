@@ -45,7 +45,7 @@ for disk in "${disks_of_specified_size[@]}"; do
   # found if given disk is unmounted
   disk_unmounted=$(lsblk --noheadings -o NAME,MOUNTPOINT | (grep ${disk} || true) | awk '{ if ($2=="") { print $1 } }' | wc -l)
 
-  # if given disk has no partition and also unmounted, then this is our data disk(we found it)
+  # if given disk has no partition and it is also unmounted, then this is our data disk (we found it)
   if [[ ${disk_partition_count} -eq 0 && ${disk_unmounted} -eq 1 ]]; then
     DEV=/dev/${disk}
     break

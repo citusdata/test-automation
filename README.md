@@ -614,7 +614,9 @@ create: <bool>                specifies if we should create extension in databas
 configure: <bool>             specifies if the installation step has a configure step (i.e. ./configure)
 repo_url: <string>            specifies repo url for non-contrib extension
 git_ref: <string>             specifies repo branch name for non-contrib extension
-relative_test_path: <string>  specifies relative directory for which pg_regress should consider
+relative_test_path: <string>  specifies relative directory in which pg_regress will run the tests
+conf_string: <string>         specifies optional postgres.conf options
+post_create_hook: <string>    specifies optional method name to be called after the extension is created. You should implement the hook in fabfile/extension_hooks.py.
 
 
 [tdigest]
@@ -670,6 +672,10 @@ On the coordinator node:
 # Don't forget to escape `=` at the end of your connection string
 fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
 ```
+
+**Important Note**
+- If an extension is a contrib module, then any url and branch will be discarded. If it is not a contrib module, url and branch is required.
+- `conf_string` is optional both for extension and test case definitions.
 
 ## <a name="tpch"></a> Running TPC-H Tests
 

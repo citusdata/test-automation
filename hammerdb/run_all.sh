@@ -29,7 +29,7 @@ echo "\pset pager off" >> ~/.psqlrc
 # for each hammerdb config, run the tests and store the results
 for config_file in "${HOME}/test-automation/fabfile/hammerdb_confs"/*
 do
-  # get the file name from absolute path 
+  # get the file name from absolute path
   config_file=$(basename "$config_file")
 
   ssh -o "StrictHostKeyChecking no" -A "${coordinator_private_ip}" "source ~/.bash_profile;fab --show=debug setup.hammerdb:${config_file},driver_ip=${driver_private_ip}"

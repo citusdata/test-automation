@@ -20,8 +20,8 @@ echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6Tb
 
 git clone git@github.com:citusdata/release-test-results.git "${HOME}"/release-test-results
 
-git config --global user.email "citus-bot@microsoft.com" 
-git config --global user.name "citus bot" 
+git config --global user.email "citus-bot@microsoft.com"
+git config --global user.name "citus bot"
 
 now=$(date +"%m_%d_%Y_%s")
 
@@ -32,6 +32,6 @@ cd "${HOME}"/release-test-results
 commit_message="add test results"
 
 git checkout -b "${branch_name}/${now}"
-git add -A 
+git add -A
 git commit -m "$commit_message"
 git push origin "${branch_name}/${now}"

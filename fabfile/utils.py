@@ -7,7 +7,7 @@ import os.path
 import os
 import socket
 
-from fabric.api import run, cd
+from fabric.api import run, cd, abort
 from fabric.contrib.files import append, exists
 
 import config
@@ -26,9 +26,18 @@ def rmdir(path, force=False):
         run('rm {} -r {}'.format(flag, path))
 
 
-def psql(command, connectionURI=''):
+def psql(command='', filepath='', connectionURI=''):
+    if command == '' and filepath == '':
+        abort('psql needs at least one of the -c or -f options!')
+
     with cd(config.PG_LATEST):
-        return run('bin/psql {} -c "{}"'.format(connectionURI, command))
+        psql_command = 'bin/psql {} '.format(connectionURI)
+
+        if command != '':
+            psql_command += '-c "{}" '.format(command)
+        if filepath != '':
+            psql_command += '-f {} '.format(filepath)
+        return run(psql_command)
 
 
 def add_github_to_known_hosts():
@@ -53,9 +62,21 @@ def download_pg():
     run('wget -O {} --no-verbose {}'.format(target_file, url))
     return target_file
 
+def pg_contrib_dir():
+    version = config.PG_VERSION
+    src_dir = os.path.join(config.PG_SOURCE_BALLS, 'postgresql-{}'.format(version))
+    contrib_dir = os.path.join(src_dir, 'contrib')
+    return contrib_dir
 
 def pg_url_for_version(version):
     return 'https://ftp.postgresql.org/pub/source/v{0}/postgresql-{0}.tar.bz2'.format(version)
 
 def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
+
+def get_preload_libs_string(preloaded_libs):
+    return "shared_preload_libraries = \'{}\'".format(",".join(preloaded_libs))
+
+def get_core_count():
+    core_count = eval(run('nproc'))
+    return core_count

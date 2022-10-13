@@ -5,7 +5,17 @@ import prefix
 from utils import psql
 
 
-__all__ = ['start', 'stop', 'restart', 'read_config', 'set_config', 'set_config_str']
+__all__ = ['create', 'start', 'stop', 'restart', 'read_config', 'set_config', 'set_config_str']
+
+
+@task
+@parallel
+def create():
+    'Create the database in pg-latest'
+    prefix.check_for_pg_latest()
+
+    with cd(config.PG_LATEST):
+        run('bin/initdb -D data')
 
 
 @task

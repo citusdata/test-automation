@@ -15,7 +15,7 @@ project_directory="$(realpath "${project_directory}")"
 # the user that will be used to run citus_dev
 PG_USER=pguser
 useradd $PG_USER
-  
+
 # give ownership of the project directory to the pguser
 chown $PG_USER $project_directory
 
@@ -91,7 +91,7 @@ cd ..
 # ---
 # note that "append" has been commented out from the distribution table types since the
 # \COPY command for append distributed tables requires a append_to_shard :shardid option
-# "append" can be uncommented back if that option is no longer required. 
+# "append" can be uncommented back if that option is no longer required.
 for type in hash #append
 do
   for executor in real-time task-tracker adaptive

@@ -25,6 +25,7 @@ required for testing citus.
   * [Basic Cluster Setup](#basic-cluster-setup)
   * [Running PgBench Tests](#pgbench)
   * [Running Scale Tests](#scale)
+  * [Running Extension Tests](#extension)
   * [Running PgBench Tests Against Hyperscale (Citus)](#pgbench-cloud)
   * [Running TPC-H Tests](#tpch)
   * [Running TPC-H Tests Against Hyperscale (Citus)](#tpch-cloud)
@@ -361,7 +362,7 @@ be lifted in the future.
 
 **Depending of the tests you trigger here, you can block at most 3 jobs slots in circleci for around 3 hours. Choose wisely the time you want to run the tests to not block development**
 
-If you want, you can run trigger a job which can run pgbench, scale and tpch tests. What the job does is:
+If you want, you can run trigger a job which can run pgbench, scale, tpch and extension tests. What the job does is:
 
 * It creates a cluster with the test resource group name
 * It connects to the coordinator
@@ -374,6 +375,7 @@ There is a separate job for each test and you can run any combinations of them. 
 * If the branch has a prefix `scale/`, then scale job will be triggered.
 * If the branch has a prefix `tpch/`, then tpch job will be triggered.
 * If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
+* If the branch has a prefix `extension/`, then extension job will be triggered. 
 
 You should push your branch to Github so that the circleci job will be triggerred.
 
@@ -401,12 +403,14 @@ You can change all the settings in these files, the config files for tests are l
 * pgbench: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
 * scale: https://github.com/citusdata/test-automation/tree/master/fabfile/pgbench_confs
 * tpch: https://github.com/citusdata/test-automation/tree/master/fabfile/tpch_confs
+* extension: https://github.com/citusdata/test-automation/tree/master/fabfile/extension_confs
 
 By default, the following tests will be run for each test:
 
 * pgbench: `pgbench_default.ini` and `pgbench_default_without_transaction.ini`
 * scale: `scale_test.ini`
 * tpch: `tpch_default.ini`
+* extension: `extension_default.ini`
 
 If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
 
@@ -581,6 +585,83 @@ fab run.pgbench_tests:scale_test_foreign.ini
 fab run.pgbench_tests:scale_test_100_columns.ini
 ```
 
+## <a name="extension"></a> Running Extension Tests
+
+You can execute a PG extension's regression tests with any combination of other extensions created in the database. The purpose of those tests is to figure out if any test fails due to having those extensions together. Currently we only support extensions whose tests can be run by pg_regress. We do not support any other extensions whose tests are run by some other tools. e.g. tap tests
+
+Here is the schema for main section:
+
+```
+[main]
+postgres_versions: [<string>]   specifies Postgres versions for which the test should be repeated
+extensions: [<string>]          specifies the extensions for which we give information
+test_count: <integer>           specifies total test scenarios which uses any extensions amongst the extension definitions
+
+
+[main]
+postgres_versions: ['14.5']
+extensions: ['citus', 'hll', 'topn', 'tdigest', 'auto_explain']
+test_count: 4
+```
+
+Here is the schema for an extension definition:
+
+```
+[<string>]                    specifies the extension name (that should be the same name with the extension name used in 'create extension <extension_name>;')
+contrib: <bool>               specifies if the extension exists in contrib folder under Postgres (we do not install if it is a contrib extension because it is bundled with Postgres)
+preload: <bool>               specifies if we should add the extension into shared_preload_libraries
+create: <bool>                specifies if we should create extension in database (for example: 'create extension auto_explain;' causes error because it does not add any object)
+configure: <bool>             specifies if the installation step has a configure step (i.e. ./configure)
+repo_url: <string>            specifies repo url for non-contrib extension
+git_ref: <string>             specifies repo branch name for non-contrib extension
+relative_test_path: <string>  specifies relative directory in which pg_regress will run the tests
+conf_string: <string>         specifies optional postgres.conf options
+post_create_hook: <string>    specifies optional method name to be called after the extension is created. You should implement the hook in fabfile/extension_hooks.py.
+
+
+[tdigest]
+contrib: False
+preload: False
+create: True
+configure: False
+repo_url: https://github.com/tvondra/tdigest.git
+git_ref: v1.4.0
+relative_test_path: .
+```
+
+Here is the schema for a test case:
+
+```
+[test-<integer>]                  specifies the test name
+ext_to_test: <string>             specifies the extension to be tested       
+dep_order: <string>               specifies the shared_preload_libraries string order
+test_command: <string>            specifies the test command
+conf_string: <string>             specifies the postgres configurations to be used in the test
+
+
+[test-4]
+ext_to_test: citus
+dep_order: citus,auto_explain
+test_command: make check-vanilla
+conf_string: '''
+    auto_explain.log_min_duration=0
+    auto_explain.log_analyze=1
+    auto_explain.log_buffers=1
+    auto_explain.log_nested_statements=1
+    '''
+```
+
+On the coordinator node:
+
+```bash
+# This will run default extension tests with PG=14.5
+# Yes, that's all :) You can change settings in fabfile/extension_confs/extension_default.ini
+fab run.extension_tests
+
+# It's possible to provide another configuration file for tests
+fab run.extension_tests:[other_config.ini]
+```
+
 ## <a name="pgbench-cloud"></a> Running PgBench Tests Against Hyperscale (Citus)
 
 On the coordinator node:
@@ -591,6 +672,10 @@ On the coordinator node:
 # Don't forget to escape `=` at the end of your connection string
 fab run.pgbench_tests:pgbench_cloud.ini,connectionURI='postgres://citus:HJ3iS98CGTOBkwMgXM-RZQ@c.fs4qawhjftbgo7c4f7x3x7ifdpe.db.citusdata.com:5432/citus?sslmode\=require'
 ```
+
+**Important Note**
+- If an extension is a contrib module, then any url and branch will be discarded. If it is not a contrib module, url and branch is required.
+- `conf_string` is optional both for extension and test case definitions.
 
 ## <a name="tpch"></a> Running TPC-H Tests
 

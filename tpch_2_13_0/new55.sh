@@ -20,12 +20,12 @@ export DSS_PATH
 
 # parse command line
 case $# in
-	3)	
+	3)
 		PROCS=$3
 		DOP=$2
 		SF=$1
 		;;
-	2)	
+	2)
 		DOP=$2
 		SF=$1
 		;;

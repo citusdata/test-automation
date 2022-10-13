@@ -18,7 +18,7 @@ def set_prefix(prefix):
 
     if not os.path.isabs(prefix):
         abort('{} is not an absolute path'.format(prefix))
-        
+
     latest = config.PG_LATEST
 
     # -f to overwrite any existing links

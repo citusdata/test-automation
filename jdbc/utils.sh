@@ -15,7 +15,7 @@ function install_pg_with_version()
     pg_version=$1
     pg_name=""postgresql-$pg_version""
     install_flags=${2:-""}
-    
+
     wget -O "$pg_name.tar.gz" "https://ftp.postgresql.org/pub/source/v$pg_version/$pg_name.tar.gz"
     tar -xvzf "$pg_name.tar.gz"
     cd $pg_name
@@ -24,7 +24,7 @@ function install_pg_with_version()
     make -sj $(nproc) install
 
     cd contrib
-    make -s install    
+    make -s install
 
     # reset to starting dir
     cd ../..
@@ -49,7 +49,7 @@ function create_test_cluster()
     pip3 install -r requirements.txt
 
     CITUS_DEV=$current_dir/tools/citus_dev/citus_dev
-    
+
     su - $PG_USER -c "cd $current_dir && PATH=$PATH $CITUS_DEV make citus-cluster"
 
     COOR_PORT=9700

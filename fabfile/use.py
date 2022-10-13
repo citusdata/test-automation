@@ -98,4 +98,3 @@ def debug_mode(*args):
 @task
 def valgrind(*args):
     config.PG_CONFIGURE_FLAGS.append('--with-icu --enable-cassert --enable-debug CFLAGS="-ggdb -Og -DUSE_VALGRIND"')
-    

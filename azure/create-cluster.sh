@@ -8,7 +8,7 @@ set -e
 ## Set mydir to the directory containing the script
 ## The ${var%pattern} format will remove the shortest match of
 ## pattern from the end of the string. Here, it will remove the
-## script's name,. leaving only the directory. 
+## script's name,. leaving only the directory.
 azuredir="${0%/*}"
 cd ${azuredir}
 
@@ -42,12 +42,17 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 current_branch_name=$(git branch --show-current)
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
 
-# get local public ip 
-local_public_ip=$(host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.com has" | awk '{print $4}')
+# get local public ip
+local_public_ip=$(curl ifconfig.me)
 
 # below is the default create cluster command
 CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
  --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
+
+# override numberOfWorkers param if it is extension testing
+if [ "$rg" == "citusbot_extension_test_resource_group" ]; then
+    CREATE_CLUSTER_COMMAND+=(--parameters numberOfWorkers=0)
+fi
 
 # if VALGRIND_TEST variable is not exported, set it to 0
 is_valgrind_test=${VALGRIND_TEST:=0}
@@ -56,8 +61,7 @@ is_valgrind_test=${VALGRIND_TEST:=0}
 if [[ "$is_valgrind_test" != "0" ]]; then
     # be on the safe side, add "--parameters" before "numberOfWorkers" as the order
     # of the parameters in CREATE_CLUSTER_COMMAND may change
-    CREATE_CLUSTER_COMMAND+=(--parameters)
-    CREATE_CLUSTER_COMMAND+=(numberOfWorkers=0)
+    CREATE_CLUSTER_COMMAND+=(--parameters numberOfWorkers=0)
 fi
 
 # run CREATE_CLUSTER_COMMAND
@@ -69,7 +73,7 @@ echo execution time was `expr $end_time - $start_time` s.
 
 connection_string=$(az deployment group show -g ${rg} -n azuredeploy --query properties.outputs.ssh.value)
 
-# remove the quotes 
+# remove the quotes
 connection_string=$(echo ${connection_string} | cut -d "\"" -f 2)
 
 echo "run './connect.sh' to connect to the coordinator, or ALTERNATIVELY RUN THE FOLLOWING:"

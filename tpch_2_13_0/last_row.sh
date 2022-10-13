@@ -43,7 +43,7 @@ DSS_PATH=$DSS_PATH/$SF
 export DSS_PATH
 
 # set the other args
-case $t in 
+case $t in
 	n) f="nation"; DOP=1;;	# special case for tiny table
 	r) f="region"; DOP=1;;	# special case for tiny table
 	c) f="customer";;
@@ -65,7 +65,7 @@ mknod $PIPE p
 # generate data into it
 ./dbgen -q -f -s $SF -T $t -S $DOP -C $DOP &
 # assure that data is being written to the pipe
-sleep 30 
+sleep 30
 # read the last row from the pipe
 tail -1 $PIPE > $f.last_row.$SF.$DOP &
 wait

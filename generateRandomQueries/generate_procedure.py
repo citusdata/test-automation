@@ -53,7 +53,7 @@ QUERIES = [
     "PERFORM a FROM {} WHERE a = id GROUP BY a ORDER BY a;",
     "PERFORM avg(b) FROM {} WHERE a = id GROUP BY a;",
     "PERFORM count(*) FROM {} WHERE a = id AND 1=0;"
-    
+
 ]
 
 
@@ -62,7 +62,7 @@ def generate_tables(table_count, file):
     for i in range(0, table_count):
         cur_table_tame = "{}_{}".format(TABLE_PREFIX, str(i))
         table_names.append(cur_table_tame)
-    
+
     for table_name in table_names:
         create_table_sql = CREATE_TABLE.format(table_name)
         distribute_table_sql = DISTRIBUTE_TABLE.format(table_name)
@@ -77,9 +77,9 @@ def generate_tables(table_count, file):
         table_size = random.randint(MIN_TABLE_ROWS, MAX_TABLE_ROWS)
         insert_sql = INSERT_INTO_TABLE.format(table_name, table_size)
         write_to_newline(file, insert_sql)
-        #psql(coordinator_port, insert_sql)    
+        #psql(coordinator_port, insert_sql)
     write_to_newline(file, "")
-    return table_names    
+    return table_names
 
 def write_to_newline(file, line):
     file.write(line)
@@ -112,7 +112,7 @@ def write_settings(file):
     write_to_newline(file, SYNC_METADA_SQL)
     for setting in SETTINGS:
         write_to_newline(file, SETTING_STRING.format(setting))
-    write_to_newline(file, "")    
+    write_to_newline(file, "")
 
 def write_create_functions(procedure_count, file):
     for i in range(0, procedure_count):

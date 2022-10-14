@@ -7,7 +7,6 @@ HOME_DIR = expanduser("~")
 CODE_DIRECTORY = os.path.join(HOME_DIR, 'code')
 TEST_REPO = os.path.join(HOME_DIR, 'test-automation')
 CITUS_REPO = os.path.join(HOME_DIR, 'citus')
-ENTERPRISE_REPO = os.path.join(HOME_DIR, 'citus-enterprise')
 PG_LATEST = os.path.join(HOME_DIR, 'pg-latest')
 PG_SOURCE_BALLS = os.path.join(HOME_DIR, 'postgres-source')
 HOME_DIRECTORY = HOME_DIR

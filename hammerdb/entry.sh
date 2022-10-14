@@ -14,15 +14,13 @@ export AZURE_STORAGE_KEY=$4
 export BRANCH=$5
 export GIT_USERNAME=$6
 export GIT_TOKEN=$7
+export DATA_DISK_SIZE=$8
 
 # driver node is the last node.
 if [[ $(( NODE_COUNT - 1 )) == "$NODE_ID" ]]; then
-   ./driver-init.sh "$BRANCH"
+   ./driver-init.sh "$BRANCH" "$DATA_DISK_SIZE"
 else
-   ./init.sh "$NODE_ID" $(( NODE_COUNT - 1 )) "$AZURE_STORAGE_ACCOUNT" "$AZURE_STORAGE_KEY" "$BRANCH"
+   ./init.sh "$NODE_ID" $(( NODE_COUNT - 1 )) "$AZURE_STORAGE_ACCOUNT" "$AZURE_STORAGE_KEY" "$BRANCH" "$DATA_DISK_SIZE"
 fi
 
 ./cache_git_creds.sh
-
-
-

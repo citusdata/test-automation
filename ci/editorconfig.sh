@@ -9,7 +9,7 @@ for f in $(git ls-tree -r HEAD --name-only); do
     # only process files with extensions sh, py or azuredeploy
     if [ "$f" != "${f%.sh}" ]  ||
         [ "$f" != "${f%.py}" ] ||
-        [ "$f" != "${f%.azuredeploy%}" ]
+        [ "$f" != "${f%azuredeploy*.json}" ]
     then
         # Trim trailing whitespace
         sed -e 's/[[:space:]]*$//' -i "./$f"

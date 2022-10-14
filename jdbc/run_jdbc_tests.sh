@@ -49,13 +49,7 @@ install_pg_with_version $pg_version "--with-openssl"
 
 # get the citus repo
 citus_branch=$(cat $script_directory/jdbc_config.json | jq '.citus_branch' | remove_string_quotations)
-use_enterprise=$(cat $script_directory/jdbc_config.json | jq '.use_enterprise')
-
-if [ "$use_enterprise" == "true" ]; then
-  git clone --branch $citus_branch git@github.com:citusdata/citus-enterprise.git citus
-else
-  git clone --branch $citus_branch git@github.com:citusdata/citus.git citus
-fi
+git clone --branch $citus_branch git@github.com:citusdata/citus.git citus
 
 cd citus
 echo $PG_BIN_DIR

@@ -11,7 +11,6 @@ set -x
 new_branch1=release-9.3
 new_branch2=release-9.2
 new_pg_version=12.2
-new_use_enterprise=on
 ## VARIABLES ##
 
 releasedir="${0%/*}"
@@ -26,8 +25,3 @@ find . -type f -name "*.ini" |
 # postgres_citus_versions: [('<new_pg_version>', '<new_branch1>')]
 find . -type f -name "*.ini" |
     xargs sed -i "s@postgres_citus_versions: \[('[^,;]\+', '[^,;]\+')\]@postgres_citus_versions: \[('${new_pg_version}', '${new_branch1}')\]@g"
-# replace all .ini config files:
-# use_enterprise: <use_enterprise>
-# use_enterprise: <new_use_enterprise>
-find . -type f -name "*.ini" |
-    xargs sed -i "s@use_enterprise: [^,;]\+@use_enterprise: ${new_use_enterprise}@g"

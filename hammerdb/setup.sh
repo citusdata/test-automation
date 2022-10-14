@@ -20,8 +20,7 @@ cd "${HOME}"/test-automation/hammerdb/
 mv HammerDB-"${hammerdb_version}" ~/
 
 # postgres is necessary for hammerdb, so install that
-sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-sudo yum-config-manager --disable pgdg95
+sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 sudo yum -y install postgresql14-server postgresql14
 
 cd "${driverdir}"

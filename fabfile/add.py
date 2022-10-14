@@ -1,21 +1,15 @@
-import os.path
+import os
 
-from fabric.api import task, cd, path, run, roles, sudo, abort, execute
-from fabric.tasks import Task
-from fabric.context_managers import settings
+from invoke import task
 
 import utils
+import multi_connections
 import config
 import prefix
-import pg
 import extension_hooks
 
-__all__ = [
-    'tpch', 'jdbc', 'coordinator_to_metadata', 'shards_on_coordinator'
-]
-
 def extension_path_for_url(repo_url):
-    repo_name = run('basename {}'.format(repo_url))
+    repo_name = repo_url.split('/')[-1] # get reponame.git part of the url
     repo_name = repo_name.split('.')[0] # chop off the '.git' at the end
     return os.path.join(config.CODE_DIRECTORY, repo_name)
 
@@ -111,11 +105,6 @@ class ExtensionTest:
     def get_configure_task(self):
         return ConfigureExtensionTest(self.dep_exts, self.conf_lines)
 
-    def use_existing_database(self):
-        # pg_regress will not drop and recreate database for testing. It will use the pguser default db which is already setup.
-        with cd(self.test_path):
-            run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --use-existing --dbname=pguser --user=pguser' >> Makefile")
-
     def set_test_path(self):
         extension_path = ''
         if self.extension.contrib:
@@ -124,7 +113,12 @@ class ExtensionTest:
             extension_path = extension_path_for_url(self.extension.repo_url)
         self.test_path = os.path.join(extension_path, self.extension.relative_test_path)
 
-    def regress(self):
+    def use_existing_database(self, c):
+        # pg_regress will not drop and recreate database for testing. It will use the pguser default db which is already setup.
+        with c.cd(self.test_path):
+            c.run("echo 'REGRESS_OPTS := $(REGRESS_OPTS) --use-existing --dbname=pguser --user=pguser' >> Makefile")
+
+    def regress(self, c):
         # create result folder if not exists
         utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
 
@@ -132,26 +126,25 @@ class ExtensionTest:
         self.set_test_path()
 
         # some pg_regress options to use existing database instead of recreating it
-        self.use_existing_database()
+        self.use_existing_database(c)
 
-        # run tests with warn_only option to not exit in case of a test failure in the extension,
+        # run tests with warn option to not exit in case of a test failure in the extension,
         # because we want to run regression tests for other extensions too.
-        with settings(warn_only=True):
-            with cd(self.test_path):
-                run(self.test_command)
+        with c.cd(self.test_path):
+            c.run(self.test_command, warn=True)
 
-        # rename regression.diffs, if exists, so that extension's diff file does not conflict with others'
-        self.rename_regression_diff()
+        # rename regression.diffs, if exists, so that extension's diff file does not override with others'
+        self.rename_regression_diff(c)
 
-    def rename_regression_diff(self):
+    def rename_regression_diff(self, c):
         regression_diffs_path = os.path.join(self.test_path, config.REGRESSION_DIFFS_FILE)
         if os.path.isfile(regression_diffs_path):
             extension_regression_diff = config.REGRESSION_DIFFS_FILE + '_{}_{}_'.format(config.PG_VERSION, self.test_name) + self.extension.name
-            with cd(config.RESULTS_DIRECTORY):
-                run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
+            with c.cd(config.RESULTS_DIRECTORY):
+                c.run('mv {} {}'.format(regression_diffs_path, extension_regression_diff))
 
 
-class InstallExtensionTask(Task):
+class InstallExtensionTask:
     '''
     A class which has all the boilerplate for building and installing extensions.
     '''
@@ -165,45 +158,42 @@ class InstallExtensionTask(Task):
         self.create = extension.create
         self.configure = extension.configure
         self.post_create_hook = extension.post_create_hook
+        if self.contrib:
+            self.extension_path = contrib_path_for_extension(self.name)
+        else:
+            self.extension_path = extension_path_for_url(self.repo_url)
 
-        super(InstallExtensionTask, self).__init__()
-
-    def create_extension(self):
+    def create_extension(self, c):
         if self.create:
-            utils.psql('CREATE EXTENSION "{}";'.format(self.name))
+            utils.psql(c, 'CREATE EXTENSION "{}";'.format(self.name))
         if self.post_create_hook:
-            self.post_create_hook()
+            self.post_create_hook(c)
 
-    def get_unique_package_name(self):
+    def get_unique_package_name(self, c):
+        connection_name = multi_connections.name_of_connection(c)
         if self.contrib:
-            return "{}-{}".format(self.name, config.PG_VERSION)
+            return "con-{}-{}-{}".format(connection_name, self.name, config.PG_VERSION)
         else:
-            return "{}-{}-{}".format(self.name, self.git_ref, config.PG_VERSION)
+            return "con-{}-{}-{}-{}".format(connection_name, self.name, self.git_ref, config.PG_VERSION)
 
-    def run(self):
-        extension_path = ''
-        if self.contrib:
-            extension_path = contrib_path_for_extension(self.name)
-        else:
-            extension_path = extension_path_for_url(self.repo_url)
-
+    def run(self, c):
         if not self.contrib: # contrib extensions are already installed
-            prefix.check_for_pg_latest()  # make sure we're pointed at a real instance
-            utils.add_github_to_known_hosts() # make sure ssh doesn't prompt
+            prefix.check_for_pg_latest(c)  # make sure we're pointed at a real instance
+            utils.add_github_to_known_hosts(c) # make sure ssh doesn't prompt
 
-            utils.rmdir(extension_path, force=True) # force because git write-protects files
-            run('git clone -q {} {}'.format(self.repo_url, extension_path))
+            utils.rmdir(c, self.extension_path, force=True) # force because git write-protects files
+            c.run('git clone -q {} {}'.format(self.repo_url, self.extension_path))
 
-            with cd(extension_path), path('{}/bin'.format(config.PG_LATEST)):
-                run('git checkout {}'.format(self.git_ref))
+            with c.cd(self.extension_path):
+                c.run('git checkout {}'.format(self.git_ref))
                 core_count = utils.get_core_count()
 
                 # run configure if extension has that step
                 if self.configure:
-                    run('PG_CONFIG={}/bin/pg_config ./configure'.format(config.PG_LATEST))
+                    c.run('PG_CONFIG={}/bin/pg_config ./configure'.format(config.PG_LATEST))
 
                 # fallback to make install if make install-all does not exist
-                run('make -s -j{core_count} install-all || make -s -j{core_count} install'.format(core_count=core_count))
+                c.run('make -s -j{core_count} install-all || make -s -j{core_count} install'.format(core_count=core_count))
 
 
 class ConfigureExtensionTest:
@@ -215,77 +205,97 @@ class ConfigureExtensionTest:
         self.dep_exts = dep_exts
         self.conf_lines = conf_lines
 
-    def configure(self):
+    def configure(self, c):
         pg_latest = config.PG_LATEST
-        with cd('{}/data'.format(pg_latest)):
+        with c.cd('{}/data'.format(pg_latest)):
             # add general conf options for the extension if it has any
             for dep_ext in self.dep_exts:
                 for option in dep_ext.conf_lines:
-                    run('echo {} >> postgresql.conf'.format(option))
+                    c.run('echo {} >> postgresql.conf'.format(option))
 
             # only select if dep extension is chosen to be preloaded
             preloaded_dep_names = [dep_ext.name for dep_ext in self.dep_exts if dep_ext.preload]
             preload_string = utils.get_preload_libs_string(preloaded_dep_names)
 
             # modify shared_preload_libraries according to dep order given in the regression test's config
-            run('echo "{}" >> postgresql.conf'.format(preload_string))
+            c.run('echo "{}" >> postgresql.conf'.format(preload_string))
 
             # add conf options given in the regression test's config (maybe override general settings for the extensions)
             for option in self.conf_lines:
-                run('echo {} >> postgresql.conf'.format(option))
+                c.run('echo {} >> postgresql.conf'.format(option))
 
 
-@task
-@roles('master')
-def tpch(**kwargs):
+@task(optional=['connectionURI', 'scale-factor', 'partition-type'])
+def tpch(c, connectionURI='', scale_factor=10, partition_type='default'):
     'Generates and loads tpc-h data into the instance at pg-latest'
-    prefix.check_for_pg_latest()
+    if not multi_connections.is_coordinator_connection(c):
+        return
+
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, tpch, connectionURI=connectionURI, scale_factor=scale_factor, partition_type=partition_type):
+        return
+
+    prefix.check_for_pg_latest(c)
 
     psql = '{}/bin/psql'.format(config.PG_LATEST)
 
-    connectionURI = kwargs.get('connectionURI', kwargs.get('connectionURI', ''))
-    scale = kwargs.get('scale-factor', kwargs.get('scale_factor', 10))
-    partition_type = kwargs.get('partition-type', kwargs.get('partition_type', 'default'))
+    scale = scale_factor
 
     # generate tpc-h data
     tpch_path = '{}/tpch_2_13_0'.format(config.TEST_REPO)
-    with cd(tpch_path):
-        run('make')
-        run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
+    with c.cd(tpch_path):
+        c.run('make')
+        c.run('SCALE_FACTOR={} CHUNKS="o 24 c 4 P 1 S 4 s 1" sh generate2.sh'.format(scale))
 
         # clear old tables
-        run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
+        c.run('{} {} -f drop_tables.sql'.format(psql, connectionURI))
 
         # create the tpc-h tables
         if partition_type == 'default':
-            run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'hash':
-            run('{} {} -f tpch_create_hash_partitioned_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_hash_partitioned_tables.ddl'.format(psql, connectionURI))
         elif partition_type == 'append':
-            run('{} {} -f tpch_create_append_partitioned_tables.ddl'.format(psql, connectionURI))
+            c.run('{} {} -f tpch_create_append_partitioned_tables.ddl'.format(psql, connectionURI))
 
         # stage tpc-h data
-        for segment in run('find {} -name \'*.tbl*\''.format(tpch_path)).splitlines():
+        segments = c.run('find {} -name \'*.tbl*\''.format(tpch_path)).stdout.strip()
+        for segment in segments.splitlines():
             table_name = os.path.basename(segment).split('.')[0]
-            run('''{} {} -c "\COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, connectionURI, table_name, segment))
+            c.run('''{} {} -c "\COPY {} FROM '{}' WITH DELIMITER '|'"'''.format(psql, connectionURI, table_name, segment))
 
-        run('{} {} -f warm_up_cache.sql'.format(psql, connectionURI))
+        c.run('{} {} -f warm_up_cache.sql'.format(psql, connectionURI))
 
 @task
-@roles('master')
-def jdbc():
+def jdbc(c):
     'Adds everything required to test out the jdbc connecter'
-    sudo('yum install -q -y java-1.6.0-openjdk-devel') # we only need java on the master
+    if not multi_connections.is_coordinator_connection(c):
+        return
+
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, jdbc):
+        return
+
+    # we only need java on the master
+    c.sudo('yum install -q -y java-1.8.0-openjdk-devel')
 
 @task
-@roles('master')
-def coordinator_to_metadata():
+def coordinator_to_metadata(c):
+    if not multi_connections.is_coordinator_connection(c):
+        return
+
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, coordinator_to_metadata):
+        return
+
     local_ip = utils.get_local_ip()
-    utils.psql("SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
+    utils.psql(c, "SELECT master_add_node('{}', {}, groupid => 0);".format(local_ip, config.PORT))
 
 @task
-@roles('master')
-def shards_on_coordinator():
+def shards_on_coordinator(c):
+    if not multi_connections.is_coordinator_connection(c):
+        return
+
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, shards_on_coordinator):
+        return
+
     local_ip = utils.get_local_ip()
-    utils.psql("SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
+    utils.psql(c, "SELECT 1 FROM master_set_node_property('{}', {}, 'shouldhaveshards', true);"
         .format(local_ip, config.PORT))

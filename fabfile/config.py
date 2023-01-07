@@ -28,7 +28,7 @@ CITUS_RELATED_VALGRIND_LOG_FILE = 'valgrind_test_log_citus.txt'
 VALGRIND_REQUIRED_PACKAGES = ['valgrind', 'valgrind-devel.x86_64', 'openssl-devel.x86_64', 'libicu-devel.x86_64']
 VALGRIND_SUCCESS_FNAME = 'valgrind_success'
 
-PG_VERSION = '9.6.1'
+PG_VERSION = '15.1'
 PG_CONFIGURE_FLAGS = ['--with-openssl','--enable-tap-tests']
 
 settings = {

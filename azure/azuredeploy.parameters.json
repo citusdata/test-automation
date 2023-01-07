@@ -12,7 +12,7 @@
             "value": "Standard_D4s_v5"
         },
         "workerVmSize": {
-            "value": "Standard_E4s_v5"
+            "value": "Standard_D4s_v5"
         },
         "coordinatorDiskSizeGB": {
             "value": 512

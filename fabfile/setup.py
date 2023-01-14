@@ -239,7 +239,7 @@ def build_postgres():
 
     package_name = _pg_package_name()
     if _build_cache.search_build_cache(package_name): # already installed current version
-        return
+        print('Found PG installation in cache, but ignoring it')
     _build_cache.insert_build_cache(package_name)
 
     # Give the postgres source to the remote nodes

@@ -17,6 +17,13 @@ firewall-cmd --add-port=3456/tcp || true
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
+yum clean all
+yum --disablerepo="epel" update nss
+
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm || true
+
+sed -i 's/$releasever/9/g' /etc/yum.repos.d/epel*.repo
+
 # install epel repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 
@@ -88,7 +95,7 @@ semanage port -a -t ssh_port_t -p tcp 3456
 # restart ssh service to be able to use the new port
 systemctl restart sshd
 
-BRANCH=$5
+BRANCH="fix-epel-repo-install"
 
 echo ${BRANCH} > /tmp/branch_name
 

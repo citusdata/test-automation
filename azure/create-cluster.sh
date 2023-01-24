@@ -49,8 +49,11 @@ local_public_ip=$(curl ifconfig.me)
 CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
  --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
 
+# if EXTENSION_TEST variable is not exported, set it to 0
+is_extension_test=${EXTENSION_TEST:=0}
+
 # override numberOfWorkers param if it is extension testing
-if [ "$rg" == "citusbot_extension_test_resource_group" ]; then
+if [ "$is_extension_test" != "0" ]; then
     CREATE_CLUSTER_COMMAND+=(--parameters numberOfWorkers=0)
 fi
 

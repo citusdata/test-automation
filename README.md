@@ -732,11 +732,13 @@ On the coordinator node:
 ```bash
 # This will run default extension tests with PG=14.5
 # Yes, that's all :) You can change settings in fabfile/extension_confs/extension_default.ini
-fab run.extension_tests
+fab run.extension-tests
 
 # It's possible to provide another configuration file for tests
-fab run.extension_tests:[other_config.ini]
+fab run.extension-tests:[other_config.ini]
 ```
+
+**Note**: You should `export EXTENSION_TEST=1` before running `create-cluster.sh` if you plan to run extension tests.
 
 ## <a name="pgbench-cloud"></a> Running PgBench Tests Against Hyperscale (Citus)
 

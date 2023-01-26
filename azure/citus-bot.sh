@@ -27,7 +27,7 @@ public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})
 
 echo ${public_ip}
 
-vm_add_public_ip_to_known_hosts ${public_ip} ${ssh_port}
+# vm_add_public_ip_to_known_hosts ${public_ip} ${ssh_port}
 
 echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.

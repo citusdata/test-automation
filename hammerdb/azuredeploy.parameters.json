@@ -3,25 +3,25 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "numberOfWorkers": {
-            "value": 4
+            "value": 2
         },
         "diskType": {
             "value": "Premium_LRS"
         },
         "coordinatorVmSize": {
-            "value": "Standard_D16s_v5"
+            "value": "Standard_D8s_v5"
         },
         "workerVmSize": {
-            "value": "Standard_E16s_v5"
+            "value": "Standard_E8s_v5"
         },
         "driverVmSize": {
-            "value": "Standard_D64s_v5"
+            "value": "Standard_D32s_v5"
         },
         "coordinatorDiskSizeGB": {
-            "value": 256
+            "value": 512
         },
         "workerDiskSizeGB": {
-            "value": 256
+            "value": 512
         }
     }
 }

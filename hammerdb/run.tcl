@@ -18,8 +18,8 @@ diset tpcc pg_defaultdbase pguser
 # if you change this, make sure to change tpcc-distribute-funcs.sql
 diset tpcc pg_storedprocs true
 diset tpcc pg_driver timed
-diset tpcc pg_rampup 3
-diset tpcc pg_duration 60
+diset tpcc pg_rampup 5
+diset tpcc pg_duration 20
 diset tpcc pg_timeprofile false
 diset tpcc pg_allwarehouse true
 diset tpcc pg_keyandthink false
@@ -30,7 +30,7 @@ vuset timestamps 1
 vuset logtotemp 1
 vuset showoutput 0
 vuset unique 1
-vuset delay 100
+vuset delay 20
 vuset repeat 1
 vurun
 wait_to_complete

@@ -25,7 +25,7 @@ port=5432
 CH_THREAD_COUNT=1
 # tpcc doesn't start recording results while doing a rampup. So we should sleep for that long
 # in the analytical script as well so that they start recording around the same time.
-RAMPUP_TIME=3
+RAMPUP_TIME=5
 # DEFAULT_CH_RUNTIME_IN_SECS is used when tpcc part is disabled. If tpcc is disabled, this is
 # how long we will run the analytical queries in second.
 DEFAULT_CH_RUNTIME_IN_SECS=3600

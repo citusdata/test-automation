@@ -8,9 +8,18 @@ set -e
 set -x
 
 source commons.sh
-# source instead of just calling to override the ssh-agent created
-# by CircleCI
-source ./add-sshkey.sh
+
+# generate PEM to use to ssh into the Azure VM-s
+ssh-keygen -m PEM -b 2048 -t rsa -f ~/.ssh/vm-key -q -N ""
+eval `ssh-agent -s`
+
+# add key for azure VM
+ssh-add ~/.ssh/vm-key
+
+# add the the default key in order to forward it with
+# ssh agent forwarding to allow the Azure VM-s to pull the
+# test automation repo
+ssh-add
 
 function cleanup {
     sh ./delete-resource-group.sh
@@ -27,7 +36,7 @@ public_ip=$(rg_get_public_ip ${RESOURCE_GROUP_NAME})
 
 echo ${public_ip}
 
-# vm_add_public_ip_to_known_hosts ${public_ip} ${ssh_port}
+ssh_execute ${public_ip} ${ssh_port} 'echo "'$RESULT_REPO_ACCESS_TOKEN'" > /tmp/result-repo-token'
 
 echo "running tests in remote"
 # ssh with non-interactive mode does not source bash profile, so we will need to do it ourselves here.

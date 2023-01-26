@@ -3,7 +3,6 @@
 # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 set -euxo pipefail
 
-source ../azure/add-sshkey.sh
 source ./utils.sh
 
 script_directory="$(dirname "${BASH_SOURCE[0]}")"
@@ -49,7 +48,7 @@ install_pg_with_version $pg_version "--with-openssl"
 
 # get the citus repo
 citus_branch=$(cat $script_directory/jdbc_config.json | jq '.citus_branch' | remove_string_quotations)
-git clone --branch $citus_branch git@github.com:citusdata/citus.git citus
+git clone --branch $citus_branch https://oauth2:$RESULT_REPO_ACCESS_TOKEN@github.com/citusdata/citus.git citus
 
 cd citus
 echo $PG_BIN_DIR

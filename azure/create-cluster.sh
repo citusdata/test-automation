@@ -28,7 +28,9 @@ az group create -l ${region} -n ${rg}
 # we create in azure.
 # jobs that run in multiple stages should have the same set of keys
 # added to their invocations.
-public_key=$(ssh-add -L | head -n1 )
+# make sure the key is in rsa format since other formats are not supported
+# from Azure
+public_key=$(ssh-add -L | grep ssh-rsa | head -n1)
 
 start_time=`date +%s`
 echo "waiting a long time to create cluster, this might take up to 30 mins depending on your cluster size"

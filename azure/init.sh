@@ -88,7 +88,7 @@ semanage port -a -t ssh_port_t -p tcp 3456
 # restart ssh service to be able to use the new port
 systemctl restart sshd
 
-BRANCH="report_query_on_error"
+BRANCH=$5
 
 echo ${BRANCH} > /tmp/branch_name
 

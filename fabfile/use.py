@@ -12,7 +12,7 @@ import utils
 
 @task(positional=['version'])
 def citus(c, version):
-    'Choose a citus version. For example: fab use.citus v6.0.1 setup.basic-testing (defaults to master)'
+    'Choose a citus version. For example: fab use.citus v11.1.5 setup.basic-testing (defaults to master)'
     if multi_connections.execute_on_all_nodes_if_no_hosts(c, citus, version):
         return
 

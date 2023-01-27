@@ -156,8 +156,8 @@
     "variables": {
         "imagePublisher": "RedHat",
         "imageOffer": "RHEL",
-        "imageSku": "90-gen2",
-        "driverImageSku" : "90-gen2",
+        "imageSku": "9_1",
+        "driverImageSku" : "9_1",
         "storageAcctName": "[take(concat(parameters('clusterName'), uniqueString(resourceGroup().id)),24)]",
         "networkSecurityGroupName": "networkSecurityGroup1",
         "vnetName": "citusVNet",

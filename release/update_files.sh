@@ -8,9 +8,9 @@ set -e
 set -x
 
 ## VARIABLES ##
-new_branch1=release-9.3
-new_branch2=release-9.2
-new_pg_version=12.2
+new_branch1=release-11.1
+new_branch2=main
+new_pg_version=15.1
 ## VARIABLES ##
 
 releasedir="${0%/*}"

@@ -316,7 +316,7 @@ def valgrind_filter_put_results(c):
     if not os.path.exists(citus_valgrind_logs_path):
         c.run('touch {}'.format(success_file_path))
 
-def valgrind_internal(c, valgrind_target):
+def valgrind_internal(c, valgrind_target, schedule):
     'Runs valgrind tests'
 
     # set citus path variable
@@ -334,15 +334,15 @@ def valgrind_internal(c, valgrind_target):
 
         # wrap the command with tee to log stdout & stderr to a file in results directory as well
         # this is done to ensure that valgrind test is actually finished
-        valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} make {}'.format(valgrind_logs_path, valgrind_target)
+        valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} SCHEDULE={} make {}'.format(valgrind_logs_path, schedule, valgrind_target)
         valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
 
         c.run(valgrind_test_command, warn=True)
 
         valgrind_filter_put_results(c)
 
-@task(positional=['target'])
-def valgrind(c, target):
+@task(positional=['target', 'schedule'])
+def valgrind(c, target, schedule):
     'Choose a valgrind target. For example: fab ... run.valgrind check-multi-1-vg ...'
     if not multi_connections.is_coordinator_connection(c):
         return
@@ -350,10 +350,10 @@ def valgrind(c, target):
     if multi_connections.execute_on_all_nodes_if_no_hosts(c, valgrind, target):
         return
 
-    available_valgrind_targets = ('check-multi-vg', 'check-multi-1-vg', 'check-columnar-vg')
+    available_valgrind_targets = ('check-custom-schedule-vg', 'check-isolation-custom-schedule-vg', 'check-failure-custom-schedule-vg')
     if target not in available_valgrind_targets:
         raise Exit('Available targets for run.valgrind: {}'.
               format(', '.join(available_valgrind_targets)))
 
     valgrind_target = target
-    valgrind_internal(c, valgrind_target)
+    valgrind_internal(c, valgrind_target, schedule)

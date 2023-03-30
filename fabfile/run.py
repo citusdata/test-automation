@@ -316,7 +316,7 @@ def valgrind_filter_put_results(c):
     if not os.path.exists(citus_valgrind_logs_path):
         c.run('touch {}'.format(success_file_path))
 
-def valgrind_internal(c, valgrind_target, schedule):
+def valgrind_internal(c, make_target, schedule):
     'Runs valgrind tests'
 
     # set citus path variable
@@ -334,26 +334,27 @@ def valgrind_internal(c, valgrind_target, schedule):
 
         # wrap the command with tee to log stdout & stderr to a file in results directory as well
         # this is done to ensure that valgrind test is actually finished
-        valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} SCHEDULE={} make {}'.format(valgrind_logs_path, schedule, valgrind_target)
+        valgrind_test_command = 'CITUS_VALGRIND_LOG_FILE={} SCHEDULE={} make {}'.format(valgrind_logs_path, schedule, make_target)
         valgrind_test_command = valgrind_test_command + ' 2>&1 | tee {}'.format(valgrind_test_out_path)
 
         c.run(valgrind_test_command, warn=True)
 
         valgrind_filter_put_results(c)
 
-@task(positional=['target', 'schedule'])
-def valgrind(c, target, schedule):
-    'Choose a valgrind target. For example: fab ... run.valgrind check-multi-1-vg ...'
+@task(positional=['schedule'])
+def valgrind(c, schedule):
+    'Choose a schedule to run valgrind tests with. For example: fab ... run.valgrind multi-1-schedule ...'
     if not multi_connections.is_coordinator_connection(c):
         return
 
-    if multi_connections.execute_on_all_nodes_if_no_hosts(c, valgrind, target):
+    if multi_connections.execute_on_all_nodes_if_no_hosts(c, valgrind, schedule):
         return
 
-    available_valgrind_targets = ('check-custom-schedule-vg', 'check-isolation-custom-schedule-vg', 'check-failure-custom-schedule-vg')
-    if target not in available_valgrind_targets:
-        raise Exit('Available targets for run.valgrind: {}'.
-              format(', '.join(available_valgrind_targets)))
+    if "failure" in schedule:
+        make_target = "check-failure-custom-schedule-vg"
+    elif "isolation" in schedule:
+        make_target = "check-isolation-custom-schedule-vg"
+    else:
+        make_target = "check-custom-schedule-vg"
 
-    valgrind_target = target
-    valgrind_internal(c, valgrind_target, schedule)
+    valgrind_internal(c, make_target, schedule)

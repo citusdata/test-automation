@@ -10,7 +10,7 @@ required for testing citus.
   * [Getting Started](#azure-getting-started)
     * [Setup steps for each test](#azure-setup-steps)
     * [Steps to delete a cluster](#azure-delete-cluster)
-  * [Under The Hood](#under-the-hood)  
+  * [Under The Hood](#under-the-hood)
 * [AWS(Deprecated)](#AWS)
   * [Getting Started](#getting-started)
     * [Setup steps for each test](#aws-setup-steps)
@@ -39,7 +39,7 @@ required for testing citus.
   * [`run`, Run pgbench and tpch Rests Automatically](#run)
 * [Advanced fab Usage](#advanced-fab)
   * [Using Multiple Citus Installations](#multiple-installs)
-* [TroubleShooting](#TroubleShooting-test-automation)  
+* [TroubleShooting](#TroubleShooting-test-automation)
 
 ## <a name="azure"></a>Azure
 
@@ -71,7 +71,7 @@ If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusDa
 
 5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of latest consists of:
 * Open your VPN.
-* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires 
+* Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires
 `python` to be installed to run.
 
 ### General info
@@ -128,7 +128,7 @@ After you are done with testing you can run the following the delete a cluster a
   Azure has ARM templates that can be used to deploy servers with ease. There are two main files for ARM templates, `azuredeploy.json` and `azuredeploy.parameters.json`. `azuredeploy.json` has the main template and `azuredeploy.parameters.json` contains the parameters that are used in the main template. For example if you want to change the number of workers, you would do that in the parameters. You shouldnt change anything in the template file for configuration.
 
   The main template has 4 main parts:
-  
+
 * Parameters
 * Variables
 * Resources
@@ -375,7 +375,7 @@ There is a separate job for each test and you can run any combinations of them. 
 * If the branch has a prefix `scale/`, then scale job will be triggered.
 * If the branch has a prefix `tpch/`, then tpch job will be triggered.
 * If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
-* If the branch has a prefix `extension/`, then extension job will be triggered. 
+* If the branch has a prefix `extension/`, then extension job will be triggered.
 
 You should push your branch to Github so that the circleci job will be triggerred.
 
@@ -394,8 +394,8 @@ By default the tests will be run against `release-9.2` and the latest released v
 postgres_citus_versions: [('12.1', 'your-custom-branch-name-in-citus'), ('12.1', 'release-9.1')]
 ```
 
-*Note*: While you can run multiple tests by adding more elements to the array above, the results of the tests after the first might 
-be inflated due to cache hits (this depends on the tests being run and the type of disks being used by the VM-s). For the fairest 
+*Note*: While you can run multiple tests by adding more elements to the array above, the results of the tests after the first might
+be inflated due to cache hits (this depends on the tests being run and the type of disks being used by the VM-s). For the fairest
 possible comparisons, consider running the tests seperately.
 
 You can change all the settings in these files, the config files for tests are located at:
@@ -414,7 +414,7 @@ By default, the following tests will be run for each test:
 
 If you dont want to use default cluster settings(instance types etc), you can change them in https://github.com/citusdata/test-automation/blob/master/azure/azuredeploy.parameters.json.
 
-If you want to change how long each test will be run, you can change the times with the `-T` parameter. https://github.com/citusdata/test-automation/blob/master/fabfile/pgbench_confs/pgbench_default.ini#L33 
+If you want to change how long each test will be run, you can change the times with the `-T` parameter. https://github.com/citusdata/test-automation/blob/master/fabfile/pgbench_confs/pgbench_default.ini#L33
 
 ```
 pgbench_command: pgbench -c 32 -j 16 -T <test time in seconds> -P 10 -r
@@ -438,8 +438,8 @@ In `fabfile/hammerdb_confs` you can add more configs to this folder:
 You can add as many configs as you want to `fabfile/hammerdb_confs` folder and the automation tool will
 run the benchmark for each config. So if you want to compare two branches, you can create two identical config files with two different branches. (Note that you can also use git refs instead of branch names)
 Even though the script will vacuum the tables in each iteration to get more accurate results, the disk
-cache is likely to inflate the results of the tests running after the first file so for the most unbiased results 
-test the setups seperately (repeat this produre twice). 
+cache is likely to inflate the results of the tests running after the first file so for the most unbiased results
+test the setups seperately (repeat this produre twice).
 The result logs will contain the config file so that it is easy to know which config was used for a run.
 
 After adding the configs `fabfile/hammerdb_confs` could look like:
@@ -475,7 +475,7 @@ You can do that with:
 # running from the same shell where you called create-run.sh to start the test
 ../azure/delete-resource-group.sh
 ./create-run.sh
-``` 
+```
 
 If it is persistent, some policy might have been changed on Azure so either consider debugging the issue,
 or opening an issue in test-automation.
@@ -533,7 +533,7 @@ On the coordinator node:
 # Setup your test cluster with PostgreSQL 12.1 and Citus master branch
 fab use.postgres 12.1 use.citus master setup.basic-testing
 
-# Lets change some conf values 
+# Lets change some conf values
 fab pg.set-config max_wal_size "'5GB'"
 fab pg.set-config max_connections 1000
 
@@ -550,7 +550,7 @@ fab add.coordinator-to-metadata
 If you want the coordinator to have shards, you can run:
 
 ```bash
-fab add.shards-on-coordinator 
+fab add.shards-on-coordinator
 ```
 
 ## <a name="pgbench"></a> Running PgBench Tests
@@ -632,7 +632,7 @@ Here is the schema for a test case:
 
 ```
 [test-<integer>]                  specifies the test name
-ext_to_test: <string>             specifies the extension to be tested       
+ext_to_test: <string>             specifies the extension to be tested
 dep_order: <string>               specifies the shared_preload_libraries string order
 test_command: <string>            specifies the test command
 conf_string: <string>             specifies the postgres configurations to be used in the test
@@ -709,7 +709,7 @@ Here is the schema for a test case:
 
 ```
 [test-<integer>]                  specifies the test name
-ext_to_test: <string>             specifies the extension to be tested       
+ext_to_test: <string>             specifies the extension to be tested
 dep_order: <string>               specifies the shared_preload_libraries string order
 test_command: <string>            specifies the test command
 conf_string: <string>             specifies the postgres configurations to be used in the test
@@ -761,7 +761,7 @@ On the coordinator node:
 
 ```bash
 # This will run TPC-H tests with PG=12.1 and Citus 9.2 and 8.3 release branches
-# and it will log results to their own files on the home directory. You can use diff to 
+# and it will log results to their own files on the home directory. You can use diff to
 # compare results.
 # You can change settings in files under the fabfile/tpch_confs/ directory
 fab run.tpch-automate
@@ -807,12 +807,8 @@ cd azure
 
 # run fab command in coordinator in a detachable session
 #
-# Note that in addition to run.valgrind check-multi-vg, run.valgrind check-multi-1-vg and
-# run.valgrind check-columnar-vg are also available, where:
-#   run.valgrind check-multi-vg runs "make check-multi-vg"
-#   run.valgrind check-multi-1-vg runs "make check-multi-1-vg"
-#   run.valgrind check-columnar-vg runs "make check-columnar-vg"
-tmux new -d "fab use.postgres 12.3 use.citus release-9.2 run.valgrind check-multi-vg"
+# Note that you can use any valid schedule name for regression, isolation or failure tests here
+tmux new -d "fab use.postgres 15.2 use.citus release-11.1 run.valgrind multi_1_schedule"
 
 # simply exit from coordinator after detaching
 
@@ -854,7 +850,7 @@ export VALGRIND_TEST=1
 ```
 
 , which makes `numberOfWorkers` setting useless.
-This is because we will already be using our regression test structure and it creates a local cluster 
+This is because we will already be using our regression test structure and it creates a local cluster
 itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
 PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
 Also, the `create-cluster.sh` uses the first public key it finds in the ssh-agent to setup the ssh authentication
@@ -864,18 +860,14 @@ into the VM-s.
 On the coordinator node:
 
 ```bash
-# an example usage: Use PostgreSQL 14.2 and run valgrind test on citus/release-9.2
-fab use.postgres 14.2 use.citus release-9.2 run.valgrind check-multi-vg
+# an example usage: Use PostgreSQL 15.2 and run enterprise failure tests with valgrind support on citus/release-11.1
+fab use.postgres 15.2 use.citus release-11.1 run.valgrind enterprise_failure_schedule
 ```
 
 However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
 ```bash
-# As mentioned above, run.valgrind check-multi-1-vg and run.valgrind check-columnar-vg are
-# also available, where:
-#   run.valgrind check-multi-vg runs "make check-multi-vg"
-#   run.valgrind check-multi-1-vg runs "make check-multi-1-vg"
-#   run.valgrind check-columnar-vg runs "make check-columnar-vg"
-tmux new -d "fab use.postgres 12.1 use.citus release-9.2 run.valgrind check-multi-vg"
+# Note that you can use any valid schedule name for regression, isolation or failure tests here
+tmux new -d "fab use.postgres 15.2 use.citus release-11.1 run.valgrind multi_1_schedule"
 ```
 
 After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.
@@ -963,7 +955,7 @@ It is possible to add extra extensions and features to a Citus cluster:
 
 - `fab add.tpch --scale-factor=1 --partition-type=hash` will generate and copy tpch tables.
 
-  The default scale factor is 10. The default partition type is reference for nation, region and supplier and hash for remaining. If you set partition type to 'hash' or 'append', all the tables will be created with that partition type. 
+  The default scale factor is 10. The default partition type is reference for nation, region and supplier and hash for remaining. If you set partition type to 'hash' or 'append', all the tables will be created with that partition type.
 - `fab add.session_analytics` will build and install the session_analytics package (see the instructions above for information on how to checkout this private repo)
 
 For a complete list, run `fab --list`.

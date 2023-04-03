@@ -251,10 +251,6 @@ def build_postgres(c):
         c.run('tar -xf {}.tar.bz2'.format(final_dir), hide='stdout')
 
         with c.cd(final_dir):
-            # apply the patch that helps reporting the queries that cause memory errors under valgrind
-            patch_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pg_report_vg_query.patch")
-            c.run('git apply {}'.format(patch_path))
-
             pg_latest = config.PG_LATEST
             flags = ' '.join(config.PG_CONFIGURE_FLAGS)
             c.run('./configure --prefix={} {}'.format(pg_latest, flags), hide='stdout')

@@ -1,10 +1,10 @@
 diff --git a/src/backend/tcop/postgres.c b/src/backend/tcop/postgres.c
-index cab709b07b..a10ecbaf50 100644
+index 2fc49e3445..82bd080826 100644
 --- a/src/backend/tcop/postgres.c
 +++ b/src/backend/tcop/postgres.c
-@@ -27,6 +27,10 @@
- #include <sys/socket.h>
- #include <sys/time.h>
+@@ -36,6 +36,10 @@
+ #include "rusagestub.h"
+ #endif
  
 +#ifdef USE_VALGRIND
 +#include <valgrind/valgrind.h>
@@ -13,7 +13,7 @@ index cab709b07b..a10ecbaf50 100644
  #include "access/parallel.h"
  #include "access/printtup.h"
  #include "access/xact.h"
-@@ -191,6 +195,36 @@ static void enable_statement_timeout(void);
+@@ -206,6 +210,36 @@ static void enable_statement_timeout(void);
  static void disable_statement_timeout(void);
  
  
@@ -50,7 +50,7 @@ index cab709b07b..a10ecbaf50 100644
  /* ----------------------------------------------------------------
   *		routines to obtain user input
   * ----------------------------------------------------------------
-@@ -2041,6 +2075,8 @@ exec_bind_message(StringInfo input_message)
+@@ -2052,6 +2086,8 @@ exec_bind_message(StringInfo input_message)
  	if (save_log_statement_stats)
  		ShowUsage("BIND MESSAGE STATISTICS");
  
@@ -59,7 +59,7 @@ index cab709b07b..a10ecbaf50 100644
  	debug_query_string = NULL;
  }
  
-@@ -2292,6 +2328,8 @@ exec_execute_message(const char *portal_name, long max_rows)
+@@ -2299,6 +2335,8 @@ exec_execute_message(const char *portal_name, long max_rows)
  	if (save_log_statement_stats)
  		ShowUsage("EXECUTE MESSAGE STATISTICS");
  
@@ -68,7 +68,7 @@ index cab709b07b..a10ecbaf50 100644
  	debug_query_string = NULL;
  }
  
-@@ -4287,6 +4325,12 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4308,6 +4346,12 @@ PostgresMain(const char *dbname, const char *username)
  		/* Report the error to the client and/or server log */
  		EmitErrorReport();
  
@@ -81,7 +81,7 @@ index cab709b07b..a10ecbaf50 100644
  		/*
  		 * Make sure debug_query_string gets reset before we possibly clobber
  		 * the storage it points at.
-@@ -4371,6 +4415,13 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4392,6 +4436,13 @@ PostgresMain(const char *dbname, const char *username)
  		 */
  		doing_extended_query_message = false;
  
@@ -95,7 +95,7 @@ index cab709b07b..a10ecbaf50 100644
  		/*
  		 * Release storage left over from prior query cycle, and create a new
  		 * query input buffer in the cleared MessageContext.
-@@ -4571,6 +4622,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4592,6 +4643,8 @@ PostgresMain(const char *dbname, const char *username)
  					else
  						exec_simple_query(query_string);
  
@@ -104,7 +104,7 @@ index cab709b07b..a10ecbaf50 100644
  					send_ready_for_query = true;
  				}
  				break;
-@@ -4600,6 +4653,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4621,6 +4674,8 @@ PostgresMain(const char *dbname, const char *username)
  
  					exec_parse_message(query_string, stmt_name,
  									   paramTypes, numParams);
@@ -113,7 +113,7 @@ index cab709b07b..a10ecbaf50 100644
  				}
  				break;
  
-@@ -4614,6 +4669,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4635,6 +4690,8 @@ PostgresMain(const char *dbname, const char *username)
  				 * the field extraction out-of-line
  				 */
  				exec_bind_message(&input_message);
@@ -122,7 +122,7 @@ index cab709b07b..a10ecbaf50 100644
  				break;
  
  			case 'E':			/* execute */
-@@ -4631,6 +4688,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4652,6 +4709,8 @@ PostgresMain(const char *dbname, const char *username)
  					pq_getmsgend(&input_message);
  
  					exec_execute_message(portal_name, max_rows);
@@ -131,7 +131,7 @@ index cab709b07b..a10ecbaf50 100644
  				}
  				break;
  
-@@ -4664,6 +4723,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4685,6 +4744,8 @@ PostgresMain(const char *dbname, const char *username)
  				/* commit the function-invocation transaction */
  				finish_xact_command();
  
@@ -140,7 +140,7 @@ index cab709b07b..a10ecbaf50 100644
  				send_ready_for_query = true;
  				break;
  
-@@ -4708,6 +4769,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4729,6 +4790,8 @@ PostgresMain(const char *dbname, const char *username)
  
  					if (whereToSendOutput == DestRemote)
  						pq_putemptymessage('3');	/* CloseComplete */
@@ -149,7 +149,7 @@ index cab709b07b..a10ecbaf50 100644
  				}
  				break;
  
-@@ -4740,6 +4803,8 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4761,6 +4824,8 @@ PostgresMain(const char *dbname, const char *username)
  											describe_type)));
  							break;
  					}
@@ -158,7 +158,7 @@ index cab709b07b..a10ecbaf50 100644
  				}
  				break;
  
-@@ -4752,6 +4817,7 @@ PostgresMain(const char *dbname, const char *username)
+@@ -4773,6 +4838,7 @@ PostgresMain(const char *dbname, const char *username)
  			case 'S':			/* sync */
  				pq_getmsgend(&input_message);
  				finish_xact_command();

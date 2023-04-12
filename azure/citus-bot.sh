@@ -22,7 +22,8 @@ ssh-add ~/.ssh/vm-key
 ssh-add
 
 function cleanup {
-    sh ./delete-resource-group.sh
+#    sh ./delete-resource-group.sh
+    echo "cleanup commented out"
 }
 
 trap cleanup EXIT

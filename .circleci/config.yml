@@ -78,6 +78,7 @@ jobs:
       - run:
           command: |
             cd ./azure
+            export EXTENSION_TEST=1
             ./citus-bot.sh citusbot_extension_test_resource_group
           name: install dependencies and run extension tests
           no_output_timeout: 10m 

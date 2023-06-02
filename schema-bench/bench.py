@@ -3,12 +3,9 @@
 import fire
 import psycopg
 from psycopg import sql
-from psycopg_pool import AsyncConnectionPool, ConnectionPool
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from functools import partial
+from concurrent.futures import ProcessPoolExecutor
 from itertools import repeat
 import multiprocessing
-import asyncio
 import sys
 import subprocess
 import tempfile
@@ -75,7 +72,6 @@ class Bench:
         connection_string="",
     ):
         chunks = chunkify(list(range(scale)), concurrency)
-        print(chunks)
         with ProcessPoolExecutor(
             max_workers=concurrency,
         ) as executor:
@@ -103,7 +99,6 @@ class Bench:
                 SELECT data, number FROM schema_bench_:schemaid.table_:tableid WHERE id = 1;
                 """,
             )
-            print(f.name)
             f.flush()
 
             run(
@@ -119,6 +114,7 @@ class Bench:
                     str(time),
                     "--progress",
                     str(progress),
+                    "--no-vacuum",
                     connection_string,
                 ],
                 shell=False,

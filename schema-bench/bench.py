@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
 import fire
+import psycopg
 from psycopg import sql
-from psycopg_pool import AsyncConnectionPool
+from psycopg_pool import AsyncConnectionPool, ConnectionPool
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from functools import partial
+from itertools import repeat
 import multiprocessing
 import asyncio
 import sys
@@ -31,42 +35,55 @@ def capture(command, *args, **kwargs):
     return run(command, *args, stdout=subprocess.PIPE, text=True, **kwargs).stdout
 
 
+def create_schemas(args):
+    connection_string = args[0]
+    table_count = args[1]
+    indexes = args[2]
+
+    with psycopg.connect(
+        connection_string, prepare_threshold=None, autocommit=True
+    ) as conn:
+        for i in indexes:
+            schema_string = f"schema_bench_{i}"
+            schema = sql.Identifier(schema_string)
+            conn.execute(
+                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(
+                    schema,
+                )
+            )
+            conn.execute(sql.SQL("CREATE SCHEMA {}").format(schema))
+            for j in range(table_count):
+                table = sql.Identifier(schema_string, f"table_{j}")
+                conn.execute(
+                    sql.SQL(
+                        "CREATE TABLE {}(id bigserial PRIMARY KEY, data text, number bigint)"
+                    ).format(table)
+                )
+
+
+def chunkify(l, n):
+    """Yield n number of striped chunks from l."""
+    return [l[i::n] for i in range(n)]
+
+
 class Bench:
-    async def build(
+    def build(
         self,
         scale=100,
         table_count=10,
         concurrency=multiprocessing.cpu_count(),
         connection_string="",
     ):
-        async with AsyncConnectionPool(
-            connection_string,
-            min_size=concurrency,
-            kwargs=dict(prepare_threshold=None, autocommit=True),
-        ) as pool:
-            self.pool = pool
-            tasks = []
-            for i in range(scale):
-                tasks.append(self.create_schema(i, table_count))
-            await asyncio.gather(*tasks)
-
-    async def create_schema(self, index, table_count):
-        async with self.pool.connection() as conn:
-            schema_string = f"schema_bench_{index}"
-            schema = sql.Identifier(schema_string)
-            await conn.execute(
-                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(
-                    schema,
-                )
-            )
-            await conn.execute(sql.SQL("CREATE SCHEMA {}").format(schema))
-            for j in range(table_count):
-                table = sql.Identifier(schema_string, f"table_{j}")
-                await conn.execute(
-                    sql.SQL(
-                        "CREATE TABLE {}(id bigserial PRIMARY KEY, data text, number bigint)"
-                    ).format(table)
-                )
+        chunks = chunkify(list(range(scale)), concurrency)
+        print(chunks)
+        with ProcessPoolExecutor(
+            max_workers=concurrency,
+        ) as executor:
+            for _ in executor.map(
+                create_schemas,
+                zip(repeat(connection_string), repeat(table_count), chunks)
+            ):
+                pass
 
     def run(
         self,

@@ -35,11 +35,15 @@ def capture(command, *args, **kwargs):
 def create_schemas(args):
     connection_string = args[0]
     table_count = args[1]
-    indexes = args[2]
+    citus = args[2]
+    indexes = args[3]
 
     with psycopg.connect(
         connection_string, prepare_threshold=None, autocommit=True
     ) as conn:
+        if citus:
+            conn.execute("SET citus.enable_schema_based_sharding TO ON")
+
         for i in indexes:
             schema_string = f"schema_bench_{i}"
             schema = sql.Identifier(schema_string)
@@ -70,6 +74,7 @@ class Bench:
         table_count=10,
         concurrency=multiprocessing.cpu_count(),
         connection_string="",
+        citus=True,
     ):
         chunks = chunkify(list(range(scale)), concurrency)
         with ProcessPoolExecutor(
@@ -77,7 +82,7 @@ class Bench:
         ) as executor:
             for _ in executor.map(
                 create_schemas,
-                zip(repeat(connection_string), repeat(table_count), chunks)
+                zip(repeat(connection_string), repeat(table_count), repeat(citus), chunks)
             ):
                 pass
 

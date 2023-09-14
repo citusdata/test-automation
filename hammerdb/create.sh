@@ -12,7 +12,7 @@ set -e
 driverdir="${0%/*}"
 cd "${driverdir}"
 
-regions=(eastus southcentralus westus2)
+regions=(eastus)
 
 size=${#regions[@]}
 index=$((RANDOM % size))

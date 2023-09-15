@@ -12,7 +12,7 @@ set -e
 azuredir="${0%/*}"
 cd ${azuredir}
 
-regions=(eastus southcentralus westus2)
+regions=(eastus)
 
 size=${#regions[@]}
 index=$(($RANDOM % $size))

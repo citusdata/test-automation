@@ -251,9 +251,12 @@ def build_postgres(c):
         c.run('tar -xf {}.tar.bz2'.format(final_dir), hide='stdout')
 
         with c.cd(final_dir):
-            # apply the patch that helps reporting the queries that cause memory errors under valgrind
-            patch_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pg_report_vg_query.patch")
-            c.run('git apply {}'.format(patch_path))
+            # Apply the patch that helps reporting the queries that cause memory errors under valgrind
+            # if Postgres version is older than 16. This is because, the relevant patch has already been
+            # merged into Postgres in 16.
+            if PG_VERSION.split(".")[0] < "16":                
+                patch_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pg_report_vg_query.patch")
+                c.run('git apply {}'.format(patch_path))
 
             pg_latest = config.PG_LATEST
             flags = ' '.join(config.PG_CONFIGURE_FLAGS)

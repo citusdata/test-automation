@@ -1,0 +1,22 @@
+name: Performance Tests - PgBench
+on:
+  push:
+    branches:
+    - pgbench/*
+    - all_performance_test/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  pgbench:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Install dependencies and run pgbench tests
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |-
+          cd ./azure
+          ./citus-bot.sh citusbot_pgbench_test_resource_group

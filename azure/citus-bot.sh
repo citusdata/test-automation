@@ -19,7 +19,7 @@ ssh-add ~/.ssh/vm-key
 # add the the default key in order to forward it with
 # ssh agent forwarding to allow the Azure VM-s to pull the
 # test automation repo
-ssh-add
+# ssh-add
 
 function cleanup {
     sh ./delete-resource-group.sh

@@ -1,0 +1,16 @@
+name: Compatibility Tests - JDBC
+on:
+  push:
+    branches:
+    - jdbc/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  jdbc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - name: install dependencies and run jdbc compatibility tests
+      run: |-
+        cd ./jdbc
+        ./run_jdbc_tests.sh

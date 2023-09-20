@@ -1,0 +1,17 @@
+name: citusdata/test-automation/compatibility-tests
+on:
+  push:
+    branches:
+    - extension/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: xxxxdjBy
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - name: install dependencies and run extension tests
+      run: |-
+        cd ./azure
+        export EXTENSION_TEST=1
+        ./citus-bot.sh citusbot_extension_test_resource_group

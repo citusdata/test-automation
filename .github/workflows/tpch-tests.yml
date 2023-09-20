@@ -1,0 +1,22 @@
+name: Performance Tests - TPCH
+on:
+  push:
+    branches:
+    - tpch/*
+    - all_performance_test/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  tpch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: install dependencies and run tpch tests
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |-
+          cd ./azure
+          ./citus-bot.sh citusbot_tpch_test_resource_group

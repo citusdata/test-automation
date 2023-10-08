@@ -40,16 +40,26 @@ echo "waiting a long time to create cluster, this might take up to 30 mins depen
 # we use login option in su and -p(preserving environment variables) cannot be used with login. We need to use login option
 # so that $HOME, $PATH are set to the target users $HOME and $PATH.
 
+echo "test"
+
 # https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
-current_branch_name=$(git symbolic-ref --short HEAD 2>/dev/null)
+current_branch_name=$(git branch --show-current)
+echo $current_branch_name
+
 export BRANCH=${CIRCLE_BRANCH:=$current_branch_name}
+
+echo $BRANCH
 
 # get local public ip
 local_public_ip=$(curl ifconfig.me)
 
+echo $local_public_ip
+
 # below is the default create cluster command
 CREATE_CLUSTER_COMMAND=(az deployment group create -g ${rg} --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
  --parameters sshPublicKey="${public_key}" branchName="$BRANCH" localPublicIp="$local_public_ip")
+
+echo ${CREATE_CLUSTER_COMMAND[@]}
 
 # if EXTENSION_TEST variable is not exported, set it to 0
 is_extension_test=${EXTENSION_TEST:=0}

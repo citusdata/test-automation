@@ -5,7 +5,7 @@ on:
     - tpch/*
     - all_performance_test/*
 env:
-  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.TEST_RESULTS_REPO_TOKEN }}
 jobs:
   tpch:
     runs-on: ubuntu-latest
@@ -14,6 +14,8 @@ jobs:
       options: --user root
     steps:
     - uses: actions/checkout@v3.5.0
+    - name: Fix ownership issues
+      run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
     # - uses: azure/login@v1
     #   with:
     #     creds: ${{ secrets.AZURE_CREDENTIALS }}

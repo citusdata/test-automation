@@ -3,14 +3,18 @@ on:
   push:
     branches:
     - jdbc/*
-env:
-  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   jdbc:
     runs-on: ubuntu-latest
+    container:
+      image: buildpack-deps:focal
+      options: --user root
     steps:
     - uses: actions/checkout@v3.5.0
-    - name: install dependencies and run jdbc compatibility tests
+    - name: Fix ownership issues
+      run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+    - name: Run JDBC compatibility tests
       run: |-
         cd ./jdbc
         ./run_jdbc_tests.sh
+      shell: bash

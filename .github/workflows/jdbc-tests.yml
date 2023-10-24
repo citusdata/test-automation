@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - jdbc/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.TEST_RESULTS_REPO_TOKEN }}
 jobs:
   jdbc:
     runs-on: ubuntu-latest

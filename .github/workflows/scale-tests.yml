@@ -1,0 +1,39 @@
+name: Performance Tests - Scale
+on:
+  push:
+    branches:
+    - scale/*
+    - all_performance_test/*
+env:
+  RESULT_REPO_ACCESS_TOKEN: ${{ secrets.TEST_RESULTS_REPO_TOKEN }}
+jobs:
+  tpch:
+    runs-on: ubuntu-latest
+    container:
+      image: buildpack-deps:bullseye
+      options: --user root
+    steps:
+    - uses: actions/checkout@v3.5.0
+    - name: Fix ownership issues
+      run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+    - name: Install Dependencies
+      run: |-
+        apt-get update && apt-get install -y cmake zip jq
+        apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
+        curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+        AZ_REPO=$(lsb_release -cs)
+        echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+        apt-get update
+        apt-get install -y azure-cli
+    - name: Login to Azure
+      run: |-
+        az login --service-principal \
+          -u ${{ fromJson(secrets.AZURE_CREDENTIALS)['clientId']}} \
+          -p ${{ fromJson(secrets.AZURE_CREDENTIALS)['clientSecret']}} \
+          --tenant ${{ fromJson(secrets.AZURE_CREDENTIALS)['tenantId']}}
+    - name: Run scale tests
+      run: |-
+        mkdir ~/.ssh
+        cd ./azure
+        ./citus-bot.sh citusbot_scale_test_resource_group
+      shell: bash

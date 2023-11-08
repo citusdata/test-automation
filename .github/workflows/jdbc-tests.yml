@@ -20,3 +20,4 @@ jobs:
         cd ./jdbc
         ./run_jdbc_tests.sh
       shell: bash
+      

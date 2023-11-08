@@ -37,3 +37,4 @@ jobs:
         cd ./azure
         ./citus-bot.sh citusbot_pgbench_test_resource_group
       shell: bash
+      

@@ -1,4 +1,4 @@
-name: Compatibility - Extension Tests
+name: Compatibility Tests - Extension
 on:
   push:
     branches:

@@ -34,4 +34,3 @@ jobs:
             cd ./azure
             ./delete-resource-group-job.sh
         shell: bash
-      

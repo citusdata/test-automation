@@ -7,7 +7,7 @@ on:
 env:
   RESULT_REPO_ACCESS_TOKEN: ${{ secrets.TEST_RESULTS_REPO_TOKEN }}
 jobs:
-  tpch:
+  pgbench:
     runs-on: ubuntu-latest
     container:
       image: buildpack-deps:bullseye

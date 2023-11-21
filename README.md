@@ -69,7 +69,7 @@ If your subscriptions list doesn't contain `Azure SQL DB Project Orcas - CitusDa
     ssh-add
     ```
 
-5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on CircleCI. Doing this as of latest consists of:
+5. You should setup your VPN to be able to connect to Azure VM-s if your tests are not running on GHA. Doing this as of latest consists of:
 * Open your VPN.
 * Run `routes.ps1` (on Windows only, if you are developing on Mac you should probably ping smn from the team for help). The script requires
 `python` to be installed to run.
@@ -360,7 +360,7 @@ be lifted in the future.
 # <a name="running-tests"></a> Running Tests
 ## <a name="running-automated-tests"></a>Running Automated Tests
 
-**Depending of the tests you trigger here, you can block at most 3 jobs slots in circleci for around 3 hours. Choose wisely the time you want to run the tests to not block development**
+**Depending of the tests you trigger here, you can block at most 3 jobs slots in GHA for around 3 hours. Choose wisely the time you want to run the tests to not block development**
 
 If you want, you can run trigger a job which can run pgbench, scale, tpch and extension tests. What the job does is:
 
@@ -377,7 +377,7 @@ There is a separate job for each test and you can run any combinations of them. 
 * If the branch has a prefix `all_performance_test/`, then all jobs will be triggered.
 * If the branch has a prefix `extension/`, then extension job will be triggered.
 
-You should push your branch to Github so that the circleci job will be triggerred.
+You should push your branch to Github so that the GHA job will be triggerred.
 
 Each job uses a specific resource group name so that there will be at most 3 resource groups for these jobs. If there is already a resource group, then you should make sure that:
 

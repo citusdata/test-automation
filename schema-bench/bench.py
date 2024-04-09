@@ -36,12 +36,12 @@ def create_schemas(args):
     connection_string = args[0]
     table_count = args[1]
     citus = args[2]
-    indexes = args[3]
+    foreign_key = args[3]
+    indexes = args[4]
 
     with psycopg.connect(
         connection_string, prepare_threshold=None, autocommit=True
     ) as conn:
-        conn.execute('CREATE EXTENSION IF NOT EXISTS citext')
         if citus:
             conn.execute("SET citus.enable_schema_based_sharding TO ON")
 
@@ -53,6 +53,7 @@ def create_schemas(args):
                     schema,
                 )
             )
+            fkey_table = sql.Identifier(schema_string, f"table_0")
             conn.execute(sql.SQL("CREATE SCHEMA {}").format(schema))
             for j in range(table_count):
                 table = sql.Identifier(schema_string, f"table_{j}")
@@ -61,6 +62,14 @@ def create_schemas(args):
                         "CREATE TABLE {}(id bigserial PRIMARY KEY, data text, number bigint, num2 int, string varchar, cased_string citext)"
                     ).format(table)
                 )
+                conn.execute(
+                    sql.SQL("CREATE INDEX ON {} (num2)").format(table)
+                )
+                if foreign_key:
+                    fkey = sql.Identifier(f"table_{j}_fkey")
+                    conn.execute(
+                        sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY (number) REFERENCES {}(id)").format(table, fkey, fkey_table)
+                    )
 
 
 def chunkify(l, n):
@@ -71,19 +80,26 @@ def chunkify(l, n):
 class Bench:
     def build(
         self,
+        start=0,
         scale=100,
         table_count=10,
         concurrency=multiprocessing.cpu_count(),
         connection_string="",
+        foreign_key=False,
         citus=True,
     ):
-        chunks = chunkify(list(range(scale)), concurrency)
+        with psycopg.connect(
+            connection_string, prepare_threshold=None, autocommit=True
+        ) as conn:
+            conn.execute('CREATE EXTENSION IF NOT EXISTS citext')
+
+        chunks = chunkify(list(range(start, start+scale)), concurrency)
         with ProcessPoolExecutor(
             max_workers=concurrency,
         ) as executor:
             for _ in executor.map(
                 create_schemas,
-                zip(repeat(connection_string), repeat(table_count), repeat(citus), chunks)
+                zip(repeat(connection_string), repeat(table_count), repeat(citus), repeat(foreign_key), chunks)
             ):
                 pass
 

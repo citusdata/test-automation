@@ -41,6 +41,7 @@ def create_schemas(args):
     with psycopg.connect(
         connection_string, prepare_threshold=None, autocommit=True
     ) as conn:
+        conn.execute('CREATE EXTENSION IF NOT EXISTS citext')
         if citus:
             conn.execute("SET citus.enable_schema_based_sharding TO ON")
 
@@ -57,7 +58,7 @@ def create_schemas(args):
                 table = sql.Identifier(schema_string, f"table_{j}")
                 conn.execute(
                     sql.SQL(
-                        "CREATE TABLE {}(id bigserial PRIMARY KEY, data text, number bigint)"
+                        "CREATE TABLE {}(id bigserial PRIMARY KEY, data text, number bigint, num2 int, string varchar, cased_string citext)"
                     ).format(table)
                 )
 

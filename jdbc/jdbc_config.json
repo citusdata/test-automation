@@ -1,6 +1,6 @@
 {
-    "pg_version": "14.3",
-    "citus_branch": "release-11.0",
+    "pg_version": "17.2",
+    "citus_branch": "release-13.0",
     "COMMENT_NOT_PARSED": "You can lookup jdbc versions at: https://jdbc.postgresql.org/download.html",
-    "jdbc_version": "42.3.6"
+    "jdbc_version": "42.7.4"
 }

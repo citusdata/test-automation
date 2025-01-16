@@ -216,7 +216,7 @@ def redhat_install_packages(c):
     # you can detect amazon linux with /etc/issue and redhat with /etc/redhat-release
     c.sudo("yum groupinstall -q -y 'Development Tools'", hide='stdout')
 
-    c.sudo('yum install -q -y libxml2-devel libxslt-devel'
+    c.sudo('yum install -q -y libxml2-devel libxslt-devel libicu-devel'
         ' openssl-devel pam-devel readline-devel libcurl-devel'
         ' git libzstd-devel lz4-devel perl-IPC-Run perl-Test-Simple'
         ' perl-Test-Harness perl-Time-HiRes', hide='stdout')

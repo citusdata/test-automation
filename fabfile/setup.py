@@ -219,7 +219,7 @@ def redhat_install_packages(c):
     c.sudo('yum install -q -y libxml2-devel libxslt-devel libicu-devel'
         ' openssl-devel pam-devel readline-devel libcurl-devel'
         ' git libzstd-devel lz4-devel perl-IPC-Run perl-Test-Simple'
-        ' perl-Test-Harness perl-Time-HiRes', hide='stdout')
+        ' perl-Test-Harness perl-Time-HiRes perl-FindBin', hide='stdout')
 
 # cache to not build and install the same version of postgres or extensions
 # we will only reinstall pg if its version changes.

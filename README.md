@@ -815,7 +815,7 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
 
    Now you can connect to your remote machine by using `./connect.sh` script.
 
-2. Create a directory that will be used to store the results of the valgrind tests, as in the example below:
+2. Create a directory that will be used to store the artifacts from the valgrind tests, as in the example below:
 
    ```bash
    mkdir -p ~/vglogs/
@@ -829,9 +829,9 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    ```
 
    This command will run the `multi_1_schedule` test target on the `release-13.0` branch of Citus under valgrind,
-   using the  `17.2` version of PostgreSQL, and store the results in a new subdirectory of `~/vglogs/`. Also,
-   rather than providing the Citus branch name, it's doable and more preferable to provide a commit hash to ensure
-   that the tests are run on the exact commit that you want to test.
+   using the  `17.2` version of PostgreSQL, and store the results in a new subdirectory of artifacts directory you
+   provided. Also, rather than providing the Citus branch name, it's doable and more preferable to provide a commit
+   hash to ensure that the tests are run on the exact commit that you want to test.
 
    Note that you can use any valid schedule name for regression or isolation tests here, but not a failure
    one yet (see the comment `run.sh`). `run.sh` script supports different kinds of test schedules by
@@ -845,7 +845,6 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    but it's quite normal if you see such error messages while it's trying to do that:
    ```bash
    Error response from daemon: Could not find the file /citus/src/test/regress/regression.diffs in container citus-vg-...
-   Error response from daemon: Could not find the file /citus/src/test/regress/regression.out in container citus-vg-...
    ```
 
    This happens when the regression test run was successful and so Postgres test suite removed these files. Note
@@ -854,6 +853,16 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    in Citus CI can fail under valgrind and this is also normal -unless no processes exit with status code `2`,
    which indicates a crash- because valgrind heavily slows down the tests and this usually results in test failures
    due to timeouts.
+
+   Also, if a test target produces coredumps, `gdb_core_backtraces` subdirectory that contains the stack traces of
+   these coredumps will be created under the artifacts directory and the stack traces stored there will have the same
+   name as the related coredump files. However, if you need to further investigate a coredump, then you first need to
+   commit the container with `docker commit` (because you cannot attach to a dead container) and then you can run a
+   new container from that image with `docker run -it --entrypoint /bin/bash ..`. Then, you can find the actual
+   coredump files under `/citus/src/test/regress/` directory with such names: `citus_valgrind_test_log.txt.core.296`.
+   Then, you can attach to the coredump that you want
+   (as in `gdb /pgenv/pgsql/bin/postgres /citus/src/test/regress/citus_valgrind_test_log.txt.core.296`) to further
+   investigate it.
 
 5. Delete the resource group if you created a new one for the valgrind tests.
 

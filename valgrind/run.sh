@@ -15,7 +15,7 @@ ARTIFACTS_DIR=$4
 
 image_name="citus-vg-$PG_VERSION-$CITUS_VERSION"
 
-docker build -f docker/Dockerfile -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION"
+docker build -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION" docker/
 
 container_name="$image_name-$TEST_SCHEDULE-$(date +"%Y-%m-%d-%H-%M-%S")"
 
@@ -40,8 +40,24 @@ fi
 # or a prior copy fails, so we disable exit-on-error.
 set +e
 
+start_time=$(date +%s)
+
 docker run --name "$container_name" "$image_name" /run_valgrind_test.sh "$TEST_SCHEDULE" "$make_check_target"
+
+end_time=$(date +%s)
+
+echo "Copying artifacts from container to host"
 
 docker cp "$container_name":/citus/src/test/regress/regression.diffs "$test_artifacts_dir/"
 docker cp "$container_name":/citus/src/test/regress/regression.out "$test_artifacts_dir/"
 docker cp "$container_name":/citus/src/test/regress/citus_valgrind_test_log.txt "$test_artifacts_dir/"
+docker cp "$container_name":/citus/src/test/regress/gdb_core_backtraces "$test_artifacts_dir/"
+
+# finally, also dump some information about the test run
+echo "PG_VERSION=$PG_VERSION" > "$test_artifacts_dir/meta"
+echo "CITUS_VERSION=$CITUS_VERSION" >> "$test_artifacts_dir/meta"
+echo "TEST_SCHEDULE=$TEST_SCHEDULE" >> "$test_artifacts_dir/meta"
+echo "MAKE_CHECK_TARGET=$make_check_target" >> "$test_artifacts_dir/meta"
+echo "IMAGE_NAME=$image_name" >> "$test_artifacts_dir/meta"
+echo "CONTAINER_NAME=$container_name" >> "$test_artifacts_dir/meta"
+echo "TIME_TAKEN_SEC=$((end_time - start_time))" >> "$test_artifacts_dir/meta"

@@ -24,7 +24,12 @@ mkdir -p "$test_artifacts_dir"
 
 # determine make target based on the test schedule
 if [[ "$TEST_SCHEDULE" == *"failure"* ]]; then
-    make_check_target="check-failure-custom-schedule-vg"
+    # Actually, Citus repo supports failure schedules under valgrind via
+    # "check-failure-custom-schedule-vg" but the Dockerfile we use for
+    # valgrind doesn't yet have the necessary dependencies to run the
+    # failure schedules.
+    echo "failure schedules are not supported yet"
+    exit 1
 elif [[ "$TEST_SCHEDULE" == *"isolation"* ]]; then
     make_check_target="check-isolation-custom-schedule-vg"
 else

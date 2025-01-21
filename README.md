@@ -833,9 +833,10 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    rather than providing the Citus branch name, it's doable and more preferable to provide a commit hash to ensure
    that the tests are run on the exact commit that you want to test.
 
-   Note that you can use any valid schedule name for regression, isolation or failure tests here. `run.sh` script
-   will automatically determine the custom valgrind check targets for the given schedule name by searching
-   certain keywords in the schedule name, like "isolation" and "failure".
+   Note that you can use any valid schedule name for regression or isolation tests here, but not a failure
+   one yet (see the comment `run.sh`). `run.sh` script supports different kinds of test schedules by
+   automatically determining the custom valgrind check target for the given schedule name by matching it
+   with certain keywords, like "\*isolation\*".
 
 4. Finally, investigate the logs, especially `citus_valgrind_test_log.txt` for any memory errors that seem to be
    caused by Citus.

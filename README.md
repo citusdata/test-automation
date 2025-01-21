@@ -783,14 +783,14 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
 
 ## <a name="valgrind"></a> Running Valgrind Tests
 
-0. We have simple Dockerfile that provides a valgrind environment for Citus and a simple bash script that can
+0. We have a simple Dockerfile that provides a valgrind environment for Citus and a simple bash script that can
    be used to run a valgrind test target on a container created from that Dockerfile. Both of them are
    located in the `valgrind` directory.
 
    The only reason that we use a Docker container for valgrind tests is to be able to use the vm for multiple
    valgrind test targets in parallel at the same time. Otherwise, since Citus test suite makes certain
-   assumptions about the environment, like the port number used for coordinator and worker nodes, we won't be
-   able to run multiple valgrind test targets in parallel on the same vm.
+   assumptions about the environment, like the port number used for coordinator and worker nodes, we cannot
+   run multiple valgrind test targets in parallel on the same vm.
 
 1. You can either choose to run the valgrind tests on your local machine or on a remote machine; and you can
    choose to create the remote machine by yourself or use our usual `create-cluster.sh` script.

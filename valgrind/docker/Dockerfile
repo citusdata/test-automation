@@ -30,4 +30,8 @@ RUN apt-get update && apt-get install -y python3
 RUN useradd -ms /bin/bash nonrootuser
 RUN chown -R nonrootuser:nonrootuser /citus /pgenv/pgsql/bin
 
+# copy run_valgrind_test.sh to the container
+COPY run_valgrind_test.sh /run_valgrind_test.sh
+RUN chmod +x /run_valgrind_test.sh
+
 USER nonrootuser

@@ -15,7 +15,7 @@ ARTIFACTS_DIR=$4
 
 image_name="citus-vg-$PG_VERSION-$CITUS_VERSION"
 
-docker build . -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION"
+docker build -f docker/Dockerfile -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION"
 
 container_name="$image_name-$TEST_SCHEDULE-$(date +"%Y-%m-%d-%H-%M-%S")"
 
@@ -40,7 +40,7 @@ fi
 # or a prior copy fails, so we disable exit-on-error.
 set +e
 
-docker run --name "$container_name" "$image_name" bash -c "export PATH=/pgenv/pgsql/bin/:$PATH && SCHEDULE=$TEST_SCHEDULE make -C /citus/src/test/regress/ $make_check_target"
+docker run --name "$container_name" "$image_name" /run_valgrind_test.sh "$TEST_SCHEDULE" "$make_check_target"
 
 docker cp "$container_name":/citus/src/test/regress/regression.diffs "$test_artifacts_dir/"
 docker cp "$container_name":/citus/src/test/regress/regression.out "$test_artifacts_dir/"

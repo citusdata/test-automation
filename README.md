@@ -784,7 +784,7 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
 ## <a name="valgrind"></a> Running Valgrind Tests
 
 0. We have simple Dockerfile that provides a valgrind environment for Citus and a simple bash script that can
-   be used to run a valgrind test target on a container created from that Dockerfile. Both of them are 
+   be used to run a valgrind test target on a container created from that Dockerfile. Both of them are
    located in the `valgrind` directory.
 
    The only reason that we use a Docker container for valgrind tests is to be able to use the vm for multiple
@@ -792,20 +792,20 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    assumptions about the environment, like the port number used for coordinator and worker nodes, we won't be
    able to run multiple valgrind test targets in parallel on the same vm.
 
-1. You can either choose to run the valgrind tests on your local machine or on a remote machine; and you can 
+1. You can either choose to run the valgrind tests on your local machine or on a remote machine; and you can
    choose to create the remote machine by yourself or use our usual `create-cluster.sh` script.
 
    If you already have remote machine, you can simply clone this repository there and skip this step.
 
    Otherwise, here are the steps to create a remote machine via `create-cluster.sh` script.
 
-   You need to do the following before following the steps in [Setup Steps For Each Test](#azure-setup-steps) 
+   You need to do the following before following the steps in [Setup Steps For Each Test](#azure-setup-steps)
    to execute `create-cluster.sh`:
 
    ```bash
    eval `ssh-agent -s`
    ssh-add
-   
+
    export VALGRIND_TEST=1
    ```
 
@@ -821,24 +821,40 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    mkdir -p ~/vglogs/
    ```
 
-3. Now, for each valgrind test target that you want to run, you need to run the following command, 
+3. Now, for each valgrind test target that you want to run, you need to run the following command,
    **preferably in a screen / tmux session** because valgrind tests can take a very long time:
 
    ```bash
    ./run.sh 17.2 release-13.0 multi_1_schedule ~/vglogs/
    ```
-   
+
    This command will run the `multi_1_schedule` test target on the `release-13.0` branch of Citus under valgrind,
    using the  `17.2` version of PostgreSQL, and store the results in a new subdirectory of `~/vglogs/`. Also,
    rather than providing the Citus branch name, it's doable and more preferable to provide a commit hash to ensure
    that the tests are run on the exact commit that you want to test.
-   
+
    Note that you can use any valid schedule name for regression, isolation or failure tests here. `run.sh` script
    will automatically determine the custom valgrind check targets for the given schedule name by searching
    certain keywords in the schedule name, like "isolation" and "failure".
 
-4. Finally, after investigating the logs, delete your resource group if you created a new one for the
-   valgrind tests.
+4. Finally, investigate the logs, especially `citus_valgrind_test_log.txt` for any memory errors that seem to be
+   caused by Citus.
+
+   `run.sh` will also try to copy `regression.diffs` and `regression.out` files from the container to the host
+   but it's quite normal if you see such error messages while it's trying to do that:
+   ```bash
+   Error response from daemon: Could not find the file /citus/src/test/regress/regression.diffs in container citus-vg-...
+   Error response from daemon: Could not find the file /citus/src/test/regress/regression.out in container citus-vg-...
+   ```
+
+   This happens when the regression test run was successful and so Postgres test suite removed these files. Note
+   that the tests being successful doesn't indicate that there are no memory errors, so you still need to check
+   the `citus_valgrind_test_log.txt` file. And similarly, some of the regression tests that normally don't fail
+   in Citus CI can fail under valgrind and this is also normal -unless no processes exit with status code `2`,
+   which indicates a crash- because valgrind heavily slows down the tests and this usually results in test failures
+   due to timeouts.
+
+5. Delete the resource group if you created a new one for the valgrind tests.
 
 ## <a name="fab-examples"></a> Example fab Commands
 

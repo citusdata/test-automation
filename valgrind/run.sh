@@ -13,11 +13,11 @@ CITUS_VERSION=$2
 TEST_SCHEDULE=$3
 ARTIFACTS_DIR=$4
 
-image_name="citus-vg-$PG_VERSION-$CITUS_VERSION-$TEST_SCHEDULE"
+image_name="citus-vg-$PG_VERSION-$CITUS_VERSION"
 
-docker build . -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION" --build-arg TEST_SCHEDULE="$TEST_SCHEDULE"
+docker build . -t "$image_name" --build-arg PG_VERSION="$PG_VERSION" --build-arg CITUS_VERSION="$CITUS_VERSION"
 
-container_name="$image_name-$(date +"%Y-%m-%d-%H-%M-%S")"
+container_name="$image_name-$TEST_SCHEDULE-$(date +"%Y-%m-%d-%H-%M-%S")"
 
 test_artifacts_dir="$ARTIFACTS_DIR/$container_name"
 mkdir -p "$test_artifacts_dir"

@@ -783,103 +783,88 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
 
 ## <a name="valgrind"></a> Running Valgrind Tests
 
-TL;DR
+0. We have a simple Dockerfile that provides a valgrind environment for Citus and a simple bash script that can
+   be used to run a valgrind test target on a container created from that Dockerfile. Both of them are
+   located in the `valgrind` directory.
 
-```bash
-# set the appropriate az account subscription
-az account set --subscription <subscriptionId>
+   The only reason that we use a Docker container for valgrind tests is to be able to use the vm for multiple
+   valgrind test targets in parallel at the same time. Otherwise, since Citus test suite makes certain
+   assumptions about the environment, like the port number used for coordinator and worker nodes, we cannot
+   run multiple valgrind test targets in parallel on the same vm.
 
-# setup the ssh-agent and pass your credentials to it so the azure VM-s
-# will be setup to allow ssh connection requests with your public key
-eval `ssh-agent -s`
-ssh-add
+1. You can either choose to run the valgrind tests on your local machine or on a remote machine; and you can
+   choose to create the remote machine by yourself or use our usual `create-cluster.sh` script.
 
-# 1 # start valgrind test
+   If you already have remote machine, you can simply clone this repository there and skip this step.
 
-# create valgrind instance to run
-export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
-export VALGRIND_TEST=1
-cd azure
-./create-cluster.sh
+   Otherwise, here are the steps to create a remote machine via `create-cluster.sh` script.
 
-# connect to coordinator
-./connect.sh
+   You need to do the following before following the steps in [Setup Steps For Each Test](#azure-setup-steps)
+   to execute `create-cluster.sh`:
 
-# run fab command in coordinator in a detachable session
-#
-# Note that you can use any valid schedule name for regression, isolation or failure tests here
-tmux new -d "fab use.postgres 15.2 use.citus release-11.1 run.valgrind multi_1_schedule"
+   ```bash
+   eval `ssh-agent -s`
+   ssh-add
 
-# simply exit from coordinator after detaching
+   export VALGRIND_TEST=1
+   ```
 
-# 2 # finalize valgrind test
+   Setting `VALGRIND_TEST` environment variable to `1` makes `numberOfWorkers` setting useless.
+   This is because we will already use our regression test structure and it creates a local cluster
+   itself.
 
-# reconnect to coordinator after 9.5 hours (if you preferred default coordinator configuration)
-export RESOURCE_GROUP_NAME='your-valgrind-test-rg-name-here'
+   Now you can connect to your remote machine by using `./connect.sh` script.
 
-eval `ssh-agent -s`
-ssh-add
-cd azure
-./connect.sh
+2. Create a directory that will be used to store the artifacts from the valgrind tests, as in the example below:
 
-# you can first check if valgrind test is finished by attaching to tmux session
-tmux a
-# then you should detach from the session before moving forward
-Ctrl+b d
+   ```bash
+   mkdir -p ~/vglogs/
+   ```
 
-# run push results script
-cd test-automation/azure
-./push-results.sh <branch name you prefer to push results>
+3. Now, for each valgrind test target that you want to run, you need to run the following command,
+   **preferably in a screen / tmux session** because valgrind tests can take a very long time:
 
-# simply exit from coordinator after pushing the results
+   ```bash
+   ./run.sh 17.2 release-13.0 multi_1_schedule ~/vglogs/
+   ```
 
-# delete resource group finally
-cd azure
-./delete-resource-group.sh
-```
+   This command will run the `multi_1_schedule` test target on the `release-13.0` branch of Citus under valgrind,
+   using the  `17.2` version of PostgreSQL, and store the results in a new subdirectory of artifacts directory you
+   provided. Also, rather than providing the Citus branch name, it's doable and more preferable to provide a commit
+   hash to ensure that the tests are run on the exact commit that you want to test.
 
-DETAILS:
+   Note that you can use any valid schedule name for regression or isolation tests here, but not a failure
+   one yet (see the comment `run.sh`). `run.sh` script supports different kinds of test schedules by
+   automatically determining the custom valgrind check target for the given schedule name by matching it
+   with certain keywords, like "\*isolation\*".
 
-To create a valgrind instance, following the steps in [Setup Steps For Each Test](#azure-setup-steps), do the following before executing `create-cluster.sh`:
+4. Finally, investigate the logs, especially `citus_valgrind_test_log.txt` for any memory errors that seem to be
+   caused by Citus.
 
-```bash
-eval `ssh-agent -s`
-ssh-add
+   `run.sh` will also try to copy `regression.diffs` and `regression.out` files from the container to the host
+   but it's quite normal if you see such error messages while it's trying to do that:
+   ```bash
+   Error response from daemon: Could not find the file /citus/src/test/regress/regression.diffs in container citus-vg-...
+   ```
 
-export VALGRIND_TEST=1
-```
+   This happens when the regression test run was successful and so Postgres test suite removed these files. Note
+   that the tests being successful doesn't indicate that there are no memory errors, so you still need to check
+   the `citus_valgrind_test_log.txt` file. And similarly, some of the regression tests that normally don't fail
+   in Citus CI can fail under valgrind and this is also normal -unless no processes exit with status code `2`,
+   which indicates a crash- because valgrind heavily slows down the tests and this usually results in test failures
+   due to timeouts.
 
-, which makes `numberOfWorkers` setting useless.
-This is because we will already be using our regression test structure and it creates a local cluster
-itself. Also, as we install `valgrind` only on coordinator, if we have worker nodes, then we cannot build
-PostgreSQL as we require `valgrind` on workers and get error even if we do not need them.
-Also, the `create-cluster.sh` uses the first public key it finds in the ssh-agent to setup the ssh authentication
-for the Azure VM-s so if the ssh-agent is not up or it doesn't have your credentials, you won't be able to ssh
-into the VM-s.
+   Also, if a test target produces coredumps, `gdb_core_backtraces` subdirectory that contains the stack traces of
+   these coredumps will be created under the artifacts directory and the stack traces stored there will have the same
+   name as the related coredump files. However, if you need to further investigate a coredump, then you first need to
+   commit the container with `docker commit` (because you cannot attach to a dead container) and then you can run a
+   new container from that image with `docker run -it --entrypoint /bin/bash ..`. Then, you can find the actual
+   coredump files under `/citus/src/test/regress/` directory with such names: `citus_valgrind_test_log.txt.core.296`.
+   Then, you can attach to the coredump that you want
+   (as in `gdb /pgenv/pgsql/bin/postgres /citus/src/test/regress/citus_valgrind_test_log.txt.core.296`) to further
+   investigate it.
 
-On the coordinator node:
-
-```bash
-# an example usage: Use PostgreSQL 15.2 and run enterprise failure tests with valgrind support on citus/release-11.1
-fab use.postgres 15.2 use.citus release-11.1 run.valgrind enterprise_failure_schedule
-```
-
-However as valgrind tests take too much time to complete, we recommend you to run valgrind tests in a detached session:
-```bash
-# Note that you can use any valid schedule name for regression, isolation or failure tests here
-tmux new -d "fab use.postgres 15.2 use.citus release-11.1 run.valgrind multi_1_schedule"
-```
-
-After the tests are finished (takes up to 9 hours with default coordinator size), re-connect to the coordinator.
-Result can be found under `$HOME/results` directory.
-
-To push the results to `release_test_results` repository, run the below command in coordinator node:
-
-```bash
-sh $HOME/test-automation/azure/push-results.sh <branch_name_to_push>
-```
-
-Finally, delete your resource group.
+5. Delete the resource group if you created a new one for the valgrind tests.
 
 ## <a name="fab-examples"></a> Example fab Commands
 

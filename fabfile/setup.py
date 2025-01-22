@@ -63,27 +63,6 @@ def tpch(c):
     add_workers(master_connection)
     multi_connections.execute(all_connections, add.tpch)
 
-@task
-def valgrind(c):
-    # prepare yum install command
-    if multi_connections.execute_on_all_nodes_if_no_hosts(c, valgrind):
-        return
-
-    install_required_packages_command = 'yum install -q -y ' + ' '.join(config.VALGRIND_REQUIRED_PACKAGES)
-
-    # install libraries required for valgrind test
-    c.sudo(install_required_packages_command)
-
-    # create results directory to put resulting log files there
-    # (for pushing them to results repository)
-    utils.rmdir(c, config.RESULTS_DIRECTORY, force=True)
-    utils.mkdir_if_not_exists(config.RESULTS_DIRECTORY)
-
-    # set build citus function
-    build_citus_func = config.settings[config.BUILD_CITUS_FUNC]
-    multi_connections.execute(all_connections, prefix.ensure_pg_latest_exists, default=config.POSTGRES_INSTALLATION)
-    multi_connections.execute(all_connections, common_setup, build_citus_func)
-
 @task(optional=['config-file', 'driver-ip'])
 def hammerdb(c, config_file='hammerdb.ini', driver_ip=''):
     if not multi_connections.is_coordinator_connection(c):
@@ -251,13 +230,6 @@ def build_postgres(c):
         c.run('tar -xf {}.tar.bz2'.format(final_dir), hide='stdout')
 
         with c.cd(final_dir):
-            # Apply the patch that helps reporting the queries that cause memory errors under valgrind
-            # if Postgres version is older than 16. This is because, the relevant patch has already been
-            # merged into Postgres in 16.
-            if config.PG_VERSION.split(".")[0] < "16":
-                patch_path = os.path.join(config.HOME_DIR, "test-automation/fabfile/pg_report_vg_query.patch")
-                c.run('git apply {}'.format(patch_path))
-
             pg_latest = config.PG_LATEST
             flags = ' '.join(config.PG_CONFIGURE_FLAGS)
             c.run('./configure --prefix={} {}'.format(pg_latest, flags), hide='stdout')

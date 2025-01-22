@@ -63,10 +63,3 @@ def debug_mode(c):
         return
 
     config.PG_CONFIGURE_FLAGS.append('--enable-debug --enable-cassert CFLAGS="-ggdb -Og -g3 -fno-omit-frame-pointer"')
-
-@task
-def valgrind(c):
-    if multi_connections.execute_on_all_nodes_if_no_hosts(c, valgrind):
-        return
-
-    config.PG_CONFIGURE_FLAGS.append('--with-icu --enable-cassert --enable-debug CFLAGS="-ggdb -Og -DUSE_VALGRIND"')

@@ -35,7 +35,7 @@ cd $project_directory
 
 # install build dependencies for pg and citus
 # based on: https://github.com/citusdata/citus/blob/master/CONTRIBUTING.md#debian-based-linux-ubuntu-debian
-apt-get install -y autoconf flex libcurl4-gnutls-dev libicu-dev \
+apt-get install -y autoconf flex bison libcurl4-gnutls-dev libicu-dev \
                         libkrb5-dev liblz4-dev libpam0g-dev libreadline-dev \
                         libselinux1-dev libssl-dev libxslt1-dev libzstd-dev \
                         uuid-dev

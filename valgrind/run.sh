@@ -30,8 +30,12 @@ if [[ "$TEST_SCHEDULE" == *"failure"* ]]; then
     # failure schedules.
     echo "failure schedules are not supported yet"
     exit 1
+elif [[ "$TEST_SCHEDULE" == *"columnar_isolation"* ]]; then
+    make_check_target="check-columnar-isolation-custom-schedule-vg"
 elif [[ "$TEST_SCHEDULE" == *"isolation"* ]]; then
     make_check_target="check-isolation-custom-schedule-vg"
+elif [[ "$TEST_SCHEDULE" == *"columnar"* ]]; then
+    make_check_target="check-columnar-custom-schedule-vg"
 else
     make_check_target="check-custom-schedule-vg"
 fi

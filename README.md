@@ -838,7 +838,7 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    automatically determining the custom valgrind check target for the given schedule name by matching it
    with certain keywords, like "\*isolation\*".
 
-4. Finally, investigate the logs, especially `citus_valgrind_test_log.txt` for any memory errors that seem to be
+4. Finally, investigate the logs, especially `valgrind_logs.txt` for any memory errors that seem to be
    caused by Citus.
 
    `run.sh` will also try to copy `regression.diffs` and `regression.out` files from the container to the host
@@ -849,7 +849,7 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
 
    This happens when the regression test run was successful and so Postgres test suite removed these files. Note
    that the tests being successful doesn't indicate that there are no memory errors, so you still need to check
-   the `citus_valgrind_test_log.txt` file. And similarly, some of the regression tests that normally don't fail
+   the `valgrind_logs.txt` file. And similarly, some of the regression tests that normally don't fail
    in Citus CI can fail under valgrind and this is also normal -unless no processes exit with status code `2`,
    which indicates a crash- because valgrind heavily slows down the tests and this usually results in test failures
    due to timeouts.

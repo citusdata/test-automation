@@ -54,7 +54,7 @@ echo "Copying artifacts from container to host"
 
 docker cp "$container_name":/citus/src/test/regress/regression.diffs "$test_artifacts_dir/"
 docker cp "$container_name":/citus/src/test/regress/regression.out "$test_artifacts_dir/"
-docker cp "$container_name":/citus/src/test/regress/citus_valgrind_test_log.txt "$test_artifacts_dir/"
+docker cp "$container_name":/citus/src/test/regress/valgrind_logs.txt "$test_artifacts_dir/"
 docker cp "$container_name":/citus/src/test/regress/gdb_core_backtraces "$test_artifacts_dir/"
 
 # finally, also dump some information about the test run

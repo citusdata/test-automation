@@ -21,15 +21,32 @@ set +e
 
 SCHEDULE=$TEST_SCHEDULE make -C /citus/src/test/regress/ $MAKE_CHECK_TARGET
 
+shopt -s nullglob
+
+# Copy the contents of each valgrind log file to valgrind_logs.txt
+valgrind_log_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.[0-9]+)
+if (( ${#valgrind_log_files[@]} )); then
+    touch /citus/src/test/regress/valgrind_logs.txt
+
+    # for each file, print pid and then its content to  valgrind_logs.txt
+    for valgrind_log_file in "${valgrind_log_files[@]}"; do
+        echo "+++++++++++++++++++++++++ $(basename "$valgrind_log_file") +++++++++++++++++++++++++" >> /citus/src/test/regress/valgrind_logs.txt
+        cat "$valgrind_log_file" >> /citus/src/test/regress/valgrind_logs.txt
+        echo "" >> /citus/src/test/regress/valgrind_logs.txt
+    done
+fi
+
 # For each core file that valgrind generated in case of a process crash (if any),
 # we run gdb and save the backtrace to a file.
-if [ -f /citus/src/test/regress/citus_valgrind_test_log.txt.core.* ]; then
+core_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.core.[0-9]+)
+if (( ${#core_files[@]} )); then
     pushd /citus/src/test/regress/
 
     mkdir gdb_core_backtraces
 
-    for core_file_name in ./citus_valgrind_test_log.txt.core.*; do
-        gdb -ex bt -ex quit postgres $core_file_name &> gdb_core_backtraces/$core_file_name
+    for core_file_name in "${core_files[@]}"; do
+        base_name=$(basename "$core_file_name")
+        gdb -ex bt -ex quit postgres "$core_file_name" &> "gdb_core_backtraces/$base_name"
     done
 
     echo "Found core files. Stacktraces are saved under /citus/src/test/regress/gdb_core_backtraces."

@@ -42,7 +42,7 @@ fi
 
 # For each core file that valgrind generated in case of a process crash (if any),
 # we run gdb and save the backtrace to a file.
-core_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.core.[0-9]*)
+core_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.core.+([0-9]))
 if (( ${#core_files[@]} )); then
     pushd /citus/src/test/regress/
 

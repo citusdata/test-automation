@@ -23,8 +23,11 @@ SCHEDULE=$TEST_SCHEDULE make -C /citus/src/test/regress/ $MAKE_CHECK_TARGET
 
 shopt -s nullglob
 
-# Copy the contents of each valgrind log file to valgrind_logs.txt
-valgrind_log_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.[0-9]+)
+# Collect all Valgrind log files into a single file (valgrind_logs.txt).
+# Handles both formats:
+#   - Older Citus versions: a single file named citus_valgrind_test_log.txt
+#   - Newer Citus versions: one file per PID, e.g. citus_valgrind_test_log.txt.<pid>
+valgrind_log_files=(/citus/src/test/regress/citus_valgrind_test_log.txt?(.+([0-9])))
 if (( ${#valgrind_log_files[@]} )); then
     touch /citus/src/test/regress/valgrind_logs.txt
 

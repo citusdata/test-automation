@@ -21,7 +21,7 @@ set +e
 
 SCHEDULE=$TEST_SCHEDULE make -C /citus/src/test/regress/ $MAKE_CHECK_TARGET
 
-shopt -s nullglob
+shopt -s extglob nullglob
 
 # Collect all Valgrind log files into a single file (valgrind_logs.txt).
 # Handles both formats:
@@ -29,19 +29,20 @@ shopt -s nullglob
 #   - Newer Citus versions: one file per PID, e.g. citus_valgrind_test_log.txt.<pid>
 valgrind_log_files=(/citus/src/test/regress/citus_valgrind_test_log.txt?(.+([0-9])))
 if (( ${#valgrind_log_files[@]} )); then
-    touch /citus/src/test/regress/valgrind_logs.txt
+    output=/citus/src/test/regress/valgrind_logs.txt
+    touch "$output"  # truncate/create output file
 
-    # for each file, print pid and then its content to  valgrind_logs.txt
+    # For each log file, add a header with its name and then append its contents
     for valgrind_log_file in "${valgrind_log_files[@]}"; do
-        echo "+++++++++++++++++++++++++ $(basename "$valgrind_log_file") +++++++++++++++++++++++++" >> /citus/src/test/regress/valgrind_logs.txt
-        cat "$valgrind_log_file" >> /citus/src/test/regress/valgrind_logs.txt
-        echo "" >> /citus/src/test/regress/valgrind_logs.txt
+        echo "+++++++++++++++++++++++++ $(basename "$valgrind_log_file") +++++++++++++++++++++++++" >> "$output"
+        cat "$valgrind_log_file" >> "$output"
+        echo "" >> "$output"
     done
 fi
 
 # For each core file that valgrind generated in case of a process crash (if any),
 # we run gdb and save the backtrace to a file.
-core_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.core.[0-9]+)
+core_files=(/citus/src/test/regress/citus_valgrind_test_log.txt.core.[0-9]*)
 if (( ${#core_files[@]} )); then
     pushd /citus/src/test/regress/
 

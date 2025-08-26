@@ -792,28 +792,8 @@ fab run.tpch-automate --config-file=tpch_q1.ini --connectionURI='postgres://citu
    assumptions about the environment, like the port number used for coordinator and worker nodes, we cannot
    run multiple valgrind test targets in parallel on the same vm.
 
-1. You can either choose to run the valgrind tests on your local machine or on a remote machine; and you can
-   choose to create the remote machine by yourself or use our usual `create-cluster.sh` script.
-
-   If you already have remote machine, you can simply clone this repository there and skip this step.
-
-   Otherwise, here are the steps to create a remote machine via `create-cluster.sh` script.
-
-   You need to do the following before following the steps in [Setup Steps For Each Test](#azure-setup-steps)
-   to execute `create-cluster.sh`:
-
-   ```bash
-   eval `ssh-agent -s`
-   ssh-add
-
-   export VALGRIND_TEST=1
-   ```
-
-   Setting `VALGRIND_TEST` environment variable to `1` makes `numberOfWorkers` setting useless.
-   This is because we will already use our regression test structure and it creates a local cluster
-   itself.
-
-   Now you can connect to your remote machine by using `./connect.sh` script.
+1. You can either choose to run the valgrind tests on your local machine or on a remote machine. Using a remote
+   machine is suggested because valgrind tests usually take a long time to complete.
 
 2. Create a directory that will be used to store the artifacts from the valgrind tests, as in the example below:
 

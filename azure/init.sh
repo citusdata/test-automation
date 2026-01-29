@@ -21,6 +21,8 @@ set -o pipefail
 max_retries=50
 count=1
 
+cloud-init status
+
 while (( count <= max_retries )); do
     echo "Attempt $count of $max_retries: Installing hostname..."
     
@@ -39,6 +41,17 @@ if (( count > max_retries )); then
     echo "Failed to install hostname after $max_retries attempts." 
     exit 1
 fi
+
+cloud-init status
+sleep 120
+cloud-init status
+
+if ! pgrep -f '(rpm|yum|dnf)' >/dev/null; then
+    echo "Removing rpm lock file and doing rpm rebuild"
+    rm -f /var/lib/rpm/.rpm.lock
+    rpm --rebuilddb
+fi
+
 
 # install epel repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm

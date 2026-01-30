@@ -17,6 +17,42 @@ firewall-cmd --add-port=3456/tcp || true
 # fail in a pipeline if any of the commands fails
 set -o pipefail
 
+# retry until yum repos become available, somehow redhat repositories cannot 
+# be resolved until some time since vm provisioning
+max_retries=50
+count=1
+
+cloud-init status
+
+while (( count <= max_retries )); do
+    echo "Attempt $count of $max_retries: Installing hostname..."
+    
+    # Try installing the package
+    if yum install -y hostname; then
+        echo "Successfully installed hostname."
+        break
+    else
+        echo "Install failed (exit code $?). Retrying in 10 seconds..."
+        sleep 10
+    fi
+    ((count++))
+done
+
+if (( count > max_retries )); then
+    echo "Failed to install hostname after $max_retries attempts." 
+    exit 1
+fi
+
+cloud-init status
+sleep 120
+cloud-init status
+
+if ! pgrep -f '(rpm|yum|dnf)' >/dev/null; then
+    echo "Removing rpm lock file and doing rpm rebuild"
+    rm -f /var/lib/rpm/.rpm.lock
+    rpm --rebuilddb
+fi
+
 # install epel repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 

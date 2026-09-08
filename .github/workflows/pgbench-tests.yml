@@ -10,7 +10,7 @@ jobs:
   pgbench:
     runs-on: ubuntu-latest
     container:
-      image: buildpack-deps:bullseye
+      image: buildpack-deps:bookworm
       options: --user root
     steps:
     - uses: actions/checkout@v3.5.0

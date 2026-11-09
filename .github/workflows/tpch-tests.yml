@@ -10,10 +10,10 @@ jobs:
   tpch:
     runs-on: ubuntu-latest
     container:
-      image: buildpack-deps:bullseye
+      image: buildpack-deps:bookworm
       options: --user root
     steps:
-    - uses: actions/checkout@v3.5.0
+    - uses: actions/checkout@v7
     - name: Fix ownership issues
       run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
     - name: Install Dependencies

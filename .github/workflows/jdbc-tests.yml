@@ -12,7 +12,7 @@ jobs:
       image: buildpack-deps:focal
       options: --user root
     steps:
-    - uses: actions/checkout@v3.5.0
+    - uses: actions/checkout@v7
     - name: Fix ownership issues
       run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
     - name: Run JDBC compatibility tests
